@@ -61,7 +61,6 @@
                     <h1 id="pos-title" class="text-xl font-bold text-gray-800 tracking-tight">POS System</h1>
                 </div>
                 <div class="flex items-center gap-2">
-                    <!-- Tombol Meja Aktif (Open Bill) -->
                     <button onclick="openActiveBillsModal()" class="flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3.5 py-2 rounded-xl hover:bg-amber-100 smooth-transition">
                         <i data-lucide="table" class="w-4 h-4"></i> Meja Aktif
                     </button>
@@ -89,7 +88,6 @@
 
             <!-- Menu Grid -->
             <div id="menu-container" class="flex-1 overflow-y-auto p-5 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 content-start">
-                <!-- Menu Items -->
             </div>
         </div>
 
@@ -114,11 +112,10 @@
             <div class="p-5 border-t border-gray-200 bg-white shrink-0 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] z-10">
                 <div class="flex justify-between text-sm mb-2 text-gray-500 font-medium"><p>Subtotal</p><p id="cart-subtotal">Rp 0</p></div>
                 
-                <!-- DROPDOWN DISCOUNT LEVEL (Kolom Baru) -->
                 <div class="flex justify-between items-center text-sm mb-2 text-gray-500 font-medium">
                     <p>Discount</p>
                     <select id="cart-discount-select" onchange="renderCart()" class="bg-gray-100 border-none rounded-lg px-2 py-1 outline-none text-xs font-bold text-gray-700">
-                        <option value="0" data-id="DISC-00">0% (Tanpa Diskon)</option>
+                        <option value="0" data-id="DISC-00">Tanpa Diskon (0%)</option>
                     </select>
                 </div>
                 
@@ -139,16 +136,13 @@
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- MODAL: DAFTAR MEJA AKTIF (OPEN BILL)       -->
-    <!-- ========================================== -->
+    <!-- MODAL: MEJA AKTIF -->
     <div id="modal-active-bills" class="hidden-screen fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 smooth-transition">
         <div class="bg-white rounded-3xl w-full max-w-2xl p-6 shadow-2xl flex flex-col max-h-[80vh]">
             <div class="flex justify-between items-center pb-4 border-b border-gray-200">
                 <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2"><i data-lucide="table" class="text-amber-600"></i> Daftar Meja Aktif (Open Bill)</h3>
                 <button onclick="closeModal('modal-active-bills')" class="p-1.5 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 smooth-transition"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            
             <div id="active-bills-container" class="flex-1 overflow-y-auto py-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <!-- Daftar Open Bill -->
             </div>
@@ -171,7 +165,7 @@
         let filteredData = []; 
         let cart = [];
         let currentCategory = 'Semua';
-        let activeOrderId = null; // Menyimpan ID order jika melunasi Open Bill
+        let activeOrderId = null;
 
         window.onload = () => {
             setTimeout(() => {
@@ -262,7 +256,6 @@
             }
         }
 
-        // --- FETCH & SYNC DATA ---
         async function syncData() {
             const btn = document.getElementById('btn-sync');
             const icon = btn.querySelector('i');
@@ -325,13 +318,11 @@
         function renderDiscounts() {
             const select = document.getElementById('cart-discount-select');
             select.innerHTML = discountData.map(d => {
-                // FIX MASALAH 0.3% : Jika desimal (< 1), kalikan 100 untuk tampilan
                 let displayPerc = d.percentage < 1 ? (d.percentage * 100) : d.percentage;
                 return `<option value="${d.percentage}" data-id="${d.id}">${d.name} (${displayPerc}%)</option>`;
             }).join('');
         }
 
-        // --- FILTER, SEARCH ---
         function filterMenu(cat, btnElement = null) {
             currentCategory = cat;
             if (btnElement) {
@@ -397,7 +388,6 @@
             lucide.createIcons();
         }
 
-        // --- RECALL MEJA AKTIF (OPEN BILL) ---
         async function openActiveBillsModal() {
             openModal('modal-active-bills');
             const container = document.getElementById('active-bills-container');
@@ -409,7 +399,7 @@
                 
                 if (json.success && json.data.length > 0) {
                     container.innerHTML = json.data.map(bill => `
-                        <div onclick="recallBill(${JSON.stringify(bill).replace(/"/g, '&quot;')})" class="bg-amber-50 border border-amber-200 hover:bg-amber-100/70 p-4 rounded-2xl cursor-pointer smooth-transition flex justify-between items-center shadow-sm">
+                        <div onclick="recallBill(${JSON.stringify(bill).replace(/"/g, '&quot;')})" class="bg-amber-50 border border-amber-200 hover:bg-amber-100 p-4 rounded-2xl cursor-pointer smooth-transition flex justify-between items-center shadow-sm">
                             <div>
                                 <h4 class="font-extrabold text-amber-900 text-lg">Meja: ${bill.tableNo}</h4>
                                 <p class="text-xs text-amber-700 mt-1">Waktu: ${bill.time} | Items: ${bill.items.length}</p>
@@ -430,21 +420,14 @@
         }
 
         function recallBill(bill) {
-            activeOrderId = bill.orderId; // Kunci ID transaksi yang sedang dilunasi
+            activeOrderId = bill.orderId; 
             document.getElementById('order-table').value = bill.tableNo;
             
-            // Rekonstruksi keranjang belanja
             cart = bill.items.map(item => ({
-                menuId: item.menuId,
-                name: item.name,
-                price: item.price,
-                qty: item.qty,
-                subtotal: item.subtotal,
-                notes: item.notes,
-                route: item.route
+                menuId: item.menuId, name: item.name, price: item.price, 
+                qty: item.qty, subtotal: item.subtotal, notes: item.notes, route: item.route
             }));
 
-            // Set Diskon yang tersimpan
             const selectDisc = document.getElementById('cart-discount-select');
             for (let i = 0; i < selectDisc.options.length; i++) {
                 if (selectDisc.options[i].getAttribute('data-id') === bill.discountId) {
@@ -453,19 +436,14 @@
                 }
             }
 
-            // Sembunyikan tombol "Simpan Bill (Open)" karena ini sudah berstatus open
             document.getElementById('btn-save-bill').classList.add('hidden-screen');
-
             renderCart();
             closeModal('modal-active-bills');
         }
 
-        // --- KERANJANG (CART) ---
         function addToCart(id, name, price, route) {
-            // Jika sedang melunasi open bill, kunci penambahan menu baru (SOP kasir agar tidak bias)
             if (activeOrderId) {
-                if(!confirm("Anda sedang memproses pelunasan Meja Aktif. Tambah menu baru?")) return;
-                // Jika setuju tambah menu, batalkan mode pelunasan open bill (buat bill baru)
+                if(!confirm("Anda sedang memproses pelunasan. Tambah menu baru ke bill ini?")) return;
                 activeOrderId = null;
                 document.getElementById('btn-save-bill').classList.remove('hidden-screen');
             }
@@ -492,7 +470,7 @@
             if(confirm("Kosongkan keranjang?")) { 
                 cart = []; 
                 document.getElementById('order-table').value = ""; 
-                activeOrderId = null; // Reset pelunasan
+                activeOrderId = null; 
                 document.getElementById('btn-save-bill').classList.remove('hidden-screen');
                 renderCart(); 
             }
@@ -502,14 +480,16 @@
             const container = document.getElementById('cart-container');
             const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
             
-            // Hitung Diskon %
             const selectDisc = document.getElementById('cart-discount-select');
-            const discPerc = parseFloat(selectDisc.value || 0);
-            const discountAmount = (subtotal * discPerc) / 100;
+            let discVal = parseFloat(selectDisc.value || 0);
+            
+            let discountAmount = 0;
+            if (discVal < 1) discountAmount = subtotal * discVal; 
+            else discountAmount = subtotal * (discVal / 100); 
+            
             const netSubtotal = subtotal - discountAmount;
-
             const taxPerc = parseFloat(configData["PAJAK_PB1"] || 0); 
-            const tax = (netSubtotal * taxPerc) / 100;
+            const tax = netSubtotal * (taxPerc / 100);
             const grandTotal = netSubtotal + tax;
 
             document.getElementById('cart-count').innerText = cart.reduce((sum, item) => sum + item.qty, 0);
@@ -544,7 +524,6 @@
             lucide.createIcons();
         }
 
-        // --- CHECKOUT & ROUTING PRINTER ---
         async function processOrder(payMethod) {
             if(cart.length === 0) return alert("Keranjang kosong!");
             const tableNo = document.getElementById('order-table').value.trim();
@@ -557,38 +536,27 @@
             const discPerc = parseFloat(selectDisc.value);
 
             const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
-            const discountAmount = (subtotal * discPerc) / 100;
-            const netSubtotal = subtotal - discountAmount;
+            let discountAmount = 0;
+            if (discPerc < 1) discountAmount = subtotal * discPerc; 
+            else discountAmount = subtotal * (discPerc / 100); 
             
-            const tax = (netSubtotal * parseFloat(configData["PAJAK_PB1"] || 0)) / 100;
+            const netSubtotal = subtotal - discountAmount;
+            const tax = netSubtotal * (parseFloat(configData["PAJAK_PB1"] || 0) / 100);
             const grandTotal = netSubtotal + tax;
 
             let payload = {};
             let endpoint = "placeOrder";
 
             if (activeOrderId && payMethod !== 'Open') {
-                // JALUR PELUNASAN OPEN BILL
                 endpoint = "payOpenOrder";
-                payload = {
-                    action: endpoint,
-                    data: {
-                        orderId: activeOrderId,
-                        paymentMethod: payMethod
-                    }
-                };
+                payload = { action: endpoint, data: { orderId: activeOrderId, paymentMethod: payMethod } };
             } else {
-                // JALUR PESANAN BARU (Bisa langsung Lunas atau Simpan Open)
                 payload = {
                     action: endpoint,
                     data: {
-                        tableNo: tableNo,
-                        kasirId: cashierInfo.userId,
-                        discount: discountId,
-                        tax: tax,
-                        totalAmount: grandTotal,
-                        paymentMethod: payMethod === 'Open' ? '-' : payMethod,
-                        orderStatus: payMethod === 'Open' ? 'Open' : 'Paid',
-                        items: cart
+                        tableNo: tableNo, kasirId: cashierInfo.userId, discount: discountId,
+                        tax: tax, totalAmount: grandTotal, paymentMethod: payMethod === 'Open' ? '-' : payMethod,
+                        orderStatus: payMethod === 'Open' ? 'Open' : 'Paid', items: cart
                     }
                 };
             }
@@ -598,36 +566,21 @@
                 const json = await res.json();
                 if(json.success) {
                     let orderIdPrinted = activeOrderId || json.orderId;
-                    
-                    // JALANKAN ROUTING PRINTER CERDAS (Suhu Custom)
                     executeRoutingPrint(orderIdPrinted, tableNo, payMethod, subtotal, discountAmount, tax, grandTotal);
                     
                     alert(`Transaksi Berhasil! (${payMethod})`);
-                    
-                    // Reset State
-                    cart = [];
-                    document.getElementById('order-table').value = "";
-                    activeOrderId = null;
-                    document.getElementById('btn-save-bill').classList.remove('hidden-screen');
+                    cart = []; document.getElementById('order-table').value = "";
+                    activeOrderId = null; document.getElementById('btn-save-bill').classList.remove('hidden-screen');
                     renderCart();
-                } else {
-                    alert("Error dari Server: " + json.message);
-                }
-            } catch (e) {
-                alert("Gagal mengirim pesanan. Server tidak merespon.");
-            }
+                } else { alert("Error dari Server: " + json.message); }
+            } catch (e) { alert("Gagal mengirim pesanan. Server tidak merespon."); }
         }
 
-        // =======================================================
-        // METODE PRINTER ROUTING (RAWBT SINGLE-JOB SPLIT PRINTING)
-        // =======================================================
         function executeRoutingPrint(orderId, table, payMethod, subtotal, discountAmount, tax, grandTotal) {
             const namaResto = configData["NAMA_PERUSAAN"] || "RESTO";
             const alamat = configData["ALAMAT"] || "";
-            
             let finalReceipt = "";
 
-            // 1. STRUK UTAMA KASIR (Hanya dicetak jika langsung BAYAR / LUNAS)
             if (payMethod !== "Open") {
                 finalReceipt += `[C]<b>${namaResto}</b>\n[C]${alamat}\n[C]--------------------------------\n[L]ID   : ${orderId}\n[L]Meja : ${table}\n[L]Kasir: ${cashierInfo.name}\n[C]--------------------------------\n`;
                 cart.forEach(item => {
@@ -640,12 +593,9 @@
                 if(tax > 0) finalReceipt += `[L]Pajak/Tax [R]${tax}\n`;
                 finalReceipt += `[L]<b>TOTAL</b> [R]<b>${grandTotal}</b>\n[C]--------------------------------\n`;
                 finalReceipt += `[C]Status : LUNAS (${payMethod})\n[C]Terima Kasih atas Kunjungannya!\n\n\n`;
-                
-                // Beri garis pemisah potong kertas (Scissors Cut)
                 finalReceipt += `[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
             }
 
-            // 2. STRUK ORDER DAPUR (Hanya mencetak Menu dengan Route 'Kitchen')
             const kitchenItems = cart.filter(item => item.route === "Kitchen");
             if (kitchenItems.length > 0) {
                 finalReceipt += `[C]<b>KITCHEN ORDER (DAPUR)</b>\n[L]Meja : <b>${table}</b>\n[L]ID   : ${orderId}\n[L]Jam  : ${new Date().toLocaleTimeString('id-ID')}\n[C]--------------------------------\n`;
@@ -657,7 +607,6 @@
                 finalReceipt += `\n\n\n[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
             }
 
-            // 3. STRUK ORDER BAR (Hanya mencetak Menu dengan Route 'Bar')
             const barItems = cart.filter(item => item.route === "Bar");
             if (barItems.length > 0) {
                 finalReceipt += `[C]<b>BAR ORDER (MINUMAN)</b>\n[L]Meja : <b>${table}</b>\n[L]ID   : ${orderId}\n[L]Jam  : ${new Date().toLocaleTimeString('id-ID')}\n[C]--------------------------------\n`;
@@ -669,7 +618,6 @@
                 finalReceipt += `\n\n\n`;
             }
 
-            // Kirim seluruh gabungan struk ke printer RawBT
             const base64Data = btoa(unescape(encodeURIComponent(finalReceipt)));
             const intentUrl = `intent:base64,${base64Data}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
             window.location.href = intentUrl;
