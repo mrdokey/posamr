@@ -324,9 +324,11 @@
 
         function renderDiscounts() {
             const select = document.getElementById('cart-discount-select');
-            select.innerHTML = discountData.map(d => `
-                <option value="${d.percentage}" data-id="${d.id}">${d.name} (${d.percentage}%)</option>
-            `).join('');
+            select.innerHTML = discountData.map(d => {
+                // FIX MASALAH 0.3% : Jika desimal (< 1), kalikan 100 untuk tampilan
+                let displayPerc = d.percentage < 1 ? (d.percentage * 100) : d.percentage;
+                return `<option value="${d.percentage}" data-id="${d.id}">${d.name} (${displayPerc}%)</option>`;
+            }).join('');
         }
 
         // --- FILTER, SEARCH ---
