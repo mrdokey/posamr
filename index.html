@@ -213,6 +213,29 @@
             } else if (!cashierInfo) {
                 showScreen('login-screen');
                 fetchConfigBg();
+                
+                // AKTIFKAN SENSOR AUTO-ENTER PIN LOGIN KASIR
+                const pinInput = document.getElementById('login-pin');
+                pinInput.value = ""; // Kosongkan dulu
+                pinInput.focus();
+                
+                // Hapus listener lama jika ada agar tidak dobel
+                pinInput.removeEventListener('input', handlePinInput);
+                pinInput.addEventListener('input', handlePinInput);
+            } else {
+                showScreen('main-app');
+                document.getElementById('kasir-name').innerText = cashierInfo.name;
+                initApp();
+            }
+        }
+
+        // FUNGSI SENSOR PIN (Auto-Enter Smartphone Style)
+        function handlePinInput(e) {
+            if (this.value.length === 4) {
+                // Beri jeda 300ms agar kasir sempat melihat angka ke-4 diketik sebelum memproses
+                setTimeout(loginKasir, 300);
+            }
+        }
             } else {
                 showScreen('main-app');
                 document.getElementById('kasir-name').innerText = cashierInfo.name;
