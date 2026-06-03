@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>POS Kasir LABARAC</title>
+    <!-- Manifest dimatikan sementara selama masa Development -->
+    <!-- <link rel="manifest" href="manifest.json"> -->
     <link rel="icon" type="image/png" href="https://i.ibb.co.com/JW1FFbCz/1780229137561.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f172a; overflow: hidden; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f3f4f6; overflow: hidden; }
         .hidden-screen { display: none !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .smooth-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -18,27 +20,16 @@
         @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
     </style>
 </head>
-<body class="h-[100dvh] w-screen flex flex-col select-none text-slate-100">
+<body class="h-[100dvh] w-screen flex flex-col select-none">
 
     <!-- 1. SPLASH SCREEN -->
-    <div id="splash-screen" class="fixed inset-0 bg-[#0f172a] z-[100] flex flex-col items-center justify-center smooth-transition">
+    <div id="splash-screen" class="fixed inset-0 bg-[#111827] z-[100] flex flex-col items-center justify-center smooth-transition">
         <img src="https://i.ibb.co.com/R4ZYj74K/1780229303550.png" alt="Loading" class="w-48 animate-pulse mb-4">
-        <p class="text-slate-300 text-sm font-semibold tracking-widest animate-bounce">MEMUAT SISTEM POS...</p>
+        <p class="text-white text-sm font-semibold tracking-widest animate-bounce">MEMUAT SISTEM POS...</p>
     </div>
 
-    <!-- 2. SCREEN AKTIVASI -->
-    <div id="activation-screen" class="hidden-screen fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4 smooth-transition">
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl w-full max-w-md p-8 text-center">
-            <img src="https://i.ibb.co.com/JW1FFbCz/1780229137561.png" class="w-16 h-16 mx-auto mb-4">
-            <h2 class="text-2xl font-bold text-white mb-2">Aktivasi POS</h2>
-            <p class="text-xs text-slate-400 mb-6">Masukkan URL API dari MRD Solution</p>
-            <input type="url" id="api-input" placeholder="Masukkan URL API..." class="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl focus:border-amber-500 outline-none mb-4 text-sm text-center smooth-transition">
-            <button onclick="activateSystem()" id="btn-activate" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 rounded-xl smooth-transition shadow-lg">Aktifkan Perangkat</button>
-        </div>
-    </div>
-
-    <!-- 3. SCREEN LOGIN -->
-    <div id="login-screen" class="hidden-screen fixed inset-0 bg-slate-950 z-40 flex items-center justify-center p-4 smooth-transition">
+    <!-- 2. SCREEN LOGIN KASIR (TANPA AKTIVASI) -->
+    <div id="login-screen" class="hidden-screen fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4 smooth-transition">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center">
             <h2 id="login-resto-name" class="text-xl font-black text-amber-500 mb-6 uppercase tracking-widest">LABARAC BAR</h2>
             <h3 class="text-2xl font-bold text-white mb-2">Buka Shift Kasir</h3>
@@ -65,15 +56,15 @@
                 <button onclick="pressNum('0')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-2xl active:scale-95 smooth-transition">0</button>
                 <button onclick="backspacePin()" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-lg active:scale-95 smooth-transition flex items-center justify-center text-amber-500"><i data-lucide="delete" class="w-6 h-6"></i></button>
             </div>
-            <!-- Fitur Reset PWA Khusus Developer -->
-            <button onclick="resetLicense()" class="text-[10px] text-red-500 mt-6 hover:underline">Hapus Lisensi & Reset Cache</button>
+            
+            <button onclick="resetLicense()" class="text-[10px] text-red-500 mt-6 hover:underline">Hapus Data & Paksa Refresh Browser</button>
         </div>
     </div>
 
-    <!-- 4. MAIN POS APPLICATION -->
+    <!-- 3. MAIN POS APPLICATION -->
     <div id="main-app" class="hidden-screen h-full w-full flex flex-col md:flex-row bg-[#0f172a] smooth-transition">
         
-        <!-- LEFT PANEL: MENU GRID (60%) -->
+        <!-- LEFT PANEL: MENU GRID -->
         <div class="flex-1 flex flex-col h-full overflow-hidden bg-slate-900 border-r border-slate-800">
             <header class="bg-slate-950 px-6 py-4 flex justify-between items-center z-10 shrink-0">
                 <div class="flex items-center gap-4">
@@ -114,7 +105,7 @@
             </div>
         </div>
 
-        <!-- RIGHT PANEL: CART & CHECKOUT (40%) -->
+        <!-- RIGHT PANEL: CART & CHECKOUT -->
         <div class="w-full md:w-[420px] bg-slate-900 flex flex-col h-full z-20 shadow-2xl relative">
             <div class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-950 shrink-0">
                 <h2 class="font-black text-amber-500 text-lg flex items-center gap-2"><i data-lucide="shopping-basket" class="w-5 h-5"></i> Keranjang <span id="cart-count" class="bg-amber-500 text-slate-900 text-xs px-2 py-0.5 rounded-full">0</span></h2>
@@ -127,7 +118,8 @@
                 <p id="draft-indicator" class="hidden-screen text-xs text-emerald-400 mt-2 font-bold animate-pulse"><i data-lucide="edit-3" class="w-3 h-3 inline"></i> Mode Edit Draft Aktif</p>
             </div>
 
-            <div id="cart-container" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-900/50"></div>
+            <div id="cart-container" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-900/50">
+            </div>
 
             <div class="p-6 border-t border-slate-800 bg-slate-950 shrink-0">
                 <div class="flex justify-between text-sm mb-2 text-slate-400"><p>Subtotal</p><p id="cart-subtotal" class="text-white font-bold">Rp 0</p></div>
@@ -219,15 +211,32 @@
         </div>
     </div>
 
+    <!-- SCRIPT -->
     <script>
+        // =======================================================
+        // DE-ACTIVATE SERVICE WORKER (DEVELOPMENT MODE ONLY)
+        // Memaksa browser menghapus instalan PWA & cache 
+        // =======================================================
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                    console.log("⚠️ PWA Cache berhasil dimatikan untuk fase development!");
+                }
+            });
+        }
+        
         lucide.createIcons();
 
-        const STORAGE_API = "MRD_API_URL";
+        // ⚠️ HARDCODE URL GAS SUHU DI SINI
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbxUP-K2iIaP8qF8ZBjeOI3h0OG7du_wcJQE2qM507YTb7magRRZejs6DZmqzy-Dulgy/exec";
+        
         const STORAGE_USER = "MRD_CASHIER";
         const OFFLINE_QUEUE_KEY = "MRD_OFFLINE_QUEUE";
 
-        let GAS_URL = localStorage.getItem(STORAGE_API);
-        let cashierInfo = JSON.parse(localStorage.getItem(STORAGE_USER));
+        let cashierInfo = null;
+        try { cashierInfo = JSON.parse(localStorage.getItem(STORAGE_USER)); } 
+        catch(e) { localStorage.removeItem(STORAGE_USER); }
         
         let configData = {};
         let menuData = [];
@@ -235,12 +244,11 @@
         let filteredData = []; 
         let cart = [];
         let currentCategory = 'Semua';
-        
         let activeOrderId = null; 
         let historyDataRaw = [];
         let voidTargetId = null;
 
-        // Auto-Enter PIN (KASIR LOGIN)
+        // --- SISTEM AUTO-ENTER PIN KASIR ---
         let loginPinValue = "";
         function pressNum(num) {
             if(loginPinValue.length < 4) {
@@ -261,8 +269,8 @@
         function updateLoginDots() {
             const dots = document.querySelectorAll('.pin-dot');
             dots.forEach((dot, idx) => {
-                if(idx < loginPinValue.length) { dot.classList.add('bg-amber-500', 'border-amber-500'); dot.classList.remove('bg-transparent', 'border-slate-600'); }
-                else { dot.classList.remove('bg-amber-500', 'border-amber-500'); dot.classList.add('bg-transparent', 'border-slate-600'); }
+                if(idx < loginPinValue.length) { dot.classList.add('bg-indigo-500', 'border-indigo-500'); dot.classList.remove('bg-transparent', 'border-slate-600'); }
+                else { dot.classList.remove('bg-indigo-500', 'border-indigo-500'); dot.classList.add('bg-transparent', 'border-slate-600'); }
             });
         }
 
@@ -278,23 +286,19 @@
         };
 
         function checkState() {
-            if (!GAS_URL) {
-                showScreen('activation-screen');
-            } else if (!cashierInfo) {
+            if (!cashierInfo) {
                 showScreen('login-screen');
                 fetchConfigBg();
-                const pinInput = document.getElementById('login-pin');
-                pinInput.value = ""; 
-                pinInput.focus();
             } else {
                 showScreen('main-app');
                 document.getElementById('kasir-name').innerText = cashierInfo.name;
                 initApp();
+                updateOfflineBadge();
             }
         }
 
         function showScreen(id) {
-            ['activation-screen', 'login-screen', 'main-app'].forEach(el => document.getElementById(el).classList.add('hidden-screen'));
+            ['login-screen', 'main-app'].forEach(el => document.getElementById(el).classList.add('hidden-screen'));
             document.getElementById(id).classList.remove('hidden-screen');
         }
 
@@ -305,25 +309,6 @@
             if(confirm("Yakin ingin menghapus semua data dan lisensi browser?")) {
                 localStorage.clear();
                 window.location.reload();
-            }
-        }
-
-        async function activateSystem() {
-            const input = document.getElementById('api-input').value;
-            if(!input) return alert("Masukkan URL!");
-            const btn = document.getElementById('btn-activate');
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto"></i>`;
-            try {
-                const res = await fetch(input, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) });
-                const json = await res.json();
-                if(json.success) {
-                    localStorage.setItem(STORAGE_API, input);
-                    GAS_URL = input;
-                    window.location.reload();
-                } else throw new Error("Gagal");
-            } catch (e) {
-                alert("URL API tidak valid!");
-                btn.innerHTML = "Aktifkan Perangkat";
             }
         }
 
@@ -367,10 +352,32 @@
         async function syncData() {
             const btn = document.getElementById('btn-sync');
             btn.classList.add('animate-spin');
+            
+            // Auto-Sync Offline Queue
+            let queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || "[]");
+            if (queue.length > 0) {
+                for (let i = 0; i < queue.length; i++) {
+                    try {
+                        let res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(queue[i]) });
+                        let json = await res.json();
+                        if (json.success) { queue.splice(i, 1); i--; localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue)); }
+                    } catch (e) { break; }
+                }
+            }
+            updateOfflineBadge();
+
             localStorage.removeItem('localMenu');
             localStorage.removeItem('localDiscounts');
             await initApp();
             btn.classList.remove('animate-spin');
+        }
+
+        function updateOfflineBadge() {
+            let queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || "[]");
+            const badge = document.getElementById('offline-badge');
+            const count = document.getElementById('offline-queue-count');
+            if (queue.length > 0) { badge.classList.remove('hidden'); count.innerText = queue.length; } 
+            else { badge.classList.add('hidden'); }
         }
 
         async function initApp() {
@@ -708,7 +715,7 @@
                 } else {
                     alert(json.message);
                 }
-            } catch (e) { alert("Gagal verifikasi."); } 
+            } catch (e) { alert("Gagal verifikasi. Koneksi buruk."); } 
             finally { btn.innerText = "BATALKAN"; btn.disabled = false; }
         }
 
@@ -761,8 +768,6 @@
         }
 
         async function submitOrderPayload(statusTarget, printTarget) {
-            if(!navigator.onLine) return alert("Koneksi Offline.");
-
             const tableNo = document.getElementById('order-table').value.trim();
             const selectDisc = document.getElementById('cart-discount-select');
             const discountId = selectDisc.options[selectDisc.selectedIndex].getAttribute('data-id');
@@ -808,6 +813,25 @@
                 }
             };
 
+            // JALUR OFFLINE
+            if (!navigator.onLine) {
+                let queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || "[]");
+                queue.push(payload);
+                localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
+
+                if (printTarget !== false && printTarget !== "None") {
+                    executeRoutingPrint(payload.data.orderId || "OFFLINE-"+Date.now(), tableNo, orderStatus, paymentMethod, subtotal, discountAmount, serviceCharge, tax, grandTotal, printTarget);
+                }
+
+                alert(`⚠️ Offline! Transaksi disimpan di antrean tablet & struk dicetak.`);
+                updateOfflineBadge();
+                cart = []; document.getElementById('order-table').value = "";
+                activeOrderId = null; document.getElementById('draft-indicator').classList.add('hidden-screen');
+                renderCart();
+                return;
+            }
+
+            // JALUR ONLINE
             try {
                 const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const json = await res.json();
@@ -827,7 +851,11 @@
                     document.getElementById('draft-indicator').classList.add('hidden-screen');
                     renderCart();
                 } else { alert("Error Server: " + json.message); }
-            } catch (e) { alert("Gagal koneksi server!"); }
+            } catch (e) {
+                alert("Server bermasalah. Transaksi dialihkan ke offline queue.");
+                navigator.onLine = false;
+                processOrder(statusTarget, printTarget);
+            }
         }
 
         // --- PRINTER ROUTING CERDAS ---
