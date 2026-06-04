@@ -1,40 +1,7 @@
 /**
  * MODUL 3: CHECKOUT, HISTORY, VOID, PRINTER & RESPONSIVE PORTRAIT
- * UPDATE: PURE JOBDESK FILTERING (Kasir = Proses Pesanan, Pelayan = Draft)
+ * UPDATE: MURNI UNTUK POS KASIR (Akses Penuh Pembayaran & Cetak!)
  */
-
-// --- PEMBATASAN AKSES HAK JOBDESK ---
-function applyJobdeskRules() {
-    // Normalisasi teks agar kebal huruf besar/kecil
-    const jobdesk = (cashierInfo.jobdesk || "").toLowerCase().trim();
-    
-    clearInterval(pollInterval);
-
-    const btnHistory = document.getElementById('btn-history-trigger');
-    const btnResetLicense = document.querySelector('button[onclick="resetLicense()"]');
-
-    // JIKA MURNI PELAYAN (Hanya Kirim Draft)
-    if (jobdesk === "pelayan") {
-        document.getElementById('discount-section').classList.add('hidden-screen');
-        document.getElementById('btn-cashier-print').classList.add('hidden-screen');
-        document.getElementById('btn-save-draft').classList.remove('hidden-screen');
-        document.getElementById('btn-draft-text').innerText = "KIRIM ORDER (DRAFT)";
-        
-        if (btnHistory) btnHistory.remove();
-        if (btnResetLicense) btnResetLicense.remove();
-    } 
-    // JIKA KASIR / ADMIN / MANAGER / OWNER (Akses Penuh Pembayaran)
-    else {
-        document.getElementById('discount-section').classList.remove('hidden-screen');
-        document.getElementById('btn-cashier-print').classList.remove('hidden-screen'); // TOMBOL PROSES PESANAN MUNCUL!
-        document.getElementById('btn-save-draft').classList.add('hidden-screen'); 
-        
-        if (btnHistory) btnHistory.classList.remove('hidden-screen');
-        
-        checkNewDraftNotifications(); 
-        pollInterval = setInterval(checkNewDraftNotifications, 10000); 
-    }
-}
 
 // --- POLLING DRAFT UNTUK KASIR ---
 async function checkNewDraftNotifications() {
@@ -52,6 +19,12 @@ async function checkNewDraftNotifications() {
             }
         }
     } catch(e) {}
+}
+
+// Mulai Polling Otomatis Saat Aplikasi Terbuka
+if (pollInterval === null) {
+    checkNewDraftNotifications(); 
+    pollInterval = setInterval(checkNewDraftNotifications, 10000);
 }
 
 // --- PORTRAIT SENSORS & FLOATING CART ---
@@ -158,7 +131,7 @@ async function switchTab(tabName) {
                     </div>
                 `}).join('');
             } else {
-                container.innerHTML = `<div class="py-20 text-center text-slate-600"><i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 opacity-40"></i>Tidak ada data ${tabName}</div>`;
+                if (container) container.innerHTML = `<div class="py-20 text-center text-slate-600"><i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 opacity-40"></i>Tidak ada data ${tabName}</div>`;
             }
         } else {
             if (container) container.innerHTML = `<div class="py-12 text-center text-rose-500">Error: ${json.message}</div>`;
@@ -169,6 +142,7 @@ async function switchTab(tabName) {
     }
 }
 
+// BUKA PESANAN (DRAFT / OPEN) UNTUK DIEDIT
 function editDraft(orderId) {
     const bill = historyDataRaw.find(b => b.orderId === orderId);
     if(!bill) return;
@@ -263,7 +237,7 @@ async function executeVoidVerified(reasonText) {
     } catch(e) { alert("Gagal koneksi server."); }
 }
 
-// --- SISTEM PEMROSESAN UTAMA ---
+// --- SISTEM PEMROSESAN UTAMA (MURNI KASIR) ---
 function saveDraft() {
     if(cart.length === 0) return alert("Keranjang kosong!");
     if(!document.getElementById('order-table').value.trim()) return alert("Isi Nomor Meja!");
@@ -301,12 +275,6 @@ async function submitOrderPayload(statusTarget, printTarget) {
 
     let paymentMethod = "-";
     let orderStatus = "Open";
-
-    // JIKA PELAYAN: Otomatis kunci status hanya boleh "Draft" [FIX BUG]
-    const jobdeskCheck = (cashierInfo.jobdesk || "").toLowerCase().trim();
-    if (jobdeskCheck === "pelayan") {
-        statusTarget = "Draft";
-    }
 
     if (statusTarget === "Draft") {
         orderStatus = "Draft";
@@ -361,7 +329,7 @@ async function submitOrderPayload(statusTarget, printTarget) {
                 executeRoutingPrint(finalOrderId, tableNo, orderStatus, paymentMethod, subtotal, discountAmount, serviceCharge, tax, grandTotal, printTarget);
             }
             
-            alert(`Pesanan sukses dikirim ke sistem pusat!`);
+            alert(`Pesanan sukses diproses ke sistem pusat!`);
             resetCartState();
             
             if (window.innerWidth < 768) {
@@ -382,11 +350,11 @@ function resetCartState() {
     const ind = document.getElementById('draft-indicator');
     if (ind) ind.classList.add('hidden-screen');
     
-    // Kembalikan dropdown diskon ke 0% jika ada
     const selectDisc = document.getElementById('cart-discount-select');
     if (selectDisc) selectDisc.selectedIndex = 0;
     
     renderCart();
+    updateMobileCartButtonVisibility();
 }
 
 async function syncOfflineQueue() {

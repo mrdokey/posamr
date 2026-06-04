@@ -1,5 +1,6 @@
 /**
  * MODUL 1: CONFIG & KEYPAD SESSION
+ * UPDATE: Pembersihan applyJobdeskRules (Murni Kasir)
  */
 lucide.createIcons();
 
@@ -110,7 +111,8 @@ function checkState() {
         document.getElementById('kasir-name').innerText = cashierInfo.name;
         initApp();
         updateOfflineBadge();
-        applyJobdeskRules(); 
+        
+        // Sengaja Dihapus: applyJobdeskRules() karena POS ini 100% Hak Kasir Penuh
         
         window.removeEventListener('resize', updateMobileCartButtonVisibility);
         window.addEventListener('resize', updateMobileCartButtonVisibility);
