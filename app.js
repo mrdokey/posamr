@@ -1,15 +1,14 @@
 /**
  * =================================================================
  * MODUL: POS CONTROLLER FRONT-END LOGIC "LABARAC"
- * Fitur: Safe JSON Session, Auto-Enter PIN, Dynamic Menu Rendering,
- * Local Cache Fallback, Smart Multi-Printer Routing.
+ * Fitur: 100% Responsive Portrait, Waiter & Cashier Dual System,
+ * Auto-Polling Draft, Safe JSON Session, Auto-Enter PIN.
  * =================================================================
  */
 
-// Inisialisasi Lucide Icons
 lucide.createIcons();
 
-// Variabel Storage & API (URL GAS DINAMIS TERKUNCI)
+// Variabel Storage & API
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxUP-K2iIaP8qF8ZBjeOI3h0OG7du_wcJQE2qM507YTb7magRRZejs6DZmqzy-Dulgy/exec";
 const STORAGE_USER = "MRD_CASHIER";
 const OFFLINE_QUEUE_KEY = "MRD_OFFLINE_QUEUE";
@@ -33,10 +32,10 @@ let currentCategory = 'Semua';
 let activeOrderId = null; 
 let historyDataRaw = [];
 let voidTargetId = null;
+let pollInterval = null; // Menampung objek interval polling draft [2]
 
-// --- SISTEM AUTO-ENTER PIN KASIR (TOUCH & KEYBOARD) ---
+// --- SISTEM AUTO-ENTER PIN KASIR ---
 let loginPinValue = "";
-
 function pressNum(num) {
     if(loginPinValue.length < 4) {
         loginPinValue += num;
@@ -45,7 +44,6 @@ function pressNum(num) {
         if(loginPinValue.length === 4) setTimeout(loginKasir, 300);
     }
 }
-
 function backspacePin() {
     if(loginPinValue.length > 0) {
         loginPinValue = loginPinValue.slice(0, -1);
@@ -53,28 +51,15 @@ function backspacePin() {
         updateLoginDots();
     }
 }
-
-function clearPin() { 
-    loginPinValue = ""; 
-    const pinEl = document.getElementById('login-pin');
-    if (pinEl) pinEl.value = ""; 
-    updateLoginDots(); 
-}
-
+function clearPin() { loginPinValue = ""; document.getElementById('login-pin').value = ""; updateLoginDots(); }
 function updateLoginDots() {
     const dots = document.querySelectorAll('.pin-dot');
     dots.forEach((dot, idx) => {
-        if(idx < loginPinValue.length) { 
-            dot.classList.add('bg-amber-500', 'border-amber-500'); 
-            dot.classList.remove('bg-transparent', 'border-slate-600'); 
-        } else { 
-            dot.classList.remove('bg-amber-500', 'border-amber-500'); 
-            dot.classList.add('bg-transparent', 'border-slate-600'); 
-        }
+        if(idx < loginPinValue.length) { dot.classList.add('bg-amber-500', 'border-amber-500'); dot.classList.remove('bg-transparent', 'border-slate-600'); }
+        else { dot.classList.remove('bg-amber-500', 'border-amber-500'); dot.classList.add('bg-transparent', 'border-slate-600'); }
     });
 }
 
-// Dukungan Ketik pakai Keyboard Fisik (Anti-Crash)
 function handlePhysicalKeyboard(e) {
     let val = this.value.replace(/[^0-9]/g, ''); 
     if (val.length > 4) val = val.substring(0, 4);
@@ -86,7 +71,7 @@ function handlePhysicalKeyboard(e) {
     if (loginPinValue.length === 4) setTimeout(loginKasir, 300);
 }
 
-// --- STARTUP & ROUTING LAYAR ---
+// --- STARTUP & ROUTING ---
 window.onload = () => {
     setTimeout(() => {
         const splash = document.getElementById('splash-screen');
@@ -114,10 +99,10 @@ function checkState() {
         }
     } else {
         showScreen('main-app');
-        const nameEl = document.getElementById('kasir-name');
-        if (nameEl) nameEl.innerText = cashierInfo.name;
+        document.getElementById('kasir-name').innerText = cashierInfo.name;
         initApp();
         updateOfflineBadge();
+        applyJobdeskRules(); // Terapkan pembatasan hak akses [2, 3]
     }
 }
 
@@ -141,63 +126,124 @@ function closeModal(id) {
 }
 
 function resetLicense() {
-    if(confirm("Yakin ingin menghapus semua data dan lisensi browser?")) {
+    if(confirm("Yakin ingin menghapus lisensi browser?")) {
         localStorage.clear();
         window.location.reload();
     }
 }
 
-// --- FETCH & SINKRONISASI DATA ---
-async function fetchConfigBg() {
+// --- PEMBATASAN HAK AKSES JOBDESK (RULES) ---
+function applyJobdeskRules() {
+    const jobdesk = cashierInfo.jobdesk;
+    
+    // Hentikan polling lama jika ada
+    clearInterval(pollInterval);
+
+    if (jobdesk === "Pelayan") { // ROLE PELAYAN [3]
+        // 1. Sembunyikan tombol proses pembayaran & ganti dengan tombol Kirim Draft saja
+        document.getElementById('discount-section').classList.add('hidden-screen');
+        document.getElementById('btn-cashier-print').classList.add('hidden-screen');
+        document.getElementById('btn-save-draft').classList.remove('hidden-screen');
+        document.getElementById('btn-draft-text').innerText = "KIRIM ORDER (DRAFT)";
+        
+        // 2. Sembunyikan tombol Riwayat Utama di Header (Pelayan dilarang void/print)
+        document.getElementById('btn-history-trigger').classList.add('hidden-screen');
+    } else { // ROLE KASIR / ADMIN / OWNER [2]
+        // 1. Kasir memiliki kendali pembayaran & cetak routing printer penuh
+        document.getElementById('discount-section').classList.remove('hidden-screen');
+        document.getElementById('btn-cashier-print').classList.remove('hidden-screen');
+        document.getElementById('btn-save-draft').classList.add('hidden-screen'); // Sembunyikan tombol simpan draft biasa
+        
+        // 2. Tampilkan tombol Riwayat & Aktifkan POLLING DRAFT OTOMATIS (Cek tiap 15 detik) [2]
+        document.getElementById('btn-history-trigger').classList.remove('hidden-screen');
+        checkNewDraftNotifications(); // Cek langsung sekali di awal
+        pollInterval = setInterval(checkNewDraftNotifications, 15000); // Polling otomatis harian [2]
+    }
+}
+
+// --- POLLING DRAFT NOTIFIKASI KASIR ---
+async function checkNewDraftNotifications() {
+    if (!navigator.onLine) return;
     try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) });
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "getHistoryOrders" }) });
         const json = await res.json();
-        if(json.success) {
-            const nameEl = document.getElementById('login-resto-name');
-            if (nameEl) nameEl.innerText = json.data["NAMA_PERUSAAN"] || "RESTO";
+        if (json.success) {
+            historyDataRaw = json.data;
+            // Hitung apakah ada data berstatus "Draft" (kiriman pelayan)
+            const draftCount = historyDataRaw.filter(d => d.status === "Draft").length;
+            const alertDot = document.getElementById('draft-alert-dot');
+            
+            if (draftCount > 0) {
+                alertDot.classList.remove('hidden'); // NYALAKAN LAMPU MERAH BERKEDIP [2]
+            } else {
+                alertDot.classList.add('hidden');
+            }
         }
     } catch(e) {}
 }
 
-async function loginKasir() {
-    if(loginPinValue.length < 4) return;
-    const statusText = document.getElementById('login-status');
-    if (statusText) statusText.innerText = "Memeriksa PIN...";
+// --- RESPONSIVE MOBILE PORTRAIT CART PANEL [1] ---
+function toggleMobileCart() {
+    const panel = document.getElementById('cart-panel');
+    const trigger = document.getElementById('mobile-cart-trigger');
     
-    try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) });
-        const json = await res.json();
-        if(json.success) {
-            localStorage.setItem(STORAGE_USER, JSON.stringify(json));
-            window.location.reload();
-        } else {
-            if (statusText) statusText.innerText = json.message;
-            clearPin();
-        }
-    } catch (e) {
-        if (statusText) statusText.innerText = "Koneksi gagal! Cek internet Anda.";
-        clearPin();
+    if (panel.classList.contains('hidden')) {
+        // Tampilkan keranjang di mobile (Slide Up)
+        panel.classList.remove('hidden', 'md:flex');
+        panel.classList.add('fixed', 'inset-0', 'z-50');
+        trigger.classList.add('hidden-screen');
+    } else {
+        // Sembunyikan kembali
+        panel.classList.add('hidden', 'md:flex');
+        panel.classList.remove('fixed', 'inset-0', 'z-50');
+        updateMobileCartButtonVisibility();
     }
 }
 
-function logoutKasir() {
-    if(confirm("Tutup shift kasir hari ini?")) {
-        localStorage.removeItem(STORAGE_USER);
-        window.location.reload();
+function updateMobileCartButtonVisibility() {
+    const count = cart.reduce((sum, item) => sum + item.qty, 0);
+    const trigger = document.getElementById('mobile-cart-trigger');
+    
+    document.getElementById('mobile-cart-count').innerText = count;
+
+    // Tombol melayang hanya muncul di HP/Tablet Potrait jika ada barang di keranjang
+    if (count > 0 && window.innerWidth < 768) {
+        trigger.classList.remove('hidden-screen');
+    } else {
+        trigger.classList.add('hidden-screen');
     }
+}
+
+// --- API & DATA FETCHING ---
+async function fetchConfigBg() {
+    try {
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) });
+        const json = await res.json();
+        if(json.success) document.getElementById('login-resto-name').innerText = json.data["NAMA_PERUSAAN"] || "RESTO";
+    } catch(e) {}
 }
 
 async function syncData() {
     const btn = document.getElementById('btn-sync');
-    if (btn) btn.classList.add('animate-spin');
+    btn.classList.add('animate-spin');
     
-    await syncOfflineQueue();
+    // Auto-Sync Offline Queue
+    let queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || "[]");
+    if (queue.length > 0) {
+        for (let i = 0; i < queue.length; i++) {
+            try {
+                let res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(queue[i]) });
+                let json = await res.json();
+                if (json.success) { queue.splice(i, 1); i--; localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue)); }
+            } catch (e) { break; }
+        }
+    }
+    updateOfflineBadge();
 
     localStorage.removeItem('localMenu');
     localStorage.removeItem('localDiscounts');
     await initApp();
-    
-    if (btn) btn.classList.remove('animate-spin');
+    btn.classList.remove('animate-spin');
 }
 
 async function initApp() {
@@ -237,28 +283,21 @@ async function initApp() {
             localStorage.setItem('localDiscounts', JSON.stringify(discountData));
             renderDiscounts();
         }
-    } catch (e) { 
-        const badge = document.getElementById('offline-badge');
-        if (badge) badge.classList.remove('hidden'); 
-    }
+    } catch (e) { document.getElementById('offline-badge').classList.remove('hidden'); }
 }
 
 function applyConfig() {
-    const titleEl = document.getElementById('pos-title');
-    if(configData["NAMA_PERUSAAN"] && titleEl) titleEl.innerText = configData["NAMA_PERUSAAN"];
+    if(configData["NAMA_PERUSAAN"]) document.getElementById('pos-title').innerText = configData["NAMA_PERUSAAN"];
 }
 
 function renderDiscounts() {
     const select = document.getElementById('cart-discount-select');
-    if (select) {
-        select.innerHTML = discountData.map(d => {
-            let displayPerc = d.percentage < 1 ? (d.percentage * 100) : d.percentage;
-            return `<option value="${d.percentage}" data-id="${d.id}">${d.name} (${displayPerc}%)</option>`;
-        }).join('');
-    }
+    select.innerHTML = discountData.map(d => {
+        let displayPerc = d.percentage < 1 ? (d.percentage * 100) : d.percentage;
+        return `<option value="${d.percentage}" data-id="${d.id}">${d.name} (${displayPerc}%)</option>`;
+    }).join('');
 }
 
-// --- FILTER, SEARCH & GRID RENDER ---
 function filterMenu(cat, btnElement = null) {
     currentCategory = cat;
     if (btnElement) {
@@ -285,19 +324,15 @@ function applyFilters(searchStr = "") {
         );
     }
     const container = document.getElementById('menu-container');
-    if (container) {
-        container.style.opacity = '0';
-        setTimeout(() => {
-            renderMenuHTML(filteredData);
-            container.style.opacity = '1';
-        }, 150);
-    }
+    container.style.opacity = '0';
+    setTimeout(() => {
+        renderMenuHTML(filteredData);
+        container.style.opacity = '1';
+    }, 150);
 }
 
 function renderMenuHTML(items) {
     const container = document.getElementById('menu-container');
-    if (!container) return;
-    
     if (items.length === 0) {
         container.innerHTML = `<div class="col-span-full py-20 text-center text-slate-500"><i data-lucide="search-x" class="w-16 h-16 mx-auto mb-3 opacity-30"></i>Menu tidak ditemukan</div>`;
         lucide.createIcons();
@@ -332,90 +367,6 @@ function renderMenuHTML(items) {
     lucide.createIcons();
 }
 
-// --- CART SYSTEM ---
-function addToCart(id, name, price, route) {
-    if (activeOrderId) {
-        if(!confirm("Anda sedang memproses pelunasan. Tambah menu baru ke bill ini?")) return;
-        activeOrderId = null;
-        document.getElementById('btn-save-bill').classList.remove('hidden-screen');
-    }
-
-    const exist = cart.find(i => i.menuId === id);
-    if(exist) { exist.qty++; exist.subtotal = exist.qty * price; }
-    else { cart.push({ menuId: id, name: name, price: price, qty: 1, subtotal: price, notes: '', route: route || 'Kitchen' }); }
-    renderCart();
-}
-
-function updateQty(index, delta) {
-    cart[index].qty += delta;
-    if(cart[index].qty <= 0) cart.splice(index, 1);
-    else cart[index].subtotal = cart[index].qty * cart[index].price;
-    renderCart();
-}
-
-function addNote(index) {
-    const note = prompt("Catatan Koki/Bar (misal: Pedas):", cart[index].notes);
-    if(note !== null) { cart[index].notes = note; renderCart(); }
-}
-
-function clearCart() {
-    if(confirm("Kosongkan keranjang & buang draft ini?")) { 
-        cart = []; 
-        document.getElementById('order-table').value = ""; 
-        activeOrderId = null; 
-        const ind = document.getElementById('draft-indicator');
-        if (ind) ind.classList.add('hidden-screen');
-        renderCart(); 
-    }
-}
-
-function renderCart() {
-    const container = document.getElementById('cart-container');
-    if (!container) return;
-
-    const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
-    
-    const selectDisc = document.getElementById('cart-discount-select');
-    let discVal = parseFloat(selectDisc ? selectDisc.value : 0 || 0);
-    let discountAmount = discVal < 1 ? subtotal * discVal : subtotal * (discVal / 100); 
-    const netSubtotal = subtotal - discountAmount;
-
-    const servicePerc = parseFloat(configData["SERVICE_CHARGE"] || 0);
-    const serviceCharge = netSubtotal * (servicePerc / 100);
-    const taxPerc = parseFloat(configData["PAJAK_PB1"] || 0); 
-    const tax = (netSubtotal + serviceCharge) * (taxPerc / 100);
-    const grandTotal = netSubtotal + serviceCharge + tax;
-
-    document.getElementById('cart-count').innerText = cart.reduce((sum, item) => sum + item.qty, 0);
-    document.getElementById('cart-subtotal').innerText = "Rp " + subtotal.toLocaleString();
-    document.getElementById('cart-tax').innerText = "Rp " + (tax + serviceCharge).toLocaleString();
-    document.getElementById('cart-grandtotal').innerText = "Rp " + grandTotal.toLocaleString();
-
-    if(cart.length === 0) {
-        container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-slate-600 smooth-transition"><i data-lucide="shopping-basket" class="w-16 h-16 mb-3 opacity-20"></i><p class="text-sm">Keranjang Kosong</p></div>`;
-        lucide.createIcons();
-        return;
-    }
-
-    container.innerHTML = cart.map((item, idx) => `
-        <div class="bg-slate-800 p-3.5 rounded-2xl border border-slate-700 shadow-sm relative">
-            <div class="flex justify-between items-start mb-2">
-                <div class="pr-2">
-                    <h4 class="text-xs font-bold text-white leading-tight">${item.name}</h4>
-                    <p class="text-[13px] text-amber-500 font-black mt-1">Rp ${item.subtotal.toLocaleString()}</p>
-                </div>
-                <div class="flex items-center bg-slate-900 border border-slate-700 rounded-xl p-0.5 shrink-0">
-                    <button onclick="updateQty(${idx}, -1)" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 font-bold"><i data-lucide="minus" class="w-3 h-3"></i></button>
-                    <span class="w-6 text-center text-xs font-bold text-white">${item.qty}</span>
-                    <button onclick="updateQty(${idx}, 1)" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-green-500 font-bold"><i data-lucide="plus" class="w-3 h-3"></i></button>
-                </div>
-            </div>
-            <button onclick="addNote(${idx})" class="text-[10px] bg-slate-900 text-slate-400 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 border border-slate-700 hover:text-white transition"><i data-lucide="pen-line" class="w-3 h-3"></i> ${item.notes ? item.notes : "Catatan"}</button>
-        </div>
-    `).join('');
-    lucide.createIcons();
-}
-
 // --- DRAFT & HISTORY ---
 async function openHistoryModal() {
     openModal('modal-history');
@@ -437,10 +388,10 @@ async function switchTab(tabName) {
     });
 
     const container = document.getElementById('history-container');
-    if (container) container.innerHTML = `<div class="py-20 text-center text-slate-500 animate-pulse">Menarik data dari database...</div>`;
+    container.innerHTML = `<div class="py-20 text-center text-slate-500 animate-pulse">Menarik data dari database...</div>`;
 
     if(!navigator.onLine) {
-        if (container) container.innerHTML = `<div class="py-20 text-center text-rose-500 font-bold">Koneksi Offline. Riwayat tidak bisa dimuat.</div>`;
+        container.innerHTML = `<div class="py-20 text-center text-rose-500 font-bold">Koneksi Offline. Riwayat tidak bisa dimuat.</div>`;
         return;
     }
 
@@ -492,7 +443,7 @@ async function switchTab(tabName) {
         }
         lucide.createIcons();
     } catch (e) {
-        if (container) container.innerHTML = `<div class="py-12 text-center text-rose-500">Koneksi putus.</div>`;
+        container.innerHTML = `<div class="py-12 text-center text-rose-500">Koneksi putus.</div>`;
     }
 }
 
@@ -517,13 +468,17 @@ function editDraft(orderId) {
         }
     }
 
-    const ind = document.getElementById('draft-indicator');
-    if (ind) ind.classList.remove('hidden-screen');
+    document.getElementById('draft-indicator').classList.remove('hidden-screen');
     renderCart();
     closeModal('modal-history');
+    
+    // Jika mobile portrait, otomatis buka keranjang setelah load draft
+    if (window.innerWidth < 768) {
+        toggleMobileCart();
+    }
 }
 
-// --- SYSTEM VOID / PEMBATALAN PESANAN ---
+// --- SISTEM VOID / PEMBATALAN PESANAN ---
 function reqVoid(orderId, type) {
     voidTargetId = orderId;
     const bill = historyDataRaw.find(b => b.orderId === orderId);
@@ -560,7 +515,7 @@ async function executeVoid() {
         } else {
             alert(json.message);
         }
-    } catch (e) { alert("Gagal verifikasi."); } 
+    } catch (e) { alert("Gagal verifikasi. Koneksi buruk."); } 
     finally { btn.innerText = "BATALKAN"; btn.disabled = false; }
 }
 
@@ -594,7 +549,7 @@ async function executeVoidVerified(reasonText) {
     } catch(e) { alert("Gagal koneksi server."); }
 }
 
-// --- CHECKOUT & PRINT UTAMA ---
+// --- SISTEM PEMROSESAN UTAMA ---
 function saveDraft() {
     if(cart.length === 0) return alert("Keranjang kosong!");
     if(!document.getElementById('order-table').value.trim()) return alert("Isi Nomor Meja!");
@@ -632,6 +587,11 @@ async function submitOrderPayload(statusTarget, printTarget) {
 
     let paymentMethod = "-";
     let orderStatus = "Open";
+
+    // JIKA PELAYAN: Otomatis kunci status hanya boleh "Draft" [3]
+    if (cashierInfo.jobdesk === "Pelayan") {
+        statusTarget = "Draft";
+    }
 
     if (statusTarget === "Draft") {
         orderStatus = "Draft";
@@ -686,8 +646,13 @@ async function submitOrderPayload(statusTarget, printTarget) {
                 executeRoutingPrint(finalOrderId, tableNo, orderStatus, paymentMethod, subtotal, discountAmount, serviceCharge, tax, grandTotal, printTarget);
             }
             
-            alert(`Data Sukses Disimpan! (${orderStatus})`);
+            alert(`Pesanan sukses dikirim ke sistem pusat!`);
             resetCartState();
+            
+            // Tutup keranjang mobile jika dalam portrait mode
+            if (window.innerWidth < 768) {
+                toggleMobileCart();
+            }
         } else { alert("Error Server: " + json.message); }
     } catch (e) {
         alert("Server bermasalah. Transaksi dialihkan ke offline queue.");
@@ -703,6 +668,7 @@ function resetCartState() {
     const ind = document.getElementById('draft-indicator');
     if (ind) ind.classList.add('hidden-screen');
     renderCart();
+    updateMobileCartButtonVisibility();
 }
 
 async function syncOfflineQueue() {
