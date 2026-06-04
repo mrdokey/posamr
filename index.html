@@ -4,22 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>POS Kasir LABARAC</title>
+    <!-- Manifest dimatikan sementara selama masa Development -->
+    <!-- <link rel="manifest" href="manifest.json"> -->
     <link rel="icon" type="image/png" href="https://i.ibb.co.com/JW1FFbCz/1780229137561.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f172a; overflow: hidden; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f3f4f6; overflow: hidden; }
         .hidden-screen { display: none !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .smooth-transition { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .menu-card { transition: all 0.2s ease-in-out; }
         .menu-card:active { transform: scale(0.95); opacity: 0.8; }
         .fade-out { animation: fadeOut 0.5s forwards; }
         @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
         #menu-container { transition: opacity 0.3s ease-in-out; }
     </style>
 </head>
-<body class="h-[100dvh] w-screen flex flex-col select-none text-slate-100">
+<body class="h-[100dvh] w-screen flex flex-col select-none">
 
     <!-- 1. SPLASH SCREEN -->
     <div id="splash-screen" class="fixed inset-0 bg-[#0f172a] z-[100] flex flex-col items-center justify-center smooth-transition">
@@ -59,6 +62,7 @@
                 <button onclick="pressNum('0')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-2xl active:scale-95 smooth-transition">0</button>
                 <button onclick="backspacePin()" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-lg active:scale-95 smooth-transition flex items-center justify-center text-amber-500"><i data-lucide="delete" class="w-6 h-6"></i></button>
             </div>
+            
             <p id="login-status" class="text-xs text-amber-500 mt-4 font-bold h-4"></p>
             <button onclick="resetLicense()" class="text-[10px] text-red-500 mt-6 hover:underline">Hapus Sesi & Paksa Refresh Browser</button>
         </div>
@@ -67,8 +71,9 @@
     <!-- 3. MAIN POS APPLICATION -->
     <div id="main-app" class="hidden-screen h-full w-full flex flex-col md:flex-row bg-[#0f172a] smooth-transition">
         
-        <!-- LEFT PANEL: MENU GRID (60%) -->
+        <!-- LEFT PANEL: MENU GRID -->
         <div class="flex-1 flex flex-col h-full overflow-hidden bg-slate-900 border-r border-slate-800">
+            <!-- Header Kiri -->
             <header class="bg-slate-950 px-6 py-4 flex justify-between items-center z-10 shrink-0">
                 <div class="flex items-center gap-4">
                     <img src="https://i.ibb.co.com/JW1FFbCz/1780229137561.png" class="w-10 h-10 rounded-xl">
@@ -108,7 +113,7 @@
             </div>
         </div>
 
-        <!-- RIGHT PANEL: CART & CHECKOUT (40%) -->
+        <!-- RIGHT PANEL: CART & CHECKOUT -->
         <div class="w-full md:w-[420px] bg-slate-900 flex flex-col h-full z-20 shadow-2xl relative">
             <div class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-950 shrink-0">
                 <h2 class="font-black text-amber-500 text-lg flex items-center gap-2"><i data-lucide="shopping-basket" class="w-5 h-5"></i> Keranjang <span id="cart-count" class="bg-amber-500 text-slate-900 text-xs px-2 py-0.5 rounded-full">0</span></h2>
@@ -151,7 +156,9 @@
         </div>
     </div>
 
-    <!-- MODAL: PRINT ROUTING SELECTION -->
+    <!-- ========================================== -->
+    <!-- MODAL: PRINT ROUTING SELECTION             -->
+    <!-- ========================================== -->
     <div id="modal-print" class="hidden-screen fixed inset-0 bg-black/80 z-[110] flex items-center justify-center p-6 smooth-transition">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-sm p-8 shadow-2xl flex flex-col text-center">
             <h3 class="text-2xl font-black text-white mb-2">Proses & Cetak</h3>
@@ -167,12 +174,27 @@
             </div>
 
             <div class="space-y-3">
-                <button onclick="processOrder('Open', 'None')" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-4 rounded-xl font-bold transition flex items-center justify-center gap-2">
-                    <i data-lucide="door-open" class="w-5 h-5"></i> Buka Meja Saja (Open Bill)
+                <button onclick="processOrder('Open', 'None')" class="w-full bg-slate-800 hover:bg-slate-750 text-white py-3.5 rounded-xl font-bold transition flex items-center justify-center gap-2 text-sm border border-slate-700">
+                    <i data-lucide="door-open" class="w-4 h-4"></i> Simpan Meja Saja (Open Bill)
                 </button>
-                <button onclick="processOrder('Cash', 'All')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 py-4 rounded-xl font-black transition flex items-center justify-center gap-2">
-                    <i data-lucide="banknote" class="w-5 h-5"></i> Pelunasan (Cetak Struk Tamu)
-                </button>
+                
+                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-4 text-center">Pelunasan & Cetak Struk</p>
+                
+                <!-- Grid 4 Tombol Pembayaran Sesuai Request Suhu -->
+                <div class="grid grid-cols-2 gap-2 text-white">
+                    <button onclick="processOrder('Cash', 'All')" class="py-3 bg-emerald-600 hover:bg-emerald-700 rounded-xl font-bold text-xs transition active:scale-95 flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/10">
+                        <i data-lucide="banknote" class="w-4 h-4"></i> CASH
+                    </button>
+                    <button onclick="processOrder('QRIS', 'All')" class="py-3 bg-blue-600 hover:bg-blue-700 rounded-xl font-bold text-xs transition active:scale-95 flex items-center justify-center gap-1.5 shadow-md shadow-blue-600/10">
+                        <i data-lucide="qr-code" class="w-4 h-4"></i> QRIS
+                    </button>
+                    <button onclick="processOrder('Transfer', 'All')" class="py-3 bg-purple-600 hover:bg-purple-700 rounded-xl font-bold text-xs transition active:scale-95 flex items-center justify-center gap-1.5 shadow-md shadow-purple-600/10">
+                        <i data-lucide="send" class="w-4 h-4"></i> TRANSFER
+                    </button>
+                    <button onclick="processOrder('Card', 'All')" class="py-3 bg-orange-600 hover:bg-orange-700 rounded-xl font-bold text-xs transition active:scale-95 flex items-center justify-center gap-1.5 shadow-md shadow-orange-600/10">
+                        <i data-lucide="credit-card" class="w-4 h-4"></i> CARD
+                    </button>
+                </div>
             </div>
             
             <button onclick="closeModal('modal-print')" class="mt-8 text-sm text-slate-500 font-bold hover:text-white transition">Batal</button>
