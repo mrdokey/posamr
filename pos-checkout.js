@@ -1,41 +1,77 @@
 /**
  * MODUL 3: CHECKOUT, HISTORY, VOID, PRINTER & RESPONSIVE PORTRAIT
- * UPDATE: UNIFIED PLACEORDER ENGINE (100% BEBAS BUG PELUNASAN), PURE WAITER MODE.
+ * UPDATE: VIRTUAL PORTRAIT SWITCH (Sihir Rotasi Otomatis berdasarkan Jobdesk).
  */
 
-// --- PEMBATASAN AKSES HAK JOBDESK (PURE WAITER MODE) ---
+// --- PEMBATASAN AKSES & ROTASI OTOMATIS JOBDESK (THE MAGIC SWITCH) ---
 function applyJobdeskRules() {
     const jobdesk = cashierInfo.jobdesk || "";
     const role = (cashierInfo.role || "").toLowerCase().trim();
     
     clearInterval(pollInterval);
 
-    // Seleksi Tombol Riwayat & Reset Cache
+    const mainApp = document.getElementById('main-app');
+    const cartPanel = document.getElementById('cart-panel');
+    const menuContainer = document.getElementById('menu-container');
     const btnHistory = document.getElementById('btn-history-trigger');
     const btnResetLicense = document.querySelector('button[onclick="resetLicense()"]');
 
-    // JIKA PELAYAN / STAFF (WAITRESS): KUNCI TOTAL AKSES
+    // ------------------------------------------------------------------
+    // JURUS 1: JIKA YANG LOGIN ADALAH PELAYAN (FORCE VIRTUAL PORTRAIT MOBILE) [1, 3]
+    // ------------------------------------------------------------------
     if (jobdesk === "Pelayan" || role === "staff") {
-        // 1. Sembunyikan panel diskon, tombol proses kasir, dan tampilkan kirim draft
+        // 1. Ubah main-app menjadi vertikal, batasi lebar persis HP, & beri bayangan elegan di tengah layar [1]
+        mainApp.classList.remove('md:flex-row');
+        mainApp.classList.add('flex-col', 'max-w-md', 'mx-auto', 'border-x', 'border-slate-800', 'shadow-2xl');
+        
+        // 2. Sembunyikan panel keranjang samping [1]
+        cartPanel.classList.add('hidden');
+        cartPanel.classList.remove('md:flex', 'md:w-[420px]');
+        
+        // 3. Batasi grid menu menjadi 2 kolom saja agar pas & rapi di mode potret [1]
+        menuContainer.classList.remove('sm:grid-cols-3', 'lg:grid-cols-3', 'xl:grid-cols-4');
+        menuContainer.classList.add('grid-cols-2');
+
+        // 4. Kunci fitur pembayaran & batasi tombol hanya Kirim Draft [3]
         document.getElementById('discount-section').classList.add('hidden-screen');
         document.getElementById('btn-cashier-print').classList.add('hidden-screen');
         document.getElementById('btn-save-draft').classList.remove('hidden-screen');
         document.getElementById('btn-draft-text').innerText = "KIRIM ORDER (DRAFT)";
         
-        // 2. HANCURKAN (REMOVE) tombol riwayat & reset cache agar tidak bisa diakses sama sekali
+        // Hancurkan tombol riwayat & reset cache
         if (btnHistory) btnHistory.remove();
         if (btnResetLicense) btnResetLicense.remove();
-    } else {
-        // Mode Kasir Utama / Admin
+        
+        // Update tombol keranjang melayang khusus mobile
+        updateMobileCartButtonVisibility();
+
+    } 
+    // ------------------------------------------------------------------
+    // JURUS 2: JIKA KASIR / ADMIN / OWNER LOGIN (FORCE WIDESCREEN LANDSCAPE) [1, 2]
+    // ------------------------------------------------------------------
+    else {
+        // 1. Kembalikan ke format Kasir Split-screen penuh [1]
+        mainApp.classList.add('md:flex-row');
+        mainApp.classList.remove('flex-col', 'max-w-md', 'mx-auto', 'border-x', 'border-slate-800', 'shadow-2xl');
+        
+        // 2. Tampilkan kembali panel keranjang samping [1]
+        cartPanel.classList.remove('hidden');
+        cartPanel.classList.add('md:flex', 'md:w-[420px]');
+        
+        // 3. Kembalikan grid menu menjadi lebar penuh multi-kolom [1]
+        menuContainer.classList.remove('grid-cols-2');
+        menuContainer.classList.add('sm:grid-cols-3', 'lg:grid-cols-3', 'xl:grid-cols-4');
+
+        // 4. Aktifkan fitur pembayaran
         document.getElementById('discount-section').classList.remove('hidden-screen');
         document.getElementById('btn-cashier-print').classList.remove('hidden-screen');
         document.getElementById('btn-save-draft').classList.add('hidden-screen'); 
         
         if (btnHistory) btnHistory.classList.remove('hidden-screen');
         
-        // Aktifkan Polling Pendeteksi Draft Baru dari Pelayan secara real-time
+        // Aktifkan Polling Pendeteksi Draft Baru secara real-time
         checkNewDraftNotifications(); 
-        pollInterval = setInterval(checkNewDraftNotifications, 10000); // Cek setiap 10 detik
+        pollInterval = setInterval(checkNewDraftNotifications, 10000); 
     }
 }
 
@@ -57,18 +93,18 @@ async function checkNewDraftNotifications() {
     } catch(e) {}
 }
 
-// --- PORTRAIT SENSORS ---
+// --- PORTRAIT SENSORS & FLOATING BUTTON [1] ---
 function toggleMobileCart() {
     const panel = document.getElementById('cart-panel');
     const trigger = document.getElementById('mobile-cart-trigger');
     if (!panel || !trigger) return;
     
     if (panel.classList.contains('hidden')) {
-        panel.classList.remove('hidden', 'md:flex');
+        panel.classList.remove('hidden');
         panel.classList.add('fixed', 'inset-0', 'z-[45]', 'flex');
         trigger.classList.add('hidden-screen'); 
     } else {
-        panel.classList.add('hidden', 'md:flex');
+        panel.classList.add('hidden');
         panel.classList.remove('fixed', 'inset-0', 'z-[45]', 'flex');
         updateMobileCartButtonVisibility();
     }
@@ -79,13 +115,13 @@ function updateMobileCartButtonVisibility() {
     const trigger = document.getElementById('mobile-cart-trigger');
     if (!trigger) return;
 
-    // Cek dengan aman apakah modal sedang terbuka
-    const modalHistory = document.getElementById('modal-history');
-    const modalPrint = document.getElementById('modal-print');
-    const isModalOpen = (modalHistory && !modalHistory.classList.contains('hidden-screen')) || 
-                        (modalPrint && !modalPrint.classList.contains('hidden-screen'));
+    const isModalOpen = !document.getElementById('modal-history').classList.contains('hidden-screen') || 
+                        !document.getElementById('modal-print').classList.contains('hidden-screen');
 
-    if (count > 0 && window.innerWidth < 768 && cashierInfo && !isModalOpen) {
+    const isPelayan = cashierInfo && (cashierInfo.jobdesk === "Pelayan" || cashierInfo.role.toLowerCase() === "staff");
+
+    // Tombol melayang muncul jika ada item, sedang tidak buka modal, DAN user adalah Pelayan (atau layar fisik memang HP/Portrait) [1, 3]
+    if (count > 0 && !isModalOpen && (isPelayan || window.innerWidth < 768)) {
         trigger.classList.remove('hidden-screen');
     } else {
         trigger.classList.add('hidden-screen');
@@ -113,10 +149,10 @@ async function switchTab(tabName) {
     });
 
     const container = document.getElementById('history-container');
-    if (container) container.innerHTML = `<div class="py-20 text-center text-slate-500 animate-pulse">Menarik data...</div>`;
+    container.innerHTML = `<div class="py-20 text-center text-slate-500 animate-pulse">Menarik data...</div>`;
 
     if(!navigator.onLine) {
-        if (container) container.innerHTML = `<div class="py-20 text-center text-rose-500 font-bold">Koneksi Offline.</div>`;
+        container.innerHTML = `<div class="py-20 text-center text-rose-500 font-bold">Koneksi Offline.</div>`;
         return;
     }
 
@@ -197,7 +233,11 @@ function editDraft(orderId) {
     if (ind) ind.classList.remove('hidden-screen');
     renderCart();
     closeModal('modal-history');
-    if (window.innerWidth < 768) toggleMobileCart();
+    
+    // Buka laci keranjang secara otomatis di mode handphone/potret pelayan saat edit
+    if (window.innerWidth < 768 || cashierInfo.jobdesk === "Pelayan") {
+        toggleMobileCart();
+    }
 }
 
 // --- SISTEM VOID / PEMBATALAN PESANAN ---
@@ -263,7 +303,7 @@ async function executeVoidVerified(reasonText) {
     } catch(e) { alert("Gagal koneksi server."); }
 }
 
-// --- SISTEM PEMROSESAN UTAMA (100% UNIFIED ENGINE) ---
+// --- SISTEM PEMROSESAN UTAMA ---
 function saveDraft() {
     if(cart.length === 0) return alert("Keranjang kosong!");
     if(!document.getElementById('order-table').value.trim()) return alert("Isi Nomor Meja!");
@@ -293,14 +333,16 @@ async function submitOrderPayload(statusTarget, printTarget) {
     
     const servicePerc = parseFloat(configData["SERVICE_CHARGE"] || 0);
     const serviceCharge = netSubtotal * (servicePerc / 100);
+
     const taxPerc = parseFloat(configData["PAJAK_PB1"] || 0); 
     const tax = (netSubtotal + serviceCharge) * (taxPerc / 100);
+    
     const grandTotal = netSubtotal + serviceCharge + tax;
 
     let paymentMethod = "-";
     let orderStatus = "Open";
 
-    // JIKA PELAYAN: Otomatis kunci status hanya boleh "Draft"
+    // JIKA PELAYAN: Otomatis kunci status hanya boleh "Draft" [3]
     if (cashierInfo.jobdesk === "Pelayan" || cashierInfo.role.toLowerCase() === "staff") {
         statusTarget = "Draft";
     }
@@ -314,14 +356,10 @@ async function submitOrderPayload(statusTarget, printTarget) {
         orderStatus = "Paid";
     }
 
-    // =======================================================
-    // SIHIR UNIFIED: SELALU PAKAI "placeOrder" UNTUK SINKRONISASI
-    // Beralih ke fungsi placeOrder agar hitungan, diskon, & item baru ter-update otomatis!
-    // =======================================================
     const payload = {
-        action: "placeOrder", // BYPASS TOTAL payOpenOrder!
+        action: "placeOrder", 
         data: {
-            orderId: activeOrderId || "", // Kirim ID lama jika update, kosongkan jika baru
+            orderId: activeOrderId || "", 
             tableNo: tableNo,
             kasirId: cashierInfo.userId, 
             discount: discountId,
@@ -364,7 +402,11 @@ async function submitOrderPayload(statusTarget, printTarget) {
             
             alert(`Pesanan sukses dikirim ke sistem pusat!`);
             resetCartState();
-            if (window.innerWidth < 768) toggleMobileCart();
+            
+            // Tutup laci keranjang meluncur setelah sukses kirim draft
+            if (window.innerWidth < 768 || cashierInfo.jobdesk === "Pelayan") {
+                toggleMobileCart();
+            }
         } else { alert("Error Server: " + json.message); }
     } catch (e) {
         alert("Server bermasalah. Transaksi dialihkan ke offline queue.");
@@ -396,6 +438,9 @@ async function syncOfflineQueue() {
         } catch (e) { break; }
     }
     updateOfflineBadge();
+    if (queue.length === 0) {
+        alert("🎉 Semua transaksi offline berhasil di-upload ke database Google Sheets!");
+    }
 }
 
 // --- PRINTER ROUTING ---
@@ -412,7 +457,7 @@ function reprintOrder(orderId) {
 function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discountAmount, serviceCharge, tax, grandTotal, target, isReprint = false) {
     const namaResto = configData["NAMA_PERUSAAN"] || "RESTO";
     const alamat = configData["ALAMAT"] || "";
-    const footerStruk = configData["FOOTER_STRUK"] || "Terima Kasih Atas Kunjungannya!";
+    const footerStruk = configData["FOOTER_STRUK"] || "Teria Kasih Atas Kunjungannya!";
     
     const currentDateStr = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' });
     const currentTimeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
