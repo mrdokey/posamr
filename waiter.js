@@ -1,13 +1,13 @@
 /**
- * MODUL 4: WAITER/PELAYAN ENGINE (MURNI PORTRAIT & DRAFT ORDER)
+ * MODUL 4: WAITER/PELAYAN ENGINE (FULL RESPONSIVE & DRAFT ORDER)
  */
 
-// Inisialisasi Lucide
 lucide.createIcons();
 
-// URL GAS Suhu (Hardcoded Aman)
+// ⚠️ URL GAS SUHU (HARDCODED SEMENTARA)
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxUP-K2iIaP8qF8ZBjeOI3h0OG7du_wcJQE2qM507YTb7magRRZejs6DZmqzy-Dulgy/exec";
 const STORAGE_USER = "MRD_WAITER_SESSION";
+const OFFLINE_QUEUE_KEY = "MRD_OFFLINE_WAITER_QUEUE";
 
 let cashierInfo = null;
 try { 
@@ -62,15 +62,6 @@ function updateLoginDots() {
     });
 }
 
-function handlePhysicalKeyboard(e) {
-    let val = this.value.replace(/[^0-9]/g, ''); 
-    if (val.length > 4) val = val.substring(0, 4);
-    loginPinValue = val;
-    this.value = val;
-    updateLoginDots();
-    if (loginPinValue.length === 4) setTimeout(loginWaiter, 300);
-}
-
 // --- STARTUP ---
 window.onload = () => {
     setTimeout(() => {
@@ -83,6 +74,9 @@ window.onload = () => {
             }, 500);
         }
     }, 1000); 
+    
+    // Pastikan tombol keranjang melayang diupdate jika ukuran layar berubah
+    window.addEventListener('resize', updateMobileCartButtonVisibility);
 };
 
 function checkState() {
@@ -90,12 +84,6 @@ function checkState() {
         showScreen('login-screen');
         fetchConfigBg();
         clearPin();
-        const pinInput = document.getElementById('login-pin');
-        if (pinInput) {
-            pinInput.value = ""; pinInput.focus();
-            pinInput.removeEventListener('input', handlePhysicalKeyboard);
-            pinInput.addEventListener('input', handlePhysicalKeyboard);
-        }
     } else {
         showScreen('main-app');
         document.getElementById('kasir-name').innerText = cashierInfo.name;
@@ -112,19 +100,8 @@ function showScreen(id) {
     if (target) target.classList.remove('hidden-screen');
 }
 
-function openModal(id) { 
-    const el = document.getElementById(id);
-    if (el) el.classList.remove('hidden-screen'); 
-}
-
-function closeModal(id) { 
-    const el = document.getElementById(id);
-    if (el) el.classList.add('hidden-screen'); 
-    updateMobileCartButtonVisibility();
-}
-
 function resetLicense() {
-    if(confirm("Yakin reset cache dan data login?")) {
+    if(confirm("Yakin reset cache dan data login pelayan?")) {
         localStorage.clear();
         window.location.reload();
     }
@@ -144,19 +121,18 @@ async function fetchConfigBg() {
 
 async function loginWaiter() {
     if(loginPinValue.length < 4) return;
-    const btn = document.getElementById('btn-verify');
     const statusText = document.getElementById('login-status');
-    statusText.innerText = "Memeriksa PIN Pelayan...";
+    statusText.innerText = "Memeriksa Akses Pelayan...";
     try {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) });
         const json = await res.json();
         if(json.success) {
-            // Khusus Pelayan (Staff/Waiter)
-            if (json.jobdesk === "Pelayan" || json.role.toLowerCase() === "staff") {
+            // Meloloskan Pelayan atau Staff (Pintu Khusus Waiter PWA)
+            if (json.jobdesk.toLowerCase() === "pelayan" || json.role.toLowerCase() === "staff") {
                 localStorage.setItem(STORAGE_USER, JSON.stringify(json));
                 window.location.reload();
             } else {
-                alert("Akses Ditolak! Menu ini khusus untuk HP/Tablet Pelayan.");
+                alert("Akses Ditolak! Anda bukan Pelayan/Staff.");
                 clearPin();
                 statusText.innerText = "";
             }
@@ -177,11 +153,6 @@ function logoutKasir() {
         localStorage.removeItem(STORAGE_USER);
         window.location.reload();
     }
-}
-
-async function syncData() {
-    localStorage.removeItem('localMenu');
-    await initApp();
 }
 
 async function initApp() {
@@ -226,7 +197,7 @@ function filterMenu(cat, btnElement = null) {
             b.classList.remove('bg-amber-500', 'text-slate-900', 'shadow-md');
             b.classList.add('bg-slate-800', 'text-slate-300');
         });
-        btnElement.classList.remove('bg-slate-800', 'text-slate-300');
+        btnElement.classList.remove('bg-slate-800', 'text-slate-300', 'hover:bg-slate-700');
         btnElement.classList.add('bg-amber-500', 'text-slate-900', 'shadow-md');
     }
     applyFilters();
@@ -273,14 +244,13 @@ function renderMenuHTML(items) {
         return `
         <div onclick="addToCart('${item.id}', '${item.name}', ${item.price}, '${item.route}')" class="menu-card bg-slate-800 border border-slate-700 rounded-2xl flex flex-col overflow-hidden cursor-pointer hover:border-amber-500 relative">
             <div class="h-28 relative shrink-0 overflow-hidden bg-slate-900">
-                <img src="${item.image || fallbackImg}" onerror="this.onerror=null; this.src='${fallbackImg}';" class="w-full h-full object-cover">
+                <img src="${item.image || fallbackImg}" onerror="this.onerror=null; this.src='${fallbackImg}';" class="w-full h-full object-cover transition-transform duration-700 hover:scale-110">
                 ${badgeHtml}
-                <div class="absolute top-2 right-2 bg-slate-900/80 text-[9px] font-bold px-2 py-0.5 rounded border border-slate-700">${item.category}</div>
+                <div class="absolute top-2 right-2 bg-slate-900/80 text-[9px] font-bold px-2 py-0.5 rounded border border-slate-700 text-slate-300 backdrop-blur-sm">${item.category}</div>
             </div>
             <div class="p-3 flex flex-col justify-between flex-1">
                 <div>
                     <h3 class="text-xs font-bold text-white line-clamp-2 leading-tight">${item.name}</h3>
-                    <p class="text-[9px] text-slate-400 mt-1 line-clamp-2">${item.description || ''}</p>
                 </div>
                 <p class="text-xs font-black text-amber-500 mt-2">Rp ${(item.price || 0).toLocaleString('id-ID')}</p>
             </div>
@@ -289,7 +259,7 @@ function renderMenuHTML(items) {
     lucide.createIcons();
 }
 
-// --- CART SYSTEM ---
+// --- KERANJANG BELANJA (CART SYSTEM) ---
 function addToCart(id, name, price, route) {
     const exist = cart.find(i => i.menuId === id);
     if(exist) { exist.qty++; exist.subtotal = exist.qty * price; }
@@ -305,12 +275,17 @@ function updateQty(index, delta) {
 }
 
 function addNote(index) {
-    const note = prompt("Catatan (misal: Sedang, Pedas):", cart[index].notes);
+    const note = prompt("Catatan Koki/Bar (misal: Pedas):", cart[index].notes);
     if(note !== null) { cart[index].notes = note; renderCart(); }
 }
 
 function clearCart() {
-    if(confirm("Kosongkan pesanan ini?")) { cart = []; document.getElementById('order-table').value = ""; renderCart(); }
+    if(confirm("Kosongkan keranjang pelayan?")) { 
+        cart = []; 
+        document.getElementById('order-table').value = ""; 
+        renderCart(); 
+        toggleMobileCart(); // Tutup laci
+    }
 }
 
 function renderCart() {
@@ -319,7 +294,7 @@ function renderCart() {
 
     const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
 
-    document.getElementById('cart-count').innerText = cart.reduce((sum, item) => sum + item.qty, 0);
+    // Update Grand Total di Laci
     document.getElementById('cart-grandtotal').innerText = "Rp " + subtotal.toLocaleString();
 
     // Update di Tombol Melayang Mobile
@@ -331,7 +306,7 @@ function renderCart() {
     updateMobileCartButtonVisibility();
 
     if(cart.length === 0) {
-        container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-slate-600 smooth-transition"><i data-lucide="shopping-basket" class="w-16 h-16 mb-3 opacity-20"></i><p class="text-sm">Keranjang Kosong</p></div>`;
+        container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-slate-600 smooth-transition py-10"><i data-lucide="shopping-basket" class="w-16 h-16 mb-3 opacity-20"></i><p class="text-sm font-medium">Keranjang Kosong</p></div>`;
         lucide.createIcons();
         return;
     }
@@ -349,13 +324,13 @@ function renderCart() {
                     <button onclick="updateQty(${idx}, 1)" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-green-500 font-bold"><i data-lucide="plus" class="w-3 h-3"></i></button>
                 </div>
             </div>
-            <button onclick="addNote(${idx})" class="text-[10px] bg-slate-900 text-slate-400 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 border border-slate-700 hover:text-white transition"><i data-lucide="pen-line" class="w-3 h-3"></i> ${item.notes ? item.notes : "Catatan"}</button>
+            <button onclick="addNote(${idx})" class="text-[10px] bg-slate-900 text-slate-400 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 border border-slate-700 hover:text-white transition"><i data-lucide="pen-line" class="w-3 h-3"></i> ${item.notes ? item.notes : "Tambah Catatan"}</button>
         </div>
     `).join('');
     lucide.createIcons();
 }
 
-// --- PORTRAIT MODE SENSORS ---
+// --- PORTRAIT SENSORS & FLOATING BUTTON ---
 function toggleMobileCart() {
     const panel = document.getElementById('cart-panel');
     const trigger = document.getElementById('mobile-cart-trigger');
@@ -363,11 +338,9 @@ function toggleMobileCart() {
     
     if (panel.classList.contains('hidden')) {
         panel.classList.remove('hidden');
-        panel.classList.add('fixed', 'inset-0', 'z-[45]', 'flex');
         trigger.classList.add('hidden-screen'); 
     } else {
         panel.classList.add('hidden');
-        panel.classList.remove('fixed', 'inset-0', 'z-[45]', 'flex');
         updateMobileCartButtonVisibility();
     }
 }
@@ -377,7 +350,7 @@ function updateMobileCartButtonVisibility() {
     const trigger = document.getElementById('mobile-cart-trigger');
     if (!trigger) return;
 
-    // Di mode pelayan, tombol melayang selalu aktif jika keranjang berisi item
+    // Di PWA Pelayan, tombol melayang selalu muncul jika ada barang di keranjang
     if (count > 0 && cashierInfo) {
         trigger.classList.remove('hidden-screen');
     } else {
@@ -385,34 +358,44 @@ function updateMobileCartButtonVisibility() {
     }
 }
 
-// --- SEND ORDER TO SHEET (STATUS: DRAFT) ---
+// --- SEND ORDER TO CASHIER (STATUS: DRAFT) ---
 async function sendOrderToCashier() {
     if(cart.length === 0) return alert("Keranjang kosong!");
     const tableNo = document.getElementById('order-table').value.trim();
     if(!tableNo) return alert("Mohon isi Nomor Meja!");
-
-    if(!navigator.onLine) return alert("Koneksi Offline. Gagal mengirim order.");
 
     const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
 
     const payload = {
         action: "placeOrder", 
         data: {
-            orderId: "", // Selalu buat ID baru untuk pesanan baru pelayan
+            orderId: "", // ID Baru karena pelayan selalu kirim draft baru
             tableNo: tableNo,
-            kasirId: cashierInfo.userId, // Catat UserID Pelayan di kolom KasirID (CreatedBy)
-            discount: "DISC-00", // Default tanpa diskon
+            kasirId: cashierInfo.userId, 
+            discount: "DISC-00", 
             tax: 0, 
             serviceCharge: 0, 
             totalAmount: subtotal, 
             paymentMethod: "-",
-            orderStatus: "Draft", // STATUS MAHKOTA: DRAFT!
+            orderStatus: "Draft", // KIRIM SEBAGAI DRAFT!
             items: cart
         }
     };
 
     const btn = document.getElementById('btn-send');
-    btn.innerText = "Mengirim Pesanan...";
+    if (!navigator.onLine) {
+        // SIMPAN KE ANTREAN OFFLINE PELAYAN
+        let queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || "[]");
+        queue.push(payload);
+        localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
+
+        alert(`⚠️ Koneksi terputus! Draft disimpan di antrean HP Anda. Klik Sync nanti saat sinyal bagus.`);
+        cart = []; document.getElementById('order-table').value = "";
+        renderCart(); toggleMobileCart();
+        return;
+    }
+
+    btn.innerText = "Mengirim...";
     btn.disabled = true;
 
     try {
@@ -420,10 +403,10 @@ async function sendOrderToCashier() {
         const json = await res.json();
         
         if(json.success) {
-            // Tampilkan Layar Sukses
+            // Tampilkan Layar Sukses Pelayan
             showScreen('success-screen');
             
-            // Auto Reset Kiosk setelah 3 detik
+            // Auto Reset Form
             setTimeout(() => {
                 cart = [];
                 document.getElementById('order-table').value = "";
@@ -431,7 +414,7 @@ async function sendOrderToCashier() {
                 btn.innerHTML = `<i data-lucide="send" class="w-5 h-5"></i> <span>KIRIM KE KASIR (DRAFT)</span>`;
                 btn.disabled = false;
                 showScreen('main-app');
-                lucide.createIcons();
+                toggleMobileCart(); // Tutup laci
             }, 3000);
         } else {
             alert("Error Server: " + json.message);
@@ -444,3 +427,18 @@ async function sendOrderToCashier() {
         btn.disabled = false;
     }
 }
+
+// Auto-Sync Event saat HP pelayan kembali online
+window.addEventListener('online', async () => {
+    let queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || "[]");
+    if (queue.length > 0) {
+        for (let i = 0; i < queue.length; i++) {
+            try {
+                let res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(queue[i]) });
+                let json = await res.json();
+                if (json.success) { queue.splice(i, 1); i--; localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue)); }
+            } catch (e) { break; }
+        }
+        if (queue.length === 0) alert("Semua draft tertunda berhasil dikirim ke Kasir!");
+    }
+});
