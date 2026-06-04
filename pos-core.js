@@ -146,7 +146,9 @@ function renderMenuHTML(items) {
         const fallbackImg = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&background=1e293b&color=f59e0b&size=200&font-size=0.33`;
         const totalSoldData = parseInt(item.totalSold) || 0; 
         const isHot = totalSoldData > 10;
-        const badgeHtml = isHot ? `<div class="absolute top-2 left-2 bg-rose-600 text-white text-[9px] font-black px-2 py-1 rounded-md shadow-md animate-pulse">🔥 HOT 7 DAYS</div>` : ``;
+        
+        // REVISI: Hanya stiker HOT saja, teks terjual di bawah kita hilangkan [2]
+        const badgeHtml = isHot ? `<div class="absolute top-2 left-2 bg-rose-600 text-white text-[9px] font-black px-2.5 py-1 rounded-md shadow-md animate-pulse">🔥 HOT</div>` : ``;
 
         return `
         <div onclick="addToCart('${item.id}', '${item.name}', ${item.price}, '${item.route}')" class="menu-card bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden cursor-pointer hover:border-amber-500 relative">
@@ -160,10 +162,7 @@ function renderMenuHTML(items) {
                     <h3 class="text-sm font-bold text-white line-clamp-2 leading-snug">${item.name}</h3>
                     <p class="text-[10px] text-slate-400 mt-1 line-clamp-2">${item.description || ''}</p>
                 </div>
-                <div class="flex justify-between items-end mt-3">
-                    <p class="text-[15px] font-black text-amber-500 tracking-tight">Rp ${item.price.toLocaleString()}</p>
-                    ${totalSoldData > 0 ? `<p class="text-[9px] text-slate-500 font-bold bg-slate-900 px-2 py-1 rounded">Terjual: ${totalSoldData}</p>` : ''}
-                </div>
+                <p class="text-[15px] font-black text-amber-500 mt-3 tracking-tight">Rp ${item.price.toLocaleString()}</p>
             </div>
         </div>
     `}).join('');

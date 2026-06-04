@@ -1,25 +1,41 @@
 /**
  * MODUL 3: CHECKOUT, HISTORY, VOID, PRINTER & RESPONSIVE PORTRAIT
+ * UPDATE: UNIFIED PLACEORDER ENGINE (100% BEBAS BUG PELUNASAN), PURE WAITER MODE.
  */
 
-// --- PEMBATASAN AKSES HAK JOBDESK ---
+// --- PEMBATASAN AKSES HAK JOBDESK (PURE WAITER MODE) ---
 function applyJobdeskRules() {
-    const jobdesk = cashierInfo.jobdesk;
+    const jobdesk = cashierInfo.jobdesk || "";
+    const role = (cashierInfo.role || "").toLowerCase().trim();
+    
     clearInterval(pollInterval);
 
-    if (jobdesk === "Pelayan") {
+    // Seleksi Tombol Riwayat & Reset Cache
+    const btnHistory = document.getElementById('btn-history-trigger');
+    const btnResetLicense = document.querySelector('button[onclick="resetLicense()"]');
+
+    // JIKA PELAYAN / STAFF (WAITRESS): KUNCI TOTAL AKSES
+    if (jobdesk === "Pelayan" || role === "staff") {
+        // 1. Sembunyikan panel diskon, tombol proses kasir, dan tampilkan kirim draft
         document.getElementById('discount-section').classList.add('hidden-screen');
         document.getElementById('btn-cashier-print').classList.add('hidden-screen');
         document.getElementById('btn-save-draft').classList.remove('hidden-screen');
         document.getElementById('btn-draft-text').innerText = "KIRIM ORDER (DRAFT)";
-        document.getElementById('btn-history-trigger').classList.add('hidden-screen');
+        
+        // 2. HANCURKAN (REMOVE) tombol riwayat & reset cache agar tidak bisa diakses sama sekali
+        if (btnHistory) btnHistory.remove();
+        if (btnResetLicense) btnResetLicense.remove();
     } else {
+        // Mode Kasir Utama / Admin
         document.getElementById('discount-section').classList.remove('hidden-screen');
         document.getElementById('btn-cashier-print').classList.remove('hidden-screen');
         document.getElementById('btn-save-draft').classList.add('hidden-screen'); 
-        document.getElementById('btn-history-trigger').classList.remove('hidden-screen');
+        
+        if (btnHistory) btnHistory.classList.remove('hidden-screen');
+        
+        // Aktifkan Polling Pendeteksi Draft Baru dari Pelayan secara real-time
         checkNewDraftNotifications(); 
-        pollInterval = setInterval(checkNewDraftNotifications, 15000); 
+        pollInterval = setInterval(checkNewDraftNotifications, 10000); // Cek setiap 10 detik
     }
 }
 
@@ -33,8 +49,10 @@ async function checkNewDraftNotifications() {
             historyDataRaw = json.data;
             const draftCount = historyDataRaw.filter(d => d.status === "Draft").length;
             const alertDot = document.getElementById('draft-alert-dot');
-            if (draftCount > 0) { alertDot.classList.remove('hidden'); } 
-            else { alertDot.classList.add('hidden'); }
+            if (alertDot) {
+                if (draftCount > 0) alertDot.classList.remove('hidden'); 
+                else alertDot.classList.add('hidden');
+            }
         }
     } catch(e) {}
 }
@@ -61,8 +79,11 @@ function updateMobileCartButtonVisibility() {
     const trigger = document.getElementById('mobile-cart-trigger');
     if (!trigger) return;
 
-    const isModalOpen = !document.getElementById('modal-history').classList.contains('hidden-screen') || 
-                        !document.getElementById('modal-print').classList.contains('hidden-screen');
+    // Cek dengan aman apakah modal sedang terbuka
+    const modalHistory = document.getElementById('modal-history');
+    const modalPrint = document.getElementById('modal-print');
+    const isModalOpen = (modalHistory && !modalHistory.classList.contains('hidden-screen')) || 
+                        (modalPrint && !modalPrint.classList.contains('hidden-screen'));
 
     if (count > 0 && window.innerWidth < 768 && cashierInfo && !isModalOpen) {
         trigger.classList.remove('hidden-screen');
@@ -92,10 +113,10 @@ async function switchTab(tabName) {
     });
 
     const container = document.getElementById('history-container');
-    container.innerHTML = `<div class="py-20 text-center text-slate-500 animate-pulse">Menarik data...</div>`;
+    if (container) container.innerHTML = `<div class="py-20 text-center text-slate-500 animate-pulse">Menarik data...</div>`;
 
     if(!navigator.onLine) {
-        container.innerHTML = `<div class="py-20 text-center text-rose-500 font-bold">Koneksi Offline.</div>`;
+        if (container) container.innerHTML = `<div class="py-20 text-center text-rose-500 font-bold">Koneksi Offline.</div>`;
         return;
     }
 
@@ -129,7 +150,7 @@ async function switchTab(tabName) {
                     }
 
                     return `
-                    <div class="bg-slate-950 border border-slate-800 p-5 rounded-2xl flex justify-between items-center animate-slide-up">
+                    <div class="bg-slate-950 border border-slate-800 p-5 rounded-2xl flex justify-between items-center shadow-md animate-slide-up">
                         <div>
                             <h4 class="font-black text-white text-lg flex items-center gap-2">${bill.tableNo} <span class="bg-slate-800 text-[10px] px-2 py-0.5 rounded-full font-normal text-slate-400">${bill.time}</span></h4>
                             <p class="text-xs text-slate-500 mt-1">ID: ${bill.orderId} | Total: <span class="text-amber-500 font-bold">Rp ${bill.totalAmount.toLocaleString()}</span></p>
@@ -140,14 +161,14 @@ async function switchTab(tabName) {
                     </div>
                 `}).join('');
             } else {
-                container.innerHTML = `<div class="py-20 text-center text-slate-600"><i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 opacity-40"></i>Tidak ada data ${tabName}</div>`;
+                container.innerHTML = `<div class="col-span-full py-20 text-center text-slate-600"><i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 opacity-40"></i>Tidak ada data ${tabName}</div>`;
             }
         } else {
             container.innerHTML = `<div class="py-12 text-center text-rose-500">Error: ${json.message}</div>`;
         }
         lucide.createIcons();
     } catch (e) {
-        container.innerHTML = `<div class="py-12 text-center text-rose-500">Koneksi putus.</div>`;
+        if (container) container.innerHTML = `<div class="py-12 text-center text-rose-500">Koneksi putus.</div>`;
     }
 }
 
@@ -172,13 +193,14 @@ function editDraft(orderId) {
         }
     }
 
-    document.getElementById('draft-indicator').classList.remove('hidden-screen');
+    const ind = document.getElementById('draft-indicator');
+    if (ind) ind.classList.remove('hidden-screen');
     renderCart();
     closeModal('modal-history');
     if (window.innerWidth < 768) toggleMobileCart();
 }
 
-// --- SISTEM VOID / BATAL ---
+// --- SISTEM VOID / PEMBATALAN PESANAN ---
 function reqVoid(orderId, type) {
     voidTargetId = orderId;
     const bill = historyDataRaw.find(b => b.orderId === orderId);
@@ -208,7 +230,7 @@ async function executeVoid() {
         const json = await res.json();
         
         if(json.success) {
-            const finalReason = `[VOID] ${reason} (Otorisasi: ${json.managerName})`;
+            const finalReason = `[VOID oleh ${json.managerName}] ${reason}`;
             executeVoidVerified(finalReason);
             closeModal('modal-void');
         } else {
@@ -241,7 +263,7 @@ async function executeVoidVerified(reasonText) {
     } catch(e) { alert("Gagal koneksi server."); }
 }
 
-// --- PEMROSESAN PEMBAYARAN & PRINT ---
+// --- SISTEM PEMROSESAN UTAMA (100% UNIFIED ENGINE) ---
 function saveDraft() {
     if(cart.length === 0) return alert("Keranjang kosong!");
     if(!document.getElementById('order-table').value.trim()) return alert("Isi Nomor Meja!");
@@ -278,7 +300,10 @@ async function submitOrderPayload(statusTarget, printTarget) {
     let paymentMethod = "-";
     let orderStatus = "Open";
 
-    if (cashierInfo.jobdesk === "Pelayan") statusTarget = "Draft";
+    // JIKA PELAYAN: Otomatis kunci status hanya boleh "Draft"
+    if (cashierInfo.jobdesk === "Pelayan" || cashierInfo.role.toLowerCase() === "staff") {
+        statusTarget = "Draft";
+    }
 
     if (statusTarget === "Draft") {
         orderStatus = "Draft";
@@ -289,12 +314,23 @@ async function submitOrderPayload(statusTarget, printTarget) {
         orderStatus = "Paid";
     }
 
+    // =======================================================
+    // SIHIR UNIFIED: SELALU PAKAI "placeOrder" UNTUK SINKRONISASI
+    // Beralih ke fungsi placeOrder agar hitungan, diskon, & item baru ter-update otomatis!
+    // =======================================================
     const payload = {
-        action: "placeOrder", 
+        action: "placeOrder", // BYPASS TOTAL payOpenOrder!
         data: {
-            orderId: activeOrderId || "", tableNo: tableNo, kasirId: cashierInfo.userId, 
-            discount: discountId, tax: tax, serviceCharge: serviceCharge, totalAmount: grandTotal, 
-            paymentMethod: paymentMethod, orderStatus: orderStatus, items: cart
+            orderId: activeOrderId || "", // Kirim ID lama jika update, kosongkan jika baru
+            tableNo: tableNo,
+            kasirId: cashierInfo.userId, 
+            discount: discountId,
+            tax: tax, 
+            serviceCharge: serviceCharge, 
+            totalAmount: grandTotal, 
+            paymentMethod: paymentMethod,
+            orderStatus: orderStatus, 
+            items: cart
         }
     };
 
@@ -321,11 +357,14 @@ async function submitOrderPayload(statusTarget, printTarget) {
         
         if(json.success) {
             let finalOrderId = activeOrderId || json.orderId;
+
             if (printTarget !== false && printTarget !== "None") {
                 executeRoutingPrint(finalOrderId, tableNo, orderStatus, paymentMethod, subtotal, discountAmount, serviceCharge, tax, grandTotal, printTarget);
             }
-            alert(`Pesanan Sukses Dikirim!`);
+            
+            alert(`Pesanan sukses dikirim ke sistem pusat!`);
             resetCartState();
+            if (window.innerWidth < 768) toggleMobileCart();
         } else { alert("Error Server: " + json.message); }
     } catch (e) {
         alert("Server bermasalah. Transaksi dialihkan ke offline queue.");
@@ -348,7 +387,7 @@ async function syncOfflineQueue() {
     let queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || "[]");
     if (queue.length === 0) return;
 
-    console.log(`Mengirim ${queue.length} antrean transaksi offline ke server...`);
+    console.log(`Mengirim ${queue.length} antrean transaksi offline...`);
     for (let i = 0; i < queue.length; i++) {
         try {
             let res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(queue[i]) });
