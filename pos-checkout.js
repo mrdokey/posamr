@@ -1,90 +1,55 @@
 /**
  * MODUL 3: CHECKOUT, HISTORY, VOID, PRINTER & RESPONSIVE PORTRAIT
- * UPDATE: VIRTUAL PORTRAIT SWITCH (Sihir Rotasi Otomatis berdasarkan Jobdesk).
+ * UPDATE: Unified Order Engine, Realtime Draft Notification, Fixed Checkout Buttons.
  */
 
-// --- PEMBATASAN AKSES & ROTASI OTOMATIS JOBDESK (THE MAGIC SWITCH) ---
+// --- PEMBATASAN AKSES HAK JOBDESK ---
 function applyJobdeskRules() {
     const jobdesk = cashierInfo.jobdesk || "";
     const role = (cashierInfo.role || "").toLowerCase().trim();
     
     clearInterval(pollInterval);
 
-    const mainApp = document.getElementById('main-app');
-    const cartPanel = document.getElementById('cart-panel');
-    const menuContainer = document.getElementById('menu-container');
     const btnHistory = document.getElementById('btn-history-trigger');
     const btnResetLicense = document.querySelector('button[onclick="resetLicense()"]');
 
-    // ------------------------------------------------------------------
-    // JURUS 1: JIKA YANG LOGIN ADALAH PELAYAN (FORCE VIRTUAL PORTRAIT MOBILE) [1, 3]
-    // ------------------------------------------------------------------
+    // JIKA PELAYAN (WAITRESS)
     if (jobdesk === "Pelayan" || role === "staff") {
-        // 1. Ubah main-app menjadi vertikal, batasi lebar persis HP, & beri bayangan elegan di tengah layar [1]
-        mainApp.classList.remove('md:flex-row');
-        mainApp.classList.add('flex-col', 'max-w-md', 'mx-auto', 'border-x', 'border-slate-800', 'shadow-2xl');
-        
-        // 2. Sembunyikan panel keranjang samping [1]
-        cartPanel.classList.add('hidden');
-        cartPanel.classList.remove('md:flex', 'md:w-[420px]');
-        
-        // 3. Batasi grid menu menjadi 2 kolom saja agar pas & rapi di mode potret [1]
-        menuContainer.classList.remove('sm:grid-cols-3', 'lg:grid-cols-3', 'xl:grid-cols-4');
-        menuContainer.classList.add('grid-cols-2');
-
-        // 4. Kunci fitur pembayaran & batasi tombol hanya Kirim Draft [3]
         document.getElementById('discount-section').classList.add('hidden-screen');
         document.getElementById('btn-cashier-print').classList.add('hidden-screen');
         document.getElementById('btn-save-draft').classList.remove('hidden-screen');
         document.getElementById('btn-draft-text').innerText = "KIRIM ORDER (DRAFT)";
         
-        // Hancurkan tombol riwayat & reset cache
         if (btnHistory) btnHistory.remove();
         if (btnResetLicense) btnResetLicense.remove();
-        
-        // Update tombol keranjang melayang khusus mobile
-        updateMobileCartButtonVisibility();
-
     } 
-    // ------------------------------------------------------------------
-    // JURUS 2: JIKA KASIR / ADMIN / OWNER LOGIN (FORCE WIDESCREEN LANDSCAPE) [1, 2]
-    // ------------------------------------------------------------------
+    // JIKA KASIR / ADMIN / OWNER
     else {
-        // 1. Kembalikan ke format Kasir Split-screen penuh [1]
-        mainApp.classList.add('md:flex-row');
-        mainApp.classList.remove('flex-col', 'max-w-md', 'mx-auto', 'border-x', 'border-slate-800', 'shadow-2xl');
-        
-        // 2. Tampilkan kembali panel keranjang samping [1]
-        cartPanel.classList.remove('hidden');
-        cartPanel.classList.add('md:flex', 'md:w-[420px]');
-        
-        // 3. Kembalikan grid menu menjadi lebar penuh multi-kolom [1]
-        menuContainer.classList.remove('grid-cols-2');
-        menuContainer.classList.add('sm:grid-cols-3', 'lg:grid-cols-3', 'xl:grid-cols-4');
-
-        // 4. Aktifkan fitur pembayaran
         document.getElementById('discount-section').classList.remove('hidden-screen');
         document.getElementById('btn-cashier-print').classList.remove('hidden-screen');
         document.getElementById('btn-save-draft').classList.add('hidden-screen'); 
         
         if (btnHistory) btnHistory.classList.remove('hidden-screen');
         
-        // Aktifkan Polling Pendeteksi Draft Baru secara real-time
+        // AKTIFKAN SENSOR NOTIFIKASI DRAFT REAL-TIME (Cek setiap 15 detik)
         checkNewDraftNotifications(); 
-        pollInterval = setInterval(checkNewDraftNotifications, 10000); 
+        pollInterval = setInterval(checkNewDraftNotifications, 15000); 
     }
 }
 
-// --- POLLING DRAFT UNTUK KASIR ---
+// --- POLLING NOTIFIKASI DRAFT REAL-TIME ---
 async function checkNewDraftNotifications() {
     if (!navigator.onLine) return;
     try {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "getHistoryOrders" }) });
         const json = await res.json();
+        
         if (json.success) {
             historyDataRaw = json.data;
             const draftCount = historyDataRaw.filter(d => d.status === "Draft").length;
             const alertDot = document.getElementById('draft-alert-dot');
+            
+            // Nyalakan lampu merah berkedip jika ada pesan Draft yang belum diproses Kasir!
             if (alertDot) {
                 if (draftCount > 0) alertDot.classList.remove('hidden'); 
                 else alertDot.classList.add('hidden');
@@ -93,18 +58,18 @@ async function checkNewDraftNotifications() {
     } catch(e) {}
 }
 
-// --- PORTRAIT SENSORS & FLOATING BUTTON [1] ---
+// --- PORTRAIT SENSORS & FLOATING CART ---
 function toggleMobileCart() {
     const panel = document.getElementById('cart-panel');
     const trigger = document.getElementById('mobile-cart-trigger');
     if (!panel || !trigger) return;
     
     if (panel.classList.contains('hidden')) {
-        panel.classList.remove('hidden');
+        panel.classList.remove('hidden', 'md:flex');
         panel.classList.add('fixed', 'inset-0', 'z-[45]', 'flex');
         trigger.classList.add('hidden-screen'); 
     } else {
-        panel.classList.add('hidden');
+        panel.classList.add('hidden', 'md:flex');
         panel.classList.remove('fixed', 'inset-0', 'z-[45]', 'flex');
         updateMobileCartButtonVisibility();
     }
@@ -115,20 +80,19 @@ function updateMobileCartButtonVisibility() {
     const trigger = document.getElementById('mobile-cart-trigger');
     if (!trigger) return;
 
-    const isModalOpen = !document.getElementById('modal-history').classList.contains('hidden-screen') || 
-                        !document.getElementById('modal-print').classList.contains('hidden-screen');
+    const modalHistory = document.getElementById('modal-history');
+    const modalPrint = document.getElementById('modal-print');
+    const isModalOpen = (modalHistory && !modalHistory.classList.contains('hidden-screen')) || 
+                        (modalPrint && !modalPrint.classList.contains('hidden-screen'));
 
-    const isPelayan = cashierInfo && (cashierInfo.jobdesk === "Pelayan" || cashierInfo.role.toLowerCase() === "staff");
-
-    // Tombol melayang muncul jika ada item, sedang tidak buka modal, DAN user adalah Pelayan (atau layar fisik memang HP/Portrait) [1, 3]
-    if (count > 0 && !isModalOpen && (isPelayan || window.innerWidth < 768)) {
+    if (count > 0 && window.innerWidth < 768 && cashierInfo && !isModalOpen) {
         trigger.classList.remove('hidden-screen');
     } else {
         trigger.classList.add('hidden-screen');
     }
 }
 
-// --- RIWAYAT & DRAFT ---
+// --- RIWAYAT & DRAFT MANAJEMEN ---
 async function openHistoryModal() {
     openModal('modal-history');
     switchTab('Draft'); 
@@ -149,10 +113,10 @@ async function switchTab(tabName) {
     });
 
     const container = document.getElementById('history-container');
-    container.innerHTML = `<div class="py-20 text-center text-slate-500 animate-pulse">Menarik data...</div>`;
+    if (container) container.innerHTML = `<div class="py-20 text-center text-slate-500 animate-pulse">Menarik data dari database...</div>`;
 
     if(!navigator.onLine) {
-        container.innerHTML = `<div class="py-20 text-center text-rose-500 font-bold">Koneksi Offline.</div>`;
+        if (container) container.innerHTML = `<div class="py-20 text-center text-rose-500 font-bold">Koneksi Offline. Riwayat tidak bisa dimuat.</div>`;
         return;
     }
 
@@ -164,12 +128,17 @@ async function switchTab(tabName) {
             historyDataRaw = json.data;
             const filteredData = historyDataRaw.filter(d => d.status === tabName);
             
+            // Reset Notifikasi Draft jika tab Draft dibuka
+            if (tabName === "Draft" && document.getElementById('draft-alert-dot')) {
+                document.getElementById('draft-alert-dot').classList.add('hidden');
+            }
+            
             if (filteredData.length > 0) {
                 container.innerHTML = filteredData.map(bill => {
                     let actionButtons = "";
                     if (tabName === "Draft") {
                         actionButtons = `
-                            <button onclick="editDraft('${bill.orderId}')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition">Edit Draft</button>
+                            <button onclick="editDraft('${bill.orderId}')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition">Proses Draft</button>
                             <button onclick="reqVoid('${bill.orderId}', 'Draft Bebas')" class="bg-red-500/10 text-red-500 px-3 py-2 rounded-xl text-xs font-bold hover:bg-red-500/20 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                         `;
                     } else if (tabName === "Open") {
@@ -197,10 +166,10 @@ async function switchTab(tabName) {
                     </div>
                 `}).join('');
             } else {
-                container.innerHTML = `<div class="col-span-full py-20 text-center text-slate-600"><i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 opacity-40"></i>Tidak ada data ${tabName}</div>`;
+                container.innerHTML = `<div class="py-20 text-center text-slate-600"><i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 opacity-40"></i>Tidak ada data ${tabName}</div>`;
             }
         } else {
-            container.innerHTML = `<div class="py-12 text-center text-rose-500">Error: ${json.message}</div>`;
+            if (container) container.innerHTML = `<div class="py-12 text-center text-rose-500">Error: ${json.message}</div>`;
         }
         lucide.createIcons();
     } catch (e) {
@@ -208,6 +177,7 @@ async function switchTab(tabName) {
     }
 }
 
+// BUKA PESANAN (DRAFT/OPEN) KE KERANJANG UNTUK DIEDIT & DIBAYAR KASIR
 function editDraft(orderId) {
     const bill = historyDataRaw.find(b => b.orderId === orderId);
     if(!bill) return;
@@ -234,8 +204,16 @@ function editDraft(orderId) {
     renderCart();
     closeModal('modal-history');
     
-    // Buka laci keranjang secara otomatis di mode handphone/potret pelayan saat edit
-    if (window.innerWidth < 768 || cashierInfo.jobdesk === "Pelayan") {
+    // FIX BUG: PASTIKAN TOMBOL PEMBAYARAN KASIR MUNCUL KEMBALI SAAT EDIT DRAFT/OPEN
+    const jobdesk = cashierInfo.jobdesk || "";
+    const role = (cashierInfo.role || "").toLowerCase().trim();
+    if (jobdesk !== "Pelayan" && role !== "staff") {
+        document.getElementById('discount-section').classList.remove('hidden-screen');
+        document.getElementById('btn-cashier-print').classList.remove('hidden-screen');
+        document.getElementById('btn-save-draft').classList.add('hidden-screen'); 
+    }
+
+    if (window.innerWidth < 768) {
         toggleMobileCart();
     }
 }
@@ -342,7 +320,7 @@ async function submitOrderPayload(statusTarget, printTarget) {
     let paymentMethod = "-";
     let orderStatus = "Open";
 
-    // JIKA PELAYAN: Otomatis kunci status hanya boleh "Draft" [3]
+    // JIKA PELAYAN: Otomatis kunci status hanya boleh "Draft"
     if (cashierInfo.jobdesk === "Pelayan" || cashierInfo.role.toLowerCase() === "staff") {
         statusTarget = "Draft";
     }
@@ -403,7 +381,6 @@ async function submitOrderPayload(statusTarget, printTarget) {
             alert(`Pesanan sukses dikirim ke sistem pusat!`);
             resetCartState();
             
-            // Tutup laci keranjang meluncur setelah sukses kirim draft
             if (window.innerWidth < 768 || cashierInfo.jobdesk === "Pelayan") {
                 toggleMobileCart();
             }
@@ -429,7 +406,7 @@ async function syncOfflineQueue() {
     let queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || "[]");
     if (queue.length === 0) return;
 
-    console.log(`Mengirim ${queue.length} antrean transaksi offline...`);
+    console.log(`Mengirim ${queue.length} antrean transaksi offline ke server...`);
     for (let i = 0; i < queue.length; i++) {
         try {
             let res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(queue[i]) });
@@ -438,12 +415,9 @@ async function syncOfflineQueue() {
         } catch (e) { break; }
     }
     updateOfflineBadge();
-    if (queue.length === 0) {
-        alert("🎉 Semua transaksi offline berhasil di-upload ke database Google Sheets!");
-    }
 }
 
-// --- PRINTER ROUTING ---
+// --- PRINTER ROUTING CERDAS ---
 function reprintOrder(orderId) {
     const bill = historyDataRaw.find(b => b.orderId === orderId);
     if(!bill) return;
@@ -457,7 +431,7 @@ function reprintOrder(orderId) {
 function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discountAmount, serviceCharge, tax, grandTotal, target, isReprint = false) {
     const namaResto = configData["NAMA_PERUSAAN"] || "RESTO";
     const alamat = configData["ALAMAT"] || "";
-    const footerStruk = configData["FOOTER_STRUK"] || "Teria Kasih Atas Kunjungannya!";
+    const footerStruk = configData["FOOTER_STRUK"] || "Terima Kasih Atas Kunjungannya!";
     
     const currentDateStr = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' });
     const currentTimeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
