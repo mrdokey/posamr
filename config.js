@@ -1,10 +1,8 @@
 /**
  * MODUL 1: CONFIG & KEYPAD SESSION
- * UPDATE: Pembersihan applyJobdeskRules (Murni Kasir)
  */
 lucide.createIcons();
 
-// Kunci Memori Lokal & URL API Terkunci (SaaS Model)
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxUP-K2iIaP8qF8ZBjeOI3h0OG7du_wcJQE2qM507YTb7magRRZejs6DZmqzy-Dulgy/exec";
 const STORAGE_USER = "MRD_CASHIER";
 const OFFLINE_QUEUE_KEY = "MRD_OFFLINE_QUEUE";
@@ -21,6 +19,9 @@ try {
 let configData = {};
 let menuData = [];
 let discountData = []; 
+let voucherData = []; // NEW: State untuk database Voucher
+let appliedVoucher = null; // NEW: State voucher yang sedang digunakan
+
 let filteredData = []; 
 let cart = [];
 let currentCategory = 'Semua';
@@ -111,8 +112,6 @@ function checkState() {
         document.getElementById('kasir-name').innerText = cashierInfo.name;
         initApp();
         updateOfflineBadge();
-        
-        // Sengaja Dihapus: applyJobdeskRules() karena POS ini 100% Hak Kasir Penuh
         
         window.removeEventListener('resize', updateMobileCartButtonVisibility);
         window.addEventListener('resize', updateMobileCartButtonVisibility);

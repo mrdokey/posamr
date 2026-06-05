@@ -1,13 +1,12 @@
 /**
  * MODUL 3: CHECKOUT, HISTORY, VOID, PRINTER & RESPONSIVE PORTRAIT
- * UPDATE: MURNI UNTUK POS KASIR (Akses Penuh Pembayaran & Cetak!)
  */
 
-// --- POLLING DRAFT UNTUK KASIR ---
 async function checkNewDraftNotifications() {
     if (!navigator.onLine) return;
+    let userArea = cashierInfo ? cashierInfo.area : "";
     try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "getHistoryOrders" }) });
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "getHistoryOrders", data: { area: userArea } }) });
         const json = await res.json();
         if (json.success) {
             historyDataRaw = json.data;
@@ -21,13 +20,11 @@ async function checkNewDraftNotifications() {
     } catch(e) {}
 }
 
-// Mulai Polling Otomatis Saat Aplikasi Terbuka
 if (pollInterval === null) {
     checkNewDraftNotifications(); 
     pollInterval = setInterval(checkNewDraftNotifications, 10000);
 }
 
-// --- PORTRAIT SENSORS & FLOATING CART ---
 function toggleMobileCart() {
     const panel = document.getElementById('cart-panel');
     const trigger = document.getElementById('mobile-cart-trigger');
@@ -54,7 +51,6 @@ function updateMobileCartButtonVisibility() {
     const isModalOpen = (modalHistory && !modalHistory.classList.contains('hidden-screen')) || 
                         (modalPrint && !modalPrint.classList.contains('hidden-screen'));
 
-    // Tampilkan tombol melayang jika di HP dan layar tidak tertutup pop-up
     if (count > 0 && window.innerWidth < 768 && cashierInfo && !isModalOpen) {
         trigger.classList.remove('hidden-screen');
     } else {
@@ -62,7 +58,6 @@ function updateMobileCartButtonVisibility() {
     }
 }
 
-// --- RIWAYAT & DRAFT ---
 async function openHistoryModal() {
     openModal('modal-history');
     switchTab('Draft'); 
@@ -90,8 +85,10 @@ async function switchTab(tabName) {
         return;
     }
 
+    let userArea = cashierInfo ? cashierInfo.area : "";
+
     try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "getHistoryOrders" }) });
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "getHistoryOrders", data: { area: userArea } }) });
         const json = await res.json();
         
         if (json.success) {
@@ -142,7 +139,6 @@ async function switchTab(tabName) {
     }
 }
 
-// BUKA PESANAN (DRAFT / OPEN) UNTUK DIEDIT
 function editDraft(orderId) {
     const bill = historyDataRaw.find(b => b.orderId === orderId);
     if(!bill) return;
@@ -164,6 +160,15 @@ function editDraft(orderId) {
         }
     }
 
+    // PENGEMBALIAN DATA VOUCHER DARI DRAFT/OPEN
+    if (bill.voucherCode) {
+        const v = voucherData.find(vx => vx.code === bill.voucherCode);
+        if (v) appliedVoucher = v;
+        else appliedVoucher = null;
+    } else {
+        appliedVoucher = null;
+    }
+
     const ind = document.getElementById('draft-indicator');
     if (ind) ind.classList.remove('hidden-screen');
     renderCart();
@@ -174,7 +179,6 @@ function editDraft(orderId) {
     }
 }
 
-// --- SISTEM VOID / PEMBATALAN PESANAN ---
 function reqVoid(orderId, type) {
     voidTargetId = orderId;
     const bill = historyDataRaw.find(b => b.orderId === orderId);
@@ -218,10 +222,13 @@ async function executeVoidVerified(reasonText) {
     const bill = historyDataRaw.find(b => b.orderId === voidTargetId);
     if(!bill) return;
 
+    let userArea = cashierInfo ? cashierInfo.area : "";
+
     const payload = {
         action: "placeOrder",
         data: {
-            orderId: voidTargetId, tableNo: bill.tableNo, discount: bill.discountId,
+            orderId: voidTargetId, tableNo: bill.tableNo, area: userArea, 
+            discount: bill.discountId, voucherCode: bill.voucherCode || "",
             tax: bill.tax, serviceCharge: bill.serviceCharge, totalAmount: 0, 
             paymentMethod: "-", orderStatus: "Void", voidReason: reasonText, items: [] 
         }
@@ -237,7 +244,6 @@ async function executeVoidVerified(reasonText) {
     } catch(e) { alert("Gagal koneksi server."); }
 }
 
-// --- SISTEM PEMROSESAN UTAMA (MURNI KASIR) ---
 function saveDraft() {
     if(cart.length === 0) return alert("Keranjang kosong!");
     if(!document.getElementById('order-table').value.trim()) return alert("Isi Nomor Meja!");
@@ -263,7 +269,16 @@ async function submitOrderPayload(statusTarget, printTarget) {
 
     const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
     let discountAmount = discPerc < 1 ? subtotal * discPerc : subtotal * (discPerc / 100); 
-    const netSubtotal = subtotal - discountAmount;
+    
+    let voucherAmount = 0;
+    if (appliedVoucher) {
+        voucherAmount = appliedVoucher.type.toLowerCase() === 'percent' 
+            ? subtotal * (appliedVoucher.value / 100) 
+            : appliedVoucher.value;
+    }
+    
+    const totalDiscount = discountAmount + voucherAmount;
+    const netSubtotal = Math.max(0, subtotal - totalDiscount);
     
     const servicePerc = parseFloat(configData["SERVICE_CHARGE"] || 0);
     const serviceCharge = netSubtotal * (servicePerc / 100);
@@ -285,13 +300,17 @@ async function submitOrderPayload(statusTarget, printTarget) {
         orderStatus = "Paid";
     }
 
+    let userArea = cashierInfo ? cashierInfo.area : "";
+
     const payload = {
         action: "placeOrder", 
         data: {
             orderId: activeOrderId || "", 
             tableNo: tableNo,
             kasirId: cashierInfo.userId, 
+            area: userArea, // DATA AREA DIKIRIM KE BACKEND
             discount: discountId,
+            voucherCode: appliedVoucher ? appliedVoucher.code : "", // DATA VOUCHER DIKIRIM
             tax: tax, 
             serviceCharge: serviceCharge, 
             totalAmount: grandTotal, 
@@ -301,14 +320,13 @@ async function submitOrderPayload(statusTarget, printTarget) {
         }
     };
 
-    // JALUR OFFLINE
     if (!navigator.onLine) {
         let queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || "[]");
         queue.push(payload);
         localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
 
         if (printTarget !== false && printTarget !== "None") {
-            executeRoutingPrint(payload.data.orderId || "OFFLINE-"+Date.now(), tableNo, orderStatus, paymentMethod, subtotal, discountAmount, serviceCharge, tax, grandTotal, printTarget);
+            executeRoutingPrint(payload.data.orderId || "OFFLINE-"+Date.now(), tableNo, orderStatus, paymentMethod, subtotal, totalDiscount, serviceCharge, tax, grandTotal, printTarget);
         }
 
         alert(`⚠️ Offline! Transaksi disimpan di antrean tablet & struk dicetak.`);
@@ -317,7 +335,6 @@ async function submitOrderPayload(statusTarget, printTarget) {
         return;
     }
 
-    // JALUR ONLINE
     try {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
         const json = await res.json();
@@ -326,7 +343,7 @@ async function submitOrderPayload(statusTarget, printTarget) {
             let finalOrderId = activeOrderId || json.orderId;
 
             if (printTarget !== false && printTarget !== "None") {
-                executeRoutingPrint(finalOrderId, tableNo, orderStatus, paymentMethod, subtotal, discountAmount, serviceCharge, tax, grandTotal, printTarget);
+                executeRoutingPrint(finalOrderId, tableNo, orderStatus, paymentMethod, subtotal, totalDiscount, serviceCharge, tax, grandTotal, printTarget);
             }
             
             alert(`Pesanan sukses diproses ke sistem pusat!`);
@@ -347,6 +364,8 @@ function resetCartState() {
     cart = [];
     document.getElementById('order-table').value = "";
     activeOrderId = null;
+    appliedVoucher = null; // Reset Voucher
+
     const ind = document.getElementById('draft-indicator');
     if (ind) ind.classList.add('hidden-screen');
     
@@ -361,7 +380,6 @@ async function syncOfflineQueue() {
     let queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || "[]");
     if (queue.length === 0) return;
 
-    console.log(`Mengirim ${queue.length} antrean transaksi offline ke server...`);
     for (let i = 0; i < queue.length; i++) {
         try {
             let res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(queue[i]) });
@@ -372,15 +390,15 @@ async function syncOfflineQueue() {
     updateOfflineBadge();
 }
 
-// --- PRINTER ROUTING ---
 function reprintOrder(orderId) {
     const bill = historyDataRaw.find(b => b.orderId === orderId);
     if(!bill) return;
 
     const subtotal = bill.items.reduce((sum, item) => sum + item.subtotal, 0);
-    const discountAmount = (subtotal + bill.tax + bill.serviceCharge) - bill.totalAmount; 
+    // Secara otomatis menghitung total seluruh diskon + voucher yang mengurangi GrandTotal
+    const totalDiscountAmount = (subtotal + bill.tax + bill.serviceCharge) - bill.totalAmount; 
 
-    executeRoutingPrint(bill.orderId, bill.tableNo, bill.status, bill.paymentMethod, subtotal, discountAmount, bill.serviceCharge, bill.tax, bill.totalAmount, "All", true);
+    executeRoutingPrint(bill.orderId, bill.tableNo, bill.status, bill.paymentMethod, subtotal, totalDiscountAmount, bill.serviceCharge, bill.tax, bill.totalAmount, "All", true);
 }
 
 function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discountAmount, serviceCharge, tax, grandTotal, target, isReprint = false) {
@@ -403,7 +421,7 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
             finalReceipt += `[L]${item.qty}x ${item.price} [R]${item.subtotal}\n`;
         });
         finalReceipt += `[C]--------------------------------\n[L]Subtotal [R]${subtotal}\n`;
-        if(discountAmount > 0) finalReceipt += `[L]Diskon [R]-${discountAmount}\n`;
+        if(discountAmount > 0) finalReceipt += `[L]Total Diskon/Voucher [R]-${discountAmount}\n`;
         if(serviceCharge > 0) finalReceipt += `[L]Layanan/Service [R]${serviceCharge}\n`;
         if(tax > 0) finalReceipt += `[L]Pajak/Tax [R]${tax}\n`;
         finalReceipt += `[L]<b>TOTAL</b> [R]<b>${grandTotal}</b>\n[C]--------------------------------\n`;

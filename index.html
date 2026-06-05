@@ -131,11 +131,28 @@
             <div class="p-6 border-t border-slate-800 bg-slate-950 shrink-0">
                 <div class="flex justify-between text-sm mb-2 text-slate-400"><p>Subtotal</p><p id="cart-subtotal" class="text-white font-bold">Rp 0</p></div>
                 <div id="discount-section" class="flex justify-between items-center text-sm mb-2 text-slate-400">
-                    <p>Diskon Promo</p>
+                    <p>Diskon Level</p>
                     <select id="cart-discount-select" onchange="renderCart()" class="bg-slate-800 border-none rounded-lg px-2 py-1 outline-none text-xs font-bold text-white cursor-pointer">
                         <option value="0" data-id="DISC-00">0%</option>
                     </select>
                 </div>
+
+                <!-- VOUCHER INPUT UI BARU -->
+                <div id="voucher-input-container" class="flex justify-between items-center text-sm mb-2 text-slate-400">
+                    <div class="flex items-center gap-2 w-full">
+                        <input type="text" id="voucher-input" placeholder="KODE VOUCHER" class="bg-slate-800 text-white px-3 py-2 rounded-lg text-xs outline-none focus:border-amber-500 border border-slate-700 w-full uppercase">
+                        <button onclick="applyVoucher()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 px-3 py-2 rounded-lg text-xs font-bold transition">Klaim</button>
+                    </div>
+                </div>
+                <div id="active-voucher-info" class="hidden justify-between items-center text-sm mb-3 bg-emerald-950/30 border border-emerald-500/20 p-2.5 rounded-xl text-emerald-400">
+                    <p class="text-xs font-bold"><i data-lucide="ticket" class="w-4 h-4 inline"></i> <span id="active-voucher-code"></span></p>
+                    <div class="flex items-center gap-2 text-xs">
+                        <span id="active-voucher-value" class="font-bold"></span>
+                        <button onclick="removeVoucher()" class="text-rose-500 hover:text-rose-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+                <!-- ===================== -->
+
                 <div class="flex justify-between text-sm mb-5 text-slate-400"><p>Pajak & Servis</p><p id="cart-tax" class="text-white font-bold">Rp 0</p></div>
                 
                 <div class="flex justify-between items-end mb-6 bg-slate-900 p-4 rounded-2xl border border-slate-800">
@@ -152,8 +169,6 @@
                     </button>
                 </div>
             </div>
-        </div>
-    </div>
 
     <!-- 5. FLOATING CART BUTTON (HANYA MUNCUL DI HP/TABLET PORTRAIT) [1] -->
     <div id="mobile-cart-trigger" class="md:hidden fixed bottom-6 left-4 right-4 z-35 hidden-screen smooth-transition">

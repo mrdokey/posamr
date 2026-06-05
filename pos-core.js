@@ -3,8 +3,9 @@
  */
 
 async function fetchConfigBg() {
+    let area = cashierInfo ? cashierInfo.area : "";
     try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) });
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig', data: { area: area } }) });
         const json = await res.json();
         if(json.success) {
             const nameEl = document.getElementById('login-resto-name');
@@ -46,6 +47,7 @@ async function initApp() {
     const localMenu = localStorage.getItem('localMenu');
     const localConfig = localStorage.getItem('localConfig');
     const localDisc = localStorage.getItem('localDiscounts');
+    const localVouchers = localStorage.getItem('localVouchers');
     
     if(localConfig) { configData = JSON.parse(localConfig); applyConfig(); }
     if(localMenu) { 
@@ -54,9 +56,12 @@ async function initApp() {
         renderMenuHTML(filteredData); 
     }
     if(localDisc) { discountData = JSON.parse(localDisc); renderDiscounts(); }
+    if(localVouchers) { voucherData = JSON.parse(localVouchers); }
+
+    let userArea = cashierInfo ? cashierInfo.area : "";
 
     try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getMenu' }) });
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getMenu', data: { area: userArea } }) });
         const json = await res.json();
         if(json.success) {
             menuData = json.data;
@@ -65,19 +70,26 @@ async function initApp() {
                 filterMenu(currentCategory, document.getElementById(`btn-cat-${currentCategory}`)); 
             }
         }
-        const resConf = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) });
+        const resConf = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig', data: { area: userArea } }) });
         const jsonConf = await resConf.json();
         if(jsonConf.success) {
             configData = jsonConf.data;
             localStorage.setItem('localConfig', JSON.stringify(configData));
             applyConfig();
         }
-        const resDisc = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getDiscounts' }) });
+        const resDisc = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getDiscounts', data: { area: userArea } }) });
         const jsonDisc = await resDisc.json();
         if(jsonDisc.success) {
             discountData = jsonDisc.data;
             localStorage.setItem('localDiscounts', JSON.stringify(discountData));
             renderDiscounts();
+        }
+        // FETCH VOUCHERS PER AREA
+        const resVoucher = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getVouchers', data: { area: userArea } }) });
+        const jsonVoucher = await resVoucher.json();
+        if(jsonVoucher.success) {
+            voucherData = jsonVoucher.data;
+            localStorage.setItem('localVouchers', JSON.stringify(voucherData));
         }
     } catch (e) { document.getElementById('offline-badge').classList.remove('hidden'); }
 }
@@ -147,7 +159,6 @@ function renderMenuHTML(items) {
         const totalSoldData = parseInt(item.totalSold) || 0; 
         const isHot = totalSoldData > 10;
         
-        // REVISI: Hanya stiker HOT saja, teks terjual di bawah kita hilangkan [2]
         const badgeHtml = isHot ? `<div class="absolute top-2 left-2 bg-rose-600 text-white text-[9px] font-black px-2.5 py-1 rounded-md shadow-md animate-pulse">🔥 HOT</div>` : ``;
 
         return `
@@ -169,6 +180,35 @@ function renderMenuHTML(items) {
     lucide.createIcons();
 }
 
+// --- FUNGSI VOUCHER ---
+function applyVoucher() {
+    const inputEl = document.getElementById('voucher-input');
+    const input = inputEl.value.trim().toUpperCase();
+    if (!input) return alert("Masukkan kode voucher terlebih dahulu!");
+    
+    const voucher = voucherData.find(v => v.code.toUpperCase() === input);
+    if (!voucher) {
+        alert("Voucher tidak ditemukan atau tidak berlaku untuk cabang ini!");
+        return;
+    }
+    
+    const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
+    if (subtotal < voucher.minPurchase) {
+        alert(`Minimal belanja Rp ${voucher.minPurchase.toLocaleString()} untuk menggunakan voucher ini!`);
+        return;
+    }
+    
+    appliedVoucher = voucher;
+    inputEl.value = "";
+    renderCart();
+}
+
+function removeVoucher() {
+    appliedVoucher = null;
+    renderCart();
+}
+
+// --- KERANJANG BELANJA ---
 function addToCart(id, name, price, route) {
     if (activeOrderId) {
         if(!confirm("Anda sedang memproses pelunasan. Tambah menu baru ke bill ini?")) return;
@@ -194,21 +234,65 @@ function addNote(index) {
     if(note !== null) { cart[index].notes = note; renderCart(); }
 }
 
+function clearCart() {
+    if(confirm("Kosongkan keranjang kasir?")) {
+        cart = [];
+        document.getElementById('order-table').value = "";
+        activeOrderId = null;
+        appliedVoucher = null; // Reset voucher
+        renderCart();
+    }
+}
+
 function renderCart() {
     const container = document.getElementById('cart-container');
     if (!container) return;
 
     const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
     
+    // Diskon Promo (Member/Loyalty)
     const selectDisc = document.getElementById('cart-discount-select');
     let discVal = parseFloat(selectDisc ? selectDisc.value : 0 || 0);
     let discountAmount = discVal < 1 ? subtotal * discVal : subtotal * (discVal / 100); 
-    const netSubtotal = subtotal - discountAmount;
+    
+    // Diskon Voucher
+    let voucherAmount = 0;
+    if (appliedVoucher) {
+        if (subtotal < appliedVoucher.minPurchase) {
+            appliedVoucher = null; // Auto hapus jika syarat gugur
+            alert("Voucher otomatis dilepas karena minimal belanja tidak terpenuhi.");
+        } else {
+            if (appliedVoucher.type.toLowerCase() === 'percent') {
+                voucherAmount = subtotal * (appliedVoucher.value / 100);
+            } else {
+                voucherAmount = appliedVoucher.value;
+            }
+        }
+    }
+
+    // UI Voucher Toggler
+    const vInfo = document.getElementById('active-voucher-info');
+    const vInputCont = document.getElementById('voucher-input-container');
+    if (appliedVoucher) {
+        vInfo.classList.remove('hidden');
+        vInfo.classList.add('flex');
+        vInputCont.classList.add('hidden');
+        document.getElementById('active-voucher-code').innerText = appliedVoucher.code;
+        document.getElementById('active-voucher-value').innerText = "- Rp " + voucherAmount.toLocaleString();
+    } else {
+        vInfo.classList.add('hidden');
+        vInfo.classList.remove('flex');
+        vInputCont.classList.remove('hidden');
+    }
+
+    const totalDiscounts = discountAmount + voucherAmount;
+    const netSubtotal = Math.max(0, subtotal - totalDiscounts); // Cegah minus
 
     const servicePerc = parseFloat(configData["SERVICE_CHARGE"] || 0);
     const serviceCharge = netSubtotal * (servicePerc / 100);
     const taxPerc = parseFloat(configData["PAJAK_PB1"] || 0); 
     const tax = (netSubtotal + serviceCharge) * (taxPerc / 100);
+    
     const grandTotal = netSubtotal + serviceCharge + tax;
 
     document.getElementById('cart-count').innerText = cart.reduce((sum, item) => sum + item.qty, 0);
