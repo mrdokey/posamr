@@ -1,12 +1,17 @@
 /**
  * MODUL 3: CHECKOUT, HISTORY, VOID, PRINTER & RESPONSIVE PORTRAIT
+ * UPDATE: Alur Kerja Bypass Draft (Cetak & Aktifkan) & Multi-Cabang Aman
  */
 
+// --- POLLING DRAFT UNTUK KASIR (MULTI-CABANG) ---
 async function checkNewDraftNotifications() {
     if (!navigator.onLine) return;
     let userArea = cashierInfo ? cashierInfo.area : "";
     try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "getHistoryOrders", data: { area: userArea } }) });
+        const res = await fetch(GAS_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: "getHistoryOrders", data: { area: userArea } }) 
+        });
         const json = await res.json();
         if (json.success) {
             historyDataRaw = json.data;
@@ -20,11 +25,13 @@ async function checkNewDraftNotifications() {
     } catch(e) {}
 }
 
+// Polling Otomatis Tiap 10 Detik
 if (pollInterval === null) {
     checkNewDraftNotifications(); 
     pollInterval = setInterval(checkNewDraftNotifications, 10000);
 }
 
+// --- PORTRAIT SENSORS & FLOATING CART ---
 function toggleMobileCart() {
     const panel = document.getElementById('cart-panel');
     const trigger = document.getElementById('mobile-cart-trigger');
@@ -58,6 +65,7 @@ function updateMobileCartButtonVisibility() {
     }
 }
 
+// --- RIWAYAT & DRAFT ---
 async function openHistoryModal() {
     openModal('modal-history');
     switchTab('Draft'); 
@@ -88,7 +96,10 @@ async function switchTab(tabName) {
     let userArea = cashierInfo ? cashierInfo.area : "";
 
     try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "getHistoryOrders", data: { area: userArea } }) });
+        const res = await fetch(GAS_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: "getHistoryOrders", data: { area: userArea } }) 
+        });
         const json = await res.json();
         
         if (json.success) {
@@ -99,8 +110,12 @@ async function switchTab(tabName) {
                 container.innerHTML = filteredData.map(bill => {
                     let actionButtons = "";
                     if (tabName === "Draft") {
+                        // REVOLUSI ALUR DRAFT: Menambahkan Tombol "Cetak & Aktifkan" untuk bypass order langsung ke dapur/bar
                         actionButtons = `
-                            <button onclick="editDraft('${bill.orderId}')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition">Proses Draft</button>
+                            <button onclick="activateAndPrintDraft('${bill.orderId}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-md">
+                                <i data-lucide="printer" class="w-3.5 h-3.5"></i> Cetak & Aktifkan
+                            </button>
+                            <button onclick="editDraft('${bill.orderId}')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition">Edit</button>
                             <button onclick="reqVoid('${bill.orderId}', 'Draft Bebas')" class="bg-red-500/10 text-red-500 px-3 py-2 rounded-xl text-xs font-bold hover:bg-red-500/20 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                         `;
                     } else if (tabName === "Open") {
@@ -139,6 +154,7 @@ async function switchTab(tabName) {
     }
 }
 
+// BUKA PESANAN (DRAFT / OPEN) UNTUK DIEDIT
 function editDraft(orderId) {
     const bill = historyDataRaw.find(b => b.orderId === orderId);
     if(!bill) return;
@@ -160,7 +176,7 @@ function editDraft(orderId) {
         }
     }
 
-    // PENGEMBALIAN DATA VOUCHER DARI DRAFT/OPEN
+    // Pemulihan data voucher yang terpakai pada Draft/Open
     if (bill.voucherCode) {
         const v = voucherData.find(vx => vx.code === bill.voucherCode);
         if (v) appliedVoucher = v;
@@ -179,6 +195,100 @@ function editDraft(orderId) {
     }
 }
 
+// --- BYPASS ALUR KERJA DRAFT (CETAK & MEJA AKTIF) ---
+async function activateAndPrintDraft(orderId) {
+    const bill = historyDataRaw.find(b => b.orderId === orderId);
+    if (!bill) return;
+
+    if (!confirm(`Cetak pesanan ke Dapur & Bar, lalu aktifkan Meja ${bill.tableNo}?`)) {
+        return;
+    }
+
+    const subtotal = bill.items.reduce((sum, item) => sum + item.subtotal, 0);
+    const totalDiscountAmount = (subtotal + bill.tax + bill.serviceCharge) - bill.totalAmount;
+
+    // 1. Jalankan Cetak Headless via Helper Direct routing
+    executeRoutingPrintDirect(bill, subtotal, totalDiscountAmount);
+
+    // 2. Kirim update status ke server (mengubah status Draft ke Open)
+    let userArea = cashierInfo ? cashierInfo.area : "";
+    const payload = {
+        action: "placeOrder",
+        data: {
+            orderId: bill.orderId,
+            tableNo: bill.tableNo,
+            kasirId: cashierInfo.userId,
+            area: userArea,
+            discount: bill.discountId || "DISC-00",
+            voucherCode: bill.voucherCode || "",
+            tax: bill.tax,
+            serviceCharge: bill.serviceCharge,
+            totalAmount: bill.totalAmount,
+            paymentMethod: "-",
+            orderStatus: "Open", // Diubah menjadi Open (Meja Aktif)
+            items: bill.items.map(i => ({
+                menuId: i.menuId,
+                qty: i.qty,
+                price: i.price,
+                subtotal: i.subtotal,
+                notes: i.notes || "",
+                route: i.route || "Kitchen"
+            }))
+        }
+    };
+
+    try {
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const json = await res.json();
+        if (json.success) {
+            alert(`Meja ${bill.tableNo} berhasil diaktifkan & pesanan dikirim ke printer!`);
+            switchTab('Open'); // Geser tab secara otomatis
+            checkNewDraftNotifications(); // Refresh jumlah notifikasi
+        } else {
+            alert("Gagal mengaktifkan meja: " + json.message);
+        }
+    } catch (e) {
+        alert("Gagal menghubungi server utama untuk sinkronisasi database.");
+    }
+}
+
+// ENGINE ROUTING PRINTER KHUSUS DRAFT DIRECT (HEADLESS)
+function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
+    const currentTimeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    let finalReceipt = "";
+
+    // Dapur
+    const kitchenItems = bill.items.filter(item => item.route === "Kitchen");
+    if (kitchenItems.length > 0) {
+        finalReceipt += `[C]<b>KITCHEN ORDER (DAPUR)</b>\n[L]Meja : <b><font size="big">${bill.tableNo}</font></b>\n[L]ID   : ${bill.orderId}\n[L]Jam  : <b>${currentTimeStr} WITA</b>\n[C]--------------------------------\n`;
+        kitchenItems.forEach(item => {
+            finalReceipt += `[L]<b>[ ] ${item.qty}x  ${item.name}</b>\n`;
+            if(item.notes) finalReceipt += `[L]   *Catatan: ${item.notes}\n`;
+            finalReceipt += `[L]--------------------------------\n`;
+        });
+        finalReceipt += `\n\n\n[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
+    }
+
+    // Bar
+    const barItems = bill.items.filter(item => item.route === "Bar");
+    if (barItems.length > 0) {
+        finalReceipt += `[C]<b>BAR ORDER (MINUMAN)</b>\n[L]Meja : <b><font size="big">${bill.tableNo}</font></b>\n[L]ID   : ${bill.orderId}\n[L]Jam  : <b>${currentTimeStr} WITA</b>\n[C]--------------------------------\n`;
+        barItems.forEach(item => {
+            finalReceipt += `[L]<b>[ ] ${item.qty}x  ${item.name}</b>\n`;
+            if(item.notes) finalReceipt += `[L]   *Catatan: ${item.notes}\n`;
+            finalReceipt += `[L]--------------------------------\n`;
+        });
+        finalReceipt += `\n\n\n`;
+    }
+
+    if (finalReceipt !== "") {
+        const base64Data = btoa(unescape(encodeURIComponent(finalReceipt)));
+        const intentUrl = `intent:base64,${base64Data}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
+        window.location.href = intentUrl;
+    }
+}
+
+// --- SISTEM VOID / PEMBATALAN PESANAN (MULTI-CABANG) ---
 function reqVoid(orderId, type) {
     voidTargetId = orderId;
     const bill = historyDataRaw.find(b => b.orderId === orderId);
@@ -244,6 +354,7 @@ async function executeVoidVerified(reasonText) {
     } catch(e) { alert("Gagal koneksi server."); }
 }
 
+// --- SISTEM PEMROSESAN UTAMA (MURNI KASIR) ---
 function saveDraft() {
     if(cart.length === 0) return alert("Keranjang kosong!");
     if(!document.getElementById('order-table').value.trim()) return alert("Isi Nomor Meja!");
@@ -308,9 +419,9 @@ async function submitOrderPayload(statusTarget, printTarget) {
             orderId: activeOrderId || "", 
             tableNo: tableNo,
             kasirId: cashierInfo.userId, 
-            area: userArea, // DATA AREA DIKIRIM KE BACKEND
+            area: userArea, 
             discount: discountId,
-            voucherCode: appliedVoucher ? appliedVoucher.code : "", // DATA VOUCHER DIKIRIM
+            voucherCode: appliedVoucher ? appliedVoucher.code : "", 
             tax: tax, 
             serviceCharge: serviceCharge, 
             totalAmount: grandTotal, 
@@ -320,6 +431,7 @@ async function submitOrderPayload(statusTarget, printTarget) {
         }
     };
 
+    // JALUR OFFLINE
     if (!navigator.onLine) {
         let queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || "[]");
         queue.push(payload);
@@ -335,6 +447,7 @@ async function submitOrderPayload(statusTarget, printTarget) {
         return;
     }
 
+    // JALUR ONLINE
     try {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
         const json = await res.json();
@@ -360,8 +473,6 @@ async function submitOrderPayload(statusTarget, printTarget) {
     }
 }
 
-// FILE: pos-checkout.js (Bagian resetCartState)
-
 function resetCartState() {
     cart = [];
     document.getElementById('order-table').value = "";
@@ -371,10 +482,6 @@ function resetCartState() {
     const ind = document.getElementById('draft-indicator');
     if (ind) ind.classList.add('hidden-screen');
     
-    // Kembalikan teks tombol draft ke kondisi default
-    const draftText = document.getElementById('btn-draft-text');
-    if (draftText) draftText.innerText = "Simpan Draft Saja";
-
     const selectDisc = document.getElementById('cart-discount-select');
     if (selectDisc) selectDisc.selectedIndex = 0;
     
@@ -396,17 +503,18 @@ async function syncOfflineQueue() {
     updateOfflineBadge();
 }
 
+// --- REPRINT ---
 function reprintOrder(orderId) {
     const bill = historyDataRaw.find(b => b.orderId === orderId);
     if(!bill) return;
 
     const subtotal = bill.items.reduce((sum, item) => sum + item.subtotal, 0);
-    // Secara otomatis menghitung total seluruh diskon + voucher yang mengurangi GrandTotal
     const totalDiscountAmount = (subtotal + bill.tax + bill.serviceCharge) - bill.totalAmount; 
 
     executeRoutingPrint(bill.orderId, bill.tableNo, bill.status, bill.paymentMethod, subtotal, totalDiscountAmount, bill.serviceCharge, bill.tax, bill.totalAmount, "All", true);
 }
 
+// --- PRINTER ROUTING (RawBT) ---
 function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discountAmount, serviceCharge, tax, grandTotal, target, isReprint = false) {
     const namaResto = configData["NAMA_PERUSAAN"] || "RESTO";
     const alamat = configData["ALAMAT"] || "";
