@@ -1,11 +1,10 @@
 /**
  * MODUL 4: WAITER/PELAYAN ENGINE (FULL RESPONSIVE & DRAFT ORDER)
- * UPDATE: Proteksi Ketat Kasir, Multi-Branch Area, & UI Card Fix
+ * UPDATE: Fix Kategori Spasi Spreadsheet & Clone CSS Card Kasir
  */
 
 lucide.createIcons();
 
-// URL GAS (Hardcoded)
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxUP-K2iIaP8qF8ZBjeOI3h0OG7du_wcJQE2qM507YTb7magRRZejs6DZmqzy-Dulgy/exec";
 const STORAGE_USER = "MRD_WAITER_SESSION";
 const OFFLINE_QUEUE_KEY = "MRD_OFFLINE_WAITER_QUEUE";
@@ -23,7 +22,6 @@ let filteredData = [];
 let cart = [];
 let currentCategory = 'Semua';
 
-// --- AUTO-ENTER PIN LOGIN WAITER ---
 let loginPinValue = "";
 
 function pressNum(num) {
@@ -63,7 +61,6 @@ function updateLoginDots() {
     });
 }
 
-// --- STARTUP ---
 window.onload = () => {
     setTimeout(() => {
         const splash = document.getElementById('splash-screen');
@@ -85,12 +82,10 @@ function checkState() {
         fetchConfigBg();
         clearPin();
     } else {
-        // FILTER KEAMANAN STARTUP: Tendang keluar jika dia adalah Kasir
         const allowedRoles = ["admin", "hrd", "manager", "owner"];
         const jobdeskClean = cashierInfo.jobdesk ? cashierInfo.jobdesk.toLowerCase().trim() : "";
         const roleClean = cashierInfo.role ? cashierInfo.role.toLowerCase().trim() : "";
 
-        // Jika dia Kasir ATAU (bukan pelayan dan bukan manajemen), HAPUS SESI!
         if (jobdeskClean === "kasir" || (jobdeskClean !== "pelayan" && !allowedRoles.includes(roleClean))) {
             localStorage.removeItem(STORAGE_USER);
             window.location.reload();
@@ -119,7 +114,6 @@ function resetLicense() {
     }
 }
 
-// --- API ACTIONS ---
 async function fetchConfigBg() {
     try {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) });
@@ -145,19 +139,14 @@ async function loginWaiter() {
             const jobdeskClean = json.jobdesk ? json.jobdesk.toLowerCase().trim() : "";
             const roleClean = json.role ? json.role.toLowerCase().trim() : "";
 
-            // BLOKIR KERAS JIKA JOBDESK = KASIR
             if (jobdeskClean === "kasir") {
                 alert("Akses Ditolak! Anda adalah Kasir. Silakan login di Mesin POS Utama.");
                 clearPin();
                 statusText.innerText = "";
-            } 
-            // LOLOSKAN JIKA PELAYAN ATAU MANAJEMEN
-            else if (jobdeskClean === "pelayan" || allowedRoles.includes(roleClean)) {
+            } else if (jobdeskClean === "pelayan" || allowedRoles.includes(roleClean)) {
                 localStorage.setItem(STORAGE_USER, JSON.stringify(json));
                 window.location.reload();
-            } 
-            // SELAIN ITU TOLAK
-            else {
+            } else {
                 alert("Akses Ditolak! Aplikasi ini khusus Pelayan.");
                 clearPin();
                 statusText.innerText = "";
@@ -217,7 +206,6 @@ function applyConfig() {
     if(configData["NAMA_PERUSAAN"] && titleEl) titleEl.innerText = configData["NAMA_PERUSAAN"] + " ORDER";
 }
 
-// --- RENDER MENU & SEARCH ---
 function filterMenu(cat, btnElement = null) {
     currentCategory = cat;
     if (btnElement) {
@@ -236,13 +224,19 @@ function searchMenu(val) { applyFilters(val.toLowerCase()); }
 function applyFilters(searchStr = "") {
     const keyword = searchStr || document.getElementById('search-menu').value.toLowerCase();
     filteredData = menuData;
-    if(currentCategory !== 'Semua') { filteredData = filteredData.filter(m => m.category === currentCategory); }
+    
+    if(currentCategory !== 'Semua') { 
+        // PERBAIKAN: Gunakan .trim() untuk mengabaikan spasi nyasar dari Spreadsheet
+        filteredData = filteredData.filter(m => (m.category || "").trim() === currentCategory); 
+    }
+    
     if(keyword !== "") {
         filteredData = filteredData.filter(m => 
             m.name.toLowerCase().includes(keyword) || 
             (m.description && m.description.toLowerCase().includes(keyword))
         );
     }
+    
     const container = document.getElementById('menu-container');
     if (container) {
         container.style.opacity = '0';
@@ -253,7 +247,6 @@ function applyFilters(searchStr = "") {
     }
 }
 
-// PERBAIKAN UI CARD MENU (h-full & z-10)
 function renderMenuHTML(items) {
     const container = document.getElementById('menu-container');
     if (!container) return;
@@ -265,21 +258,16 @@ function renderMenuHTML(items) {
     }
 
     container.innerHTML = items.map(item => {
-        // SANITASI EKSTRIM: Mencegah karakter dari Spreadsheet merusak HTML DOM
-        const safeId = String(item.id || '').replace(/'/g, "\\'").replace(/"/g, "&quot;");
-        const safeName = String(item.name || 'Menu').replace(/'/g, "\\'").replace(/"/g, "&quot;");
-        const safeRoute = String(item.route || 'Kitchen').replace(/'/g, "\\'").replace(/"/g, "&quot;");
-        const safeDesc = String(item.description || '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        const safeCat = String(item.category || '-');
-        const safePrice = Number(item.price) || 0;
+        const safeName = String(item.name || 'Menu').replace(/'/g, "\\'");
+        const safeCat = String(item.category || '-').trim(); // Bersihkan spasi
         
         const fallbackImg = `https://ui-avatars.com/api/?name=${encodeURIComponent(safeName)}&background=1e293b&color=f59e0b&size=200&font-size=0.33`;
         const isHot = (parseInt(item.totalSold) || 0) > 10;
         const badgeHtml = isHot ? `<div class="absolute top-2 left-2 bg-rose-600 text-white text-[9px] font-black px-2 py-1 rounded-md shadow-md animate-pulse">🔥 HOT</div>` : ``;
 
-        // STRUKTUR CSS KASIR (Terbukti Stabil)
+        // PERBAIKAN: Struktur CSS di-copy 100% dari Kasir yang terbukti aman
         return `
-        <div onclick="addToCart('${safeId}', '${safeName}', ${safePrice}, '${safeRoute}')" class="menu-card bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden cursor-pointer active:scale-95 transition-transform relative">
+        <div onclick="addToCart('${item.id}', '${safeName}', ${item.price}, '${item.route}')" class="menu-card bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden cursor-pointer active:scale-95 transition-transform relative">
             <div class="h-28 relative shrink-0 overflow-hidden bg-slate-900">
                 <img src="${item.image || fallbackImg}" onerror="this.onerror=null; this.src='${fallbackImg}';" class="w-full h-full object-cover">
                 ${badgeHtml}
@@ -288,9 +276,9 @@ function renderMenuHTML(items) {
             <div class="p-3 flex flex-col justify-between flex-1 bg-slate-800">
                 <div>
                     <h3 class="text-xs font-bold text-white line-clamp-2 leading-snug">${safeName}</h3>
-                    <p class="text-[9px] text-slate-400 mt-1 line-clamp-2">${safeDesc}</p>
+                    <p class="text-[9px] text-slate-400 mt-1 line-clamp-2">${item.description || ''}</p>
                 </div>
-                <p class="text-xs font-black text-amber-500 mt-2 tracking-tight">Rp ${safePrice.toLocaleString('id-ID')}</p>
+                <p class="text-xs font-black text-amber-500 mt-2 tracking-tight">Rp ${(item.price || 0).toLocaleString('id-ID')}</p>
             </div>
         </div>
     `}).join('');
@@ -298,7 +286,6 @@ function renderMenuHTML(items) {
     if(typeof lucide !== 'undefined') lucide.createIcons();
 }
 
-// --- KERANJANG BELANJA (CART SYSTEM) ---
 function addToCart(id, name, price, route) {
     const exist = cart.find(i => i.menuId === id);
     if(exist) { exist.qty++; exist.subtotal = exist.qty * price; }
@@ -333,10 +320,8 @@ function renderCart() {
 
     const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
 
-    // Update Grand Total di Laci
     document.getElementById('cart-grandtotal').innerText = "Rp " + subtotal.toLocaleString('id-ID');
 
-    // Update di Tombol Melayang Mobile
     const mobCount = document.getElementById('mobile-cart-count');
     const mobTotal = document.getElementById('mobile-cart-total');
     if (mobCount) mobCount.innerText = cart.reduce((sum, item) => sum + item.qty, 0);
@@ -369,7 +354,6 @@ function renderCart() {
     lucide.createIcons();
 }
 
-// --- PORTRAIT SENSORS & FLOATING BUTTON ---
 function toggleMobileCart() {
     const panel = document.getElementById('cart-panel');
     const trigger = document.getElementById('mobile-cart-trigger');
@@ -396,7 +380,6 @@ function updateMobileCartButtonVisibility() {
     }
 }
 
-// --- SEND ORDER TO CASHIER (STATUS: DRAFT) ---
 async function sendOrderToCashier() {
     if(cart.length === 0) return alert("Keranjang kosong!");
     const tableNo = document.getElementById('order-table').value.trim();
@@ -408,17 +391,17 @@ async function sendOrderToCashier() {
     const payload = {
         action: "placeOrder", 
         data: {
-            orderId: "", // ID Baru
+            orderId: "", 
             tableNo: tableNo,
             kasirId: cashierInfo.userId, 
-            area: userArea, // DATA AREA DIKIRIM
+            area: userArea, 
             discount: "DISC-00", 
             voucherCode: "",
             tax: 0, 
             serviceCharge: 0, 
             totalAmount: subtotal, 
             paymentMethod: "-",
-            orderStatus: "Draft", // KIRIM SEBAGAI DRAFT
+            orderStatus: "Draft", 
             items: cart
         }
     };
@@ -466,7 +449,6 @@ async function sendOrderToCashier() {
     }
 }
 
-// Auto-Sync Event saat HP pelayan kembali online
 window.addEventListener('online', async () => {
     let queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || "[]");
     if (queue.length > 0) {
