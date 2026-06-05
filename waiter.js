@@ -247,6 +247,8 @@ function applyFilters(searchStr = "") {
     }
 }
 
+// FILE: waiter.js (Timpa fungsi renderMenuHTML ini)
+
 function renderMenuHTML(items) {
     const container = document.getElementById('menu-container');
     if (!container) return;
@@ -258,28 +260,40 @@ function renderMenuHTML(items) {
     }
 
     container.innerHTML = items.map(item => {
-        const safeName = String(item.name || 'Menu').replace(/'/g, "\\'");
-        const safeCat = String(item.category || '-').trim(); // Bersihkan spasi
+        const safeId = String(item.id || '').replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        const safeName = String(item.name || 'Menu').replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        const safeRoute = String(item.route || 'Kitchen').replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        const safeDesc = String(item.description || '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const safeCat = String(item.category || '-').trim();
+        const safePrice = Number(item.price) || 0;
         
         const fallbackImg = `https://ui-avatars.com/api/?name=${encodeURIComponent(safeName)}&background=1e293b&color=f59e0b&size=200&font-size=0.33`;
         const isHot = (parseInt(item.totalSold) || 0) > 10;
         const badgeHtml = isHot ? `<div class="absolute top-2 left-2 bg-rose-600 text-white text-[9px] font-black px-2 py-1 rounded-md shadow-md animate-pulse">🔥 HOT</div>` : ``;
 
-        // PERBAIKAN: Struktur CSS di-copy 100% dari Kasir yang terbukti aman
+        // PERBAIKAN FINAL: 
+        // 1. Card utama dikunci tingginya (h-[240px])
+        // 2. Gambar dikunci (h-[130px])
+        // 3. Teks dikunci (h-[110px])
         return `
-        <div onclick="addToCart('${item.id}', '${safeName}', ${item.price}, '${item.route}')" class="menu-card bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden cursor-pointer active:scale-95 transition-transform relative">
-            <div class="h-28 relative shrink-0 overflow-hidden bg-slate-900">
+        <div onclick="addToCart('${safeId}', '${safeName}', ${safePrice}, '${safeRoute}')" class="bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden cursor-pointer active:scale-95 transition-transform relative h-[240px]">
+            
+            <!-- Area Gambar (Tinggi Tetap) -->
+            <div class="h-[130px] w-full relative shrink-0 overflow-hidden bg-slate-900">
                 <img src="${item.image || fallbackImg}" onerror="this.onerror=null; this.src='${fallbackImg}';" class="w-full h-full object-cover">
                 ${badgeHtml}
                 <div class="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-md text-slate-300 text-[9px] font-bold px-2 py-0.5 rounded border border-slate-700">${safeCat}</div>
             </div>
-            <div class="p-3 flex flex-col justify-between flex-1 bg-slate-800">
+
+            <!-- Area Teks (Tinggi Tetap) -->
+            <div class="h-[110px] p-3 flex flex-col justify-between bg-slate-800 w-full">
                 <div>
                     <h3 class="text-xs font-bold text-white line-clamp-2 leading-snug">${safeName}</h3>
-                    <p class="text-[9px] text-slate-400 mt-1 line-clamp-2">${item.description || ''}</p>
+                    <p class="text-[9px] text-slate-400 mt-1 line-clamp-2">${safeDesc}</p>
                 </div>
-                <p class="text-xs font-black text-amber-500 mt-2 tracking-tight">Rp ${(item.price || 0).toLocaleString('id-ID')}</p>
+                <p class="text-xs font-black text-amber-500 mt-1 tracking-tight">Rp ${safePrice.toLocaleString('id-ID')}</p>
             </div>
+
         </div>
     `}).join('');
     
