@@ -360,6 +360,8 @@ async function submitOrderPayload(statusTarget, printTarget) {
     }
 }
 
+// FILE: pos-checkout.js (Bagian resetCartState)
+
 function resetCartState() {
     cart = [];
     document.getElementById('order-table').value = "";
@@ -369,6 +371,10 @@ function resetCartState() {
     const ind = document.getElementById('draft-indicator');
     if (ind) ind.classList.add('hidden-screen');
     
+    // Kembalikan teks tombol draft ke kondisi default
+    const draftText = document.getElementById('btn-draft-text');
+    if (draftText) draftText.innerText = "Simpan Draft Saja";
+
     const selectDisc = document.getElementById('cart-discount-select');
     if (selectDisc) selectDisc.selectedIndex = 0;
     

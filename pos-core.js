@@ -208,17 +208,30 @@ function removeVoucher() {
     renderCart();
 }
 
-// --- KERANJANG BELANJA ---
+// FILE: pos-core.js (Bagian addToCart)
+
 function addToCart(id, name, price, route) {
     if (activeOrderId) {
         if(!confirm("Anda sedang memproses pelunasan. Tambah menu baru ke bill ini?")) return;
         activeOrderId = null;
-        document.getElementById('btn-save-bill').classList.remove('hidden-screen');
+        // Penyesuaian: Menghapus manipulasi kelas hidden-screen pada tombol yang sudah tidak digunakan
     }
 
     const exist = cart.find(i => i.menuId === id);
-    if(exist) { exist.qty++; exist.subtotal = exist.qty * price; }
-    else { cart.push({ menuId: id, name: name, price: price, qty: 1, subtotal: price, notes: '', route: route || 'Kitchen' }); }
+    if(exist) { 
+        exist.qty++; 
+        exist.subtotal = exist.qty * price; 
+    } else { 
+        cart.push({ 
+            menuId: id, 
+            name: name, 
+            price: price, 
+            qty: 1, 
+            subtotal: price, 
+            notes: '', 
+            route: route || 'Kitchen' 
+        }); 
+    }
     renderCart();
 }
 

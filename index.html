@@ -160,15 +160,19 @@
                     <p id="cart-grandtotal" class="text-3xl font-black text-amber-500 tracking-tight">Rp 0</p>
                 </div>
                 
-                <div class="flex flex-col gap-3">
-                    <button id="btn-save-draft" onclick="saveDraft()" class="w-full py-4 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-700 smooth-transition active:scale-95 flex items-center justify-center gap-2 border border-slate-700">
-                        <i data-lucide="send" class="w-5 h-5 text-amber-500"></i> <span id="btn-draft-text">KIRIM ORDER (DRAFT)</span>
-                    </button>
-                    <button id="btn-cashier-print" onclick="openPrintModal()" class="hidden-screen w-full py-4 bg-emerald-600 text-white rounded-xl font-black shadow-lg hover:bg-emerald-700 smooth-transition active:scale-95 flex items-center justify-center gap-2">
-                        <i data-lucide="printer" class="w-5 h-5"></i> PROSES PESANAN
-                    </button>
-                </div>
-            </div>
+                <!-- FILE: index.html (Bagian Panel Keranjang Belanja Kasir) -->
+
+<div class="flex flex-col gap-3">
+    <!-- TOMBOL UTAMA KASIR: BAYAR & PROSES (Selalu Aktif & Terlihat) -->
+    <button id="btn-cashier-print" onclick="openPrintModal()" class="w-full py-4 bg-emerald-600 text-white rounded-xl font-black shadow-lg hover:bg-emerald-700 smooth-transition active:scale-95 flex items-center justify-center gap-2">
+        <i data-lucide="calculator" class="w-5 h-5"></i> <span>BAYAR / PROSES PESANAN</span>
+    </button>
+
+    <!-- TOMBOL SEKUNDER KASIR: SIMPAN DRAFT (Untuk menahan meja / antrean) -->
+    <button id="btn-save-draft" onclick="saveDraft()" class="w-full py-3 bg-slate-800 text-slate-300 rounded-xl font-bold hover:bg-slate-700 smooth-transition active:scale-95 flex items-center justify-center gap-2 border border-slate-700 text-sm">
+        <i data-lucide="save" class="w-4 h-4 text-amber-500"></i> <span id="btn-draft-text">Simpan Draft Saja</span>
+    </button>
+</div>
 
     <!-- 5. FLOATING CART BUTTON (HANYA MUNCUL DI HP/TABLET PORTRAIT) [1] -->
     <div id="mobile-cart-trigger" class="md:hidden fixed bottom-6 left-4 right-4 z-35 hidden-screen smooth-transition">
