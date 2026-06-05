@@ -1,6 +1,6 @@
 /**
  * MODUL 3: CHECKOUT, HISTORY, VOID, PRINTER & RESPONSIVE PORTRAIT
- * UPDATE: Integrasi Penghitungan Tunai Otomatis & Popup Kembalian Sukses
+ * UPDATE: Fix Auto-Sync History & Cashier Checkout Flow
  */
 
 let currentTransactionTotal = 0; // State Penyimpan Tagihan Aktif
@@ -132,7 +132,7 @@ async function switchTab(tabName) {
                     <div class="bg-slate-950 border border-slate-800 p-5 rounded-2xl flex justify-between items-center shadow-md animate-slide-up">
                         <div>
                             <h4 class="font-black text-white text-lg flex items-center gap-2">${bill.tableNo} <span class="bg-slate-800 text-[10px] px-2 py-0.5 rounded-full font-normal text-slate-400">${bill.time}</span></h4>
-                            <p class="text-xs text-slate-500 mt-1">ID: ${bill.orderId} | Total: <span class="text-amber-500 font-bold">Rp ${bill.totalAmount.toLocaleString()}</span></p>
+                            <p class="text-xs text-slate-500 mt-1">ID: ${bill.orderId} | Total: <span class="text-amber-500 font-bold">Rp ${bill.totalAmount.toLocaleString('id-ID')}</span></p>
                         </div>
                         <div class="flex items-center gap-2">
                             ${actionButtons}
@@ -235,7 +235,7 @@ async function activateAndPrintDraft(orderId) {
         if (json.success) {
             alert(`Meja ${bill.tableNo} berhasil diaktifkan & pesanan dikirim ke printer!`);
             switchTab('Open');
-            checkNewDraftNotifications();
+            checkNewDraftNotifications(); // Auto-sync
         } else {
             alert("Gagal mengaktifkan meja: " + json.message);
         }
@@ -277,7 +277,6 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
     }
 }
 
-// --- PEMBATALAN PESANAN (VOID) ---
 function reqVoid(orderId, type) {
     voidTargetId = orderId;
     const bill = historyDataRaw.find(b => b.orderId === orderId);
@@ -343,7 +342,6 @@ async function executeVoidVerified(reasonText) {
     } catch(e) { alert("Gagal koneksi server."); }
 }
 
-// --- PEMROSESAN PEMBAYARAN & POPUP LOGIC ---
 function saveDraft() {
     if(cart.length === 0) return alert("Keranjang kosong!");
     if(!document.getElementById('order-table').value.trim()) return alert("Isi Nomor Meja!");
@@ -354,7 +352,6 @@ function openPrintModal() {
     if(cart.length === 0) return alert("Keranjang kosong!");
     if(!document.getElementById('order-table').value.trim()) return alert("Isi Nomor Meja!");
     
-    // Hitung Grand Total Akurat
     const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
     const selectDisc = document.getElementById('cart-discount-select');
     const discPerc = parseFloat(selectDisc ? selectDisc.value : 0 || 0);
@@ -378,11 +375,9 @@ function openPrintModal() {
     
     currentTransactionTotal = netSubtotal + serviceCharge + tax;
 
-    // Set Rincian Informasi di Modal Pembayaran
     document.getElementById('modal-order-id').innerText = activeOrderId || "BARU";
     document.getElementById('modal-grand-total').innerText = "Rp " + currentTransactionTotal.toLocaleString('id-ID');
     
-    // Reset Data Tunai
     document.getElementById('cash-received-input').value = "";
     document.getElementById('cash-change-display').innerText = "Rp 0";
     document.getElementById('cash-change-display').className = "font-black text-emerald-400 text-sm";
@@ -421,7 +416,6 @@ function processCashPayment() {
         return;
     }
     
-    // Rekam data tunai secara global sementara untuk popup sukses
     window.lastCashReceived = inputVal;
     window.lastCashChange = inputVal - currentTransactionTotal;
     
@@ -432,7 +426,6 @@ function processCashPayment() {
 function processNonCashPayment(method) {
     closeModal('modal-print');
     
-    // Pembayaran Non-Tunai dianggap uang pas
     window.lastCashReceived = currentTransactionTotal;
     window.lastCashChange = 0;
 
@@ -516,6 +509,7 @@ async function submitOrderPayload(statusTarget, printTarget) {
         } else {
             alert(`⚠️ Offline! Transaksi ${orderStatus} disimpan di antrean lokal.`);
             resetCartState();
+            checkNewDraftNotifications(); // Auto-Sync Manual
         }
         updateOfflineBadge();
         return;
@@ -537,6 +531,7 @@ async function submitOrderPayload(statusTarget, printTarget) {
             } else {
                 alert(`Pesanan berhasil disimpan sebagai ${orderStatus}!`);
                 resetCartState();
+                checkNewDraftNotifications(); // Auto-sync History pasca simpan draft/open
             }
 
             if (window.innerWidth < 768) {
@@ -550,7 +545,6 @@ async function submitOrderPayload(statusTarget, printTarget) {
     }
 }
 
-// --- POPUP KEMBALIAN ENG-LOGIC ---
 function showSuccessChangeModal(total, received, change) {
     document.getElementById('success-total').innerText = "Rp " + total.toLocaleString('id-ID');
     document.getElementById('success-received').innerText = "Rp " + received.toLocaleString('id-ID');
@@ -562,6 +556,7 @@ function showSuccessChangeModal(total, received, change) {
 function closeSuccessChangeModal() {
     closeModal('modal-success-change');
     resetCartState(); 
+    checkNewDraftNotifications(); // Auto-sync History pasca LUNAS
 }
 
 function resetCartState() {
@@ -621,13 +616,13 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
         cart.forEach(item => {
             finalReceipt += `[L]<b>${item.name}</b>\n`;
             if(item.notes) finalReceipt += `[L]  *${item.notes}\n`;
-            finalReceipt += `[L]${item.qty}x ${item.price} [R]${item.subtotal}\n`;
+            finalReceipt += `[L]${item.qty}x ${item.price.toLocaleString('id-ID')} [R]${item.subtotal.toLocaleString('id-ID')}\n`;
         });
-        finalReceipt += `[C]--------------------------------\n[L]Subtotal [R]${subtotal}\n`;
-        if(discountAmount > 0) finalReceipt += `[L]Total Diskon/Voucher [R]-${discountAmount}\n`;
-        if(serviceCharge > 0) finalReceipt += `[L]Layanan/Service [R]${serviceCharge}\n`;
-        if(tax > 0) finalReceipt += `[L]Pajak/Tax [R]${tax}\n`;
-        finalReceipt += `[L]<b>TOTAL</b> [R]<b>${grandTotal}</b>\n[C]--------------------------------\n`;
+        finalReceipt += `[C]--------------------------------\n[L]Subtotal [R]${subtotal.toLocaleString('id-ID')}\n`;
+        if(discountAmount > 0) finalReceipt += `[L]Diskon/Voucher [R]-${discountAmount.toLocaleString('id-ID')}\n`;
+        if(serviceCharge > 0) finalReceipt += `[L]Layanan/Service [R]${serviceCharge.toLocaleString('id-ID')}\n`;
+        if(tax > 0) finalReceipt += `[L]Pajak/Tax [R]${tax.toLocaleString('id-ID')}\n`;
+        finalReceipt += `[L]<b>TOTAL</b> [R]<b>${grandTotal.toLocaleString('id-ID')}</b>\n[C]--------------------------------\n`;
         finalReceipt += `[C]Status : LUNAS (${payMethod})\n[C]${footerStruk}\n\n\n`;
         finalReceipt += `[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
     }
