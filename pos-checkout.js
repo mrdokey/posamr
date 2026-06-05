@@ -1,9 +1,10 @@
 /**
  * MODUL 3: CHECKOUT, HISTORY, VOID, PRINTER & RESPONSIVE PORTRAIT
- * UPDATE: Alur Kerja Bypass Draft (Cetak & Aktifkan) & Multi-Cabang Aman
+ * UPDATE: Integrasi Penghitungan Tunai Otomatis & Popup Kembalian Sukses
  */
 
-// --- POLLING DRAFT UNTUK KASIR (MULTI-CABANG) ---
+let currentTransactionTotal = 0; // State Penyimpan Tagihan Aktif
+
 async function checkNewDraftNotifications() {
     if (!navigator.onLine) return;
     let userArea = cashierInfo ? cashierInfo.area : "";
@@ -25,13 +26,11 @@ async function checkNewDraftNotifications() {
     } catch(e) {}
 }
 
-// Polling Otomatis Tiap 10 Detik
 if (pollInterval === null) {
     checkNewDraftNotifications(); 
     pollInterval = setInterval(checkNewDraftNotifications, 10000);
 }
 
-// --- PORTRAIT SENSORS & FLOATING CART ---
 function toggleMobileCart() {
     const panel = document.getElementById('cart-panel');
     const trigger = document.getElementById('mobile-cart-trigger');
@@ -65,7 +64,6 @@ function updateMobileCartButtonVisibility() {
     }
 }
 
-// --- RIWAYAT & DRAFT ---
 async function openHistoryModal() {
     openModal('modal-history');
     switchTab('Draft'); 
@@ -110,7 +108,6 @@ async function switchTab(tabName) {
                 container.innerHTML = filteredData.map(bill => {
                     let actionButtons = "";
                     if (tabName === "Draft") {
-                        // REVOLUSI ALUR DRAFT: Menambahkan Tombol "Cetak & Aktifkan" untuk bypass order langsung ke dapur/bar
                         actionButtons = `
                             <button onclick="activateAndPrintDraft('${bill.orderId}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-md">
                                 <i data-lucide="printer" class="w-3.5 h-3.5"></i> Cetak & Aktifkan
@@ -154,7 +151,6 @@ async function switchTab(tabName) {
     }
 }
 
-// BUKA PESANAN (DRAFT / OPEN) UNTUK DIEDIT
 function editDraft(orderId) {
     const bill = historyDataRaw.find(b => b.orderId === orderId);
     if(!bill) return;
@@ -176,7 +172,6 @@ function editDraft(orderId) {
         }
     }
 
-    // Pemulihan data voucher yang terpakai pada Draft/Open
     if (bill.voucherCode) {
         const v = voucherData.find(vx => vx.code === bill.voucherCode);
         if (v) appliedVoucher = v;
@@ -195,7 +190,6 @@ function editDraft(orderId) {
     }
 }
 
-// --- BYPASS ALUR KERJA DRAFT (CETAK & MEJA AKTIF) ---
 async function activateAndPrintDraft(orderId) {
     const bill = historyDataRaw.find(b => b.orderId === orderId);
     if (!bill) return;
@@ -207,10 +201,8 @@ async function activateAndPrintDraft(orderId) {
     const subtotal = bill.items.reduce((sum, item) => sum + item.subtotal, 0);
     const totalDiscountAmount = (subtotal + bill.tax + bill.serviceCharge) - bill.totalAmount;
 
-    // 1. Jalankan Cetak Headless via Helper Direct routing
     executeRoutingPrintDirect(bill, subtotal, totalDiscountAmount);
 
-    // 2. Kirim update status ke server (mengubah status Draft ke Open)
     let userArea = cashierInfo ? cashierInfo.area : "";
     const payload = {
         action: "placeOrder",
@@ -225,7 +217,7 @@ async function activateAndPrintDraft(orderId) {
             serviceCharge: bill.serviceCharge,
             totalAmount: bill.totalAmount,
             paymentMethod: "-",
-            orderStatus: "Open", // Diubah menjadi Open (Meja Aktif)
+            orderStatus: "Open", 
             items: bill.items.map(i => ({
                 menuId: i.menuId,
                 qty: i.qty,
@@ -242,8 +234,8 @@ async function activateAndPrintDraft(orderId) {
         const json = await res.json();
         if (json.success) {
             alert(`Meja ${bill.tableNo} berhasil diaktifkan & pesanan dikirim ke printer!`);
-            switchTab('Open'); // Geser tab secara otomatis
-            checkNewDraftNotifications(); // Refresh jumlah notifikasi
+            switchTab('Open');
+            checkNewDraftNotifications();
         } else {
             alert("Gagal mengaktifkan meja: " + json.message);
         }
@@ -252,12 +244,10 @@ async function activateAndPrintDraft(orderId) {
     }
 }
 
-// ENGINE ROUTING PRINTER KHUSUS DRAFT DIRECT (HEADLESS)
 function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
     const currentTimeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     let finalReceipt = "";
 
-    // Dapur
     const kitchenItems = bill.items.filter(item => item.route === "Kitchen");
     if (kitchenItems.length > 0) {
         finalReceipt += `[C]<b>KITCHEN ORDER (DAPUR)</b>\n[L]Meja : <b><font size="big">${bill.tableNo}</font></b>\n[L]ID   : ${bill.orderId}\n[L]Jam  : <b>${currentTimeStr} WITA</b>\n[C]--------------------------------\n`;
@@ -269,7 +259,6 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
         finalReceipt += `\n\n\n[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
     }
 
-    // Bar
     const barItems = bill.items.filter(item => item.route === "Bar");
     if (barItems.length > 0) {
         finalReceipt += `[C]<b>BAR ORDER (MINUMAN)</b>\n[L]Meja : <b><font size="big">${bill.tableNo}</font></b>\n[L]ID   : ${bill.orderId}\n[L]Jam  : <b>${currentTimeStr} WITA</b>\n[C]--------------------------------\n`;
@@ -288,7 +277,7 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
     }
 }
 
-// --- SISTEM VOID / PEMBATALAN PESANAN (MULTI-CABANG) ---
+// --- PEMBATALAN PESANAN (VOID) ---
 function reqVoid(orderId, type) {
     voidTargetId = orderId;
     const bill = historyDataRaw.find(b => b.orderId === orderId);
@@ -354,7 +343,7 @@ async function executeVoidVerified(reasonText) {
     } catch(e) { alert("Gagal koneksi server."); }
 }
 
-// --- SISTEM PEMROSESAN UTAMA (MURNI KASIR) ---
+// --- PEMROSESAN PEMBAYARAN & POPUP LOGIC ---
 function saveDraft() {
     if(cart.length === 0) return alert("Keranjang kosong!");
     if(!document.getElementById('order-table').value.trim()) return alert("Isi Nomor Meja!");
@@ -364,12 +353,94 @@ function saveDraft() {
 function openPrintModal() {
     if(cart.length === 0) return alert("Keranjang kosong!");
     if(!document.getElementById('order-table').value.trim()) return alert("Isi Nomor Meja!");
+    
+    // Hitung Grand Total Akurat
+    const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
+    const selectDisc = document.getElementById('cart-discount-select');
+    const discPerc = parseFloat(selectDisc ? selectDisc.value : 0 || 0);
+    let discountAmount = discPerc < 1 ? subtotal * discPerc : subtotal * (discPerc / 100); 
+    
+    let voucherAmount = 0;
+    if (appliedVoucher) {
+        voucherAmount = appliedVoucher.type.toLowerCase() === 'percent' 
+            ? subtotal * (appliedVoucher.value / 100) 
+            : appliedVoucher.value;
+    }
+    
+    const totalDiscount = discountAmount + voucherAmount;
+    const netSubtotal = Math.max(0, subtotal - totalDiscount);
+    
+    const servicePerc = parseFloat(configData["SERVICE_CHARGE"] || 0);
+    const serviceCharge = netSubtotal * (servicePerc / 100);
+
+    const taxPerc = parseFloat(configData["PAJAK_PB1"] || 0); 
+    const tax = (netSubtotal + serviceCharge) * (taxPerc / 100);
+    
+    currentTransactionTotal = netSubtotal + serviceCharge + tax;
+
+    // Set Rincian Informasi di Modal Pembayaran
+    document.getElementById('modal-order-id').innerText = activeOrderId || "BARU";
+    document.getElementById('modal-grand-total').innerText = "Rp " + currentTransactionTotal.toLocaleString('id-ID');
+    
+    // Reset Data Tunai
+    document.getElementById('cash-received-input').value = "";
+    document.getElementById('cash-change-display').innerText = "Rp 0";
+    document.getElementById('cash-change-display').className = "font-black text-emerald-400 text-sm";
+
     openModal('modal-print');
 }
 
-function processOrder(status, printTarget) {
+function calculateChange() {
+    const inputVal = parseFloat(document.getElementById('cash-received-input').value) || 0;
+    const change = inputVal - currentTransactionTotal;
+    const display = document.getElementById('cash-change-display');
+
+    if (change >= 0) {
+        display.innerText = "Rp " + change.toLocaleString('id-ID');
+        display.className = "font-black text-emerald-400 text-sm";
+    } else {
+        display.innerText = "Kurang Rp " + Math.abs(change).toLocaleString('id-ID');
+        display.className = "font-black text-rose-500 text-sm";
+    }
+}
+
+function setQuickCash(val) {
+    const input = document.getElementById('cash-received-input');
+    if (val === 'pas') {
+        input.value = currentTransactionTotal;
+    } else {
+        input.value = val;
+    }
+    calculateChange();
+}
+
+function processCashPayment() {
+    const inputVal = parseFloat(document.getElementById('cash-received-input').value) || 0;
+    if (inputVal < currentTransactionTotal) {
+        alert("Pembayaran Gagal! Uang tunai yang diterima kurang.");
+        return;
+    }
+    
+    // Rekam data tunai secara global sementara untuk popup sukses
+    window.lastCashReceived = inputVal;
+    window.lastCashChange = inputVal - currentTransactionTotal;
+    
     closeModal('modal-print');
-    submitOrderPayload(status, printTarget);
+    submitOrderPayload("Cash", "All"); 
+}
+
+function processNonCashPayment(method) {
+    closeModal('modal-print');
+    
+    // Pembayaran Non-Tunai dianggap uang pas
+    window.lastCashReceived = currentTransactionTotal;
+    window.lastCashChange = 0;
+
+    if (method === 'Open') {
+        submitOrderPayload("Open", "All"); 
+    } else {
+        submitOrderPayload(method, "All"); 
+    }
 }
 
 async function submitOrderPayload(statusTarget, printTarget) {
@@ -431,7 +502,6 @@ async function submitOrderPayload(statusTarget, printTarget) {
         }
     };
 
-    // JALUR OFFLINE
     if (!navigator.onLine) {
         let queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || "[]");
         queue.push(payload);
@@ -441,13 +511,16 @@ async function submitOrderPayload(statusTarget, printTarget) {
             executeRoutingPrint(payload.data.orderId || "OFFLINE-"+Date.now(), tableNo, orderStatus, paymentMethod, subtotal, totalDiscount, serviceCharge, tax, grandTotal, printTarget);
         }
 
-        alert(`⚠️ Offline! Transaksi disimpan di antrean tablet & struk dicetak.`);
+        if (orderStatus === "Paid") {
+            showSuccessChangeModal(grandTotal, window.lastCashReceived, window.lastCashChange);
+        } else {
+            alert(`⚠️ Offline! Transaksi ${orderStatus} disimpan di antrean lokal.`);
+            resetCartState();
+        }
         updateOfflineBadge();
-        resetCartState();
         return;
     }
 
-    // JALUR ONLINE
     try {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
         const json = await res.json();
@@ -459,9 +532,13 @@ async function submitOrderPayload(statusTarget, printTarget) {
                 executeRoutingPrint(finalOrderId, tableNo, orderStatus, paymentMethod, subtotal, totalDiscount, serviceCharge, tax, grandTotal, printTarget);
             }
             
-            alert(`Pesanan sukses diproses ke sistem pusat!`);
-            resetCartState();
-            
+            if (orderStatus === "Paid") {
+                showSuccessChangeModal(grandTotal, window.lastCashReceived, window.lastCashChange);
+            } else {
+                alert(`Pesanan berhasil disimpan sebagai ${orderStatus}!`);
+                resetCartState();
+            }
+
             if (window.innerWidth < 768) {
                 toggleMobileCart();
             }
@@ -469,15 +546,29 @@ async function submitOrderPayload(statusTarget, printTarget) {
     } catch (e) {
         alert("Server bermasalah. Transaksi dialihkan ke offline queue.");
         navigator.onLine = false;
-        processOrder(statusTarget, printTarget);
+        submitOrderPayload(statusTarget, printTarget);
     }
+}
+
+// --- POPUP KEMBALIAN ENG-LOGIC ---
+function showSuccessChangeModal(total, received, change) {
+    document.getElementById('success-total').innerText = "Rp " + total.toLocaleString('id-ID');
+    document.getElementById('success-received').innerText = "Rp " + received.toLocaleString('id-ID');
+    document.getElementById('success-change').innerText = "Rp " + change.toLocaleString('id-ID');
+    openModal('modal-success-change');
+    lucide.createIcons();
+}
+
+function closeSuccessChangeModal() {
+    closeModal('modal-success-change');
+    resetCartState(); 
 }
 
 function resetCartState() {
     cart = [];
     document.getElementById('order-table').value = "";
     activeOrderId = null;
-    appliedVoucher = null; // Reset Voucher
+    appliedVoucher = null; 
 
     const ind = document.getElementById('draft-indicator');
     if (ind) ind.classList.add('hidden-screen');
@@ -503,7 +594,6 @@ async function syncOfflineQueue() {
     updateOfflineBadge();
 }
 
-// --- REPRINT ---
 function reprintOrder(orderId) {
     const bill = historyDataRaw.find(b => b.orderId === orderId);
     if(!bill) return;
@@ -514,7 +604,6 @@ function reprintOrder(orderId) {
     executeRoutingPrint(bill.orderId, bill.tableNo, bill.status, bill.paymentMethod, subtotal, totalDiscountAmount, bill.serviceCharge, bill.tax, bill.totalAmount, "All", true);
 }
 
-// --- PRINTER ROUTING (RawBT) ---
 function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discountAmount, serviceCharge, tax, grandTotal, target, isReprint = false) {
     const namaResto = configData["NAMA_PERUSAAN"] || "RESTO";
     const alamat = configData["ALAMAT"] || "";
