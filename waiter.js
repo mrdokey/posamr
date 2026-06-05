@@ -1,6 +1,6 @@
 /**
  * MODUL 4: WAITER/PELAYAN ENGINE (FULL RESPONSIVE & DRAFT ORDER)
- * UPDATE: Proteksi Ketat (Kasir Dilarang Masuk) & Multi-Branch Area
+ * UPDATE: Proteksi Ketat Kasir, Multi-Branch Area, & UI Card Fix
  */
 
 lucide.createIcons();
@@ -253,8 +253,7 @@ function applyFilters(searchStr = "") {
     }
 }
 
-// FILE: waiter.js (Timpa fungsi renderMenuHTML ini)
-
+// PERBAIKAN UI CARD MENU (h-full & z-10)
 function renderMenuHTML(items) {
     const container = document.getElementById('menu-container');
     if (!container) return;
@@ -271,7 +270,6 @@ function renderMenuHTML(items) {
         const isHot = totalSoldData > 10;
         const badgeHtml = isHot ? `<div class="absolute top-2 left-2 bg-rose-600 text-white text-[9px] font-black px-2 py-1 rounded-md shadow-md animate-pulse">🔥 HOT</div>` : ``;
 
-        // PERBAIKAN: Tambah h-full pada card utama, bg-slate-800 pada container teks, dan memunculkan deskripsi
         return `
         <div onclick="addToCart('${item.id}', '${item.name}', ${item.price}, '${item.route}')" class="menu-card bg-slate-800 border border-slate-700 rounded-2xl flex flex-col overflow-hidden cursor-pointer hover:border-amber-500 relative h-full">
             <div class="h-28 relative shrink-0 overflow-hidden bg-slate-900">
