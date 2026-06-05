@@ -1,9 +1,11 @@
 /**
  * MODUL 3: CHECKOUT, HISTORY, VOID, PRINTER & RESPONSIVE PORTRAIT
- * UPDATE: Fix Struk Meja Aktif (Open Bill), Reprint Akurat, & Voucher Tab Match
+ * UPDATE: Upgraded Thermal Layout (Bebas HTML Mentah, 2 Rangkap Lunas, Cetak Tagihan Open Bill, & Multi-Printer WiFi)
  */
 
 let currentTransactionTotal = 0; 
+let splitOriginalItems = []; 
+let splitTargetItems = [];   
 
 async function checkNewDraftNotifications() {
     if (!navigator.onLine) return;
@@ -187,93 +189,6 @@ function editDraft(orderId) {
     
     if (window.innerWidth < 768) {
         toggleMobileCart();
-    }
-}
-
-async function activateAndPrintDraft(orderId) {
-    const bill = historyDataRaw.find(b => b.orderId === orderId);
-    if (!bill) return;
-
-    if (!confirm(`Cetak pesanan ke Dapur & Bar, lalu aktifkan Meja ${bill.tableNo}?`)) {
-        return;
-    }
-
-    const subtotal = bill.items.reduce((sum, item) => sum + item.subtotal, 0);
-    const totalDiscountAmount = (subtotal + bill.tax + bill.serviceCharge) - bill.totalAmount;
-
-    executeRoutingPrintDirect(bill, subtotal, totalDiscountAmount);
-
-    let userArea = cashierInfo ? cashierInfo.area : "";
-    const payload = {
-        action: "placeOrder",
-        data: {
-            orderId: bill.orderId,
-            tableNo: bill.tableNo,
-            kasirId: cashierInfo.userId,
-            area: userArea,
-            discount: bill.discountId || "DISC-00",
-            voucherCode: bill.voucherCode || "",
-            tax: bill.tax,
-            serviceCharge: bill.serviceCharge,
-            totalAmount: bill.totalAmount,
-            paymentMethod: "-",
-            orderStatus: "Open", 
-            items: bill.items.map(i => ({
-                menuId: i.menuId,
-                qty: i.qty,
-                price: i.price,
-                subtotal: i.subtotal,
-                notes: i.notes || "",
-                route: i.route || "Kitchen"
-            }))
-        }
-    };
-
-    try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
-        const json = await res.json();
-        if (json.success) {
-            alert(`Meja ${bill.tableNo} berhasil diaktifkan & pesanan dikirim ke printer!`);
-            switchTab('Open');
-            checkNewDraftNotifications(); 
-        } else {
-            alert("Gagal mengaktifkan meja: " + json.message);
-        }
-    } catch (e) {
-        alert("Gagal menghubungi server utama untuk sinkronisasi database.");
-    }
-}
-
-function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
-    const currentTimeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    let finalReceipt = "";
-
-    const kitchenItems = bill.items.filter(item => item.route === "Kitchen");
-    if (kitchenItems.length > 0) {
-        finalReceipt += `[C]<b>KITCHEN ORDER (DAPUR)</b>\n[L]Meja : <b>${bill.tableNo}</b>\n[L]ID   : ${bill.orderId}\n[L]Jam  : <b>${currentTimeStr} WITA</b>\n[C]--------------------------------\n`;
-        kitchenItems.forEach(item => {
-            finalReceipt += `[L]<b>[ ] ${item.qty}x  ${item.name}</b>\n`;
-            if(item.notes) finalReceipt += `[L]   *Catatan: ${item.notes}\n`;
-            finalReceipt += `[L]--------------------------------\n`;
-        });
-        finalReceipt += `\n\n\n[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
-    }
-
-    const barItems = bill.items.filter(item => item.route === "Bar");
-    if (barItems.length > 0) {
-        finalReceipt += `[C]<b>BAR ORDER (MINUMAN)</b>\n[L]Meja : <b>${bill.tableNo}</b>\n[L]ID   : ${bill.orderId}\n[L]Jam  : <b>${currentTimeStr} WITA</b>\n[C]--------------------------------\n`;
-        barItems.forEach(item => {
-            finalReceipt += `[L]<b>[ ] ${item.qty}x  ${item.name}</b>\n`;
-            if(item.notes) finalReceipt += `[L]   *Catatan: ${item.notes}\n`;
-            finalReceipt += `[L]--------------------------------\n`;
-        });
-        finalReceipt += `\n\n\n`;
-    }
-
-    if (finalReceipt !== "") {
-        const base64Data = btoa(unescape(encodeURIComponent(finalReceipt)));
-        const intentUrl = `intent:base64,${base64Data}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
-        window.location.href = intentUrl;
     }
 }
 
@@ -589,101 +504,11 @@ async function syncOfflineQueue() {
     updateOfflineBadge();
 }
 
-function reprintOrder(orderId) {
-    const bill = historyDataRaw.find(b => b.orderId === orderId);
-    if(!bill) return;
-
-    const subtotal = bill.items.reduce((sum, item) => sum + item.subtotal, 0);
-    const totalDiscountAmount = (subtotal + bill.tax + bill.serviceCharge) - bill.totalAmount; 
-
-    // PERBAIKAN: Masukkan array "bill.items" (bukan keranjang aktif) agar pencetakan ulang detail struk tidak Rp 0
-    executeRoutingPrint(bill.orderId, bill.tableNo, bill.status, bill.paymentMethod, subtotal, totalDiscountAmount, bill.serviceCharge, bill.tax, bill.totalAmount, "All", true, bill.items);
-}
-
-// FORMAT PRINTER BERSIH RAWBT (MENDUKUNG BILL MEJA MEJA AKTIF / OPEN BILL & BEBAS TAG HTML MENTAH)
-function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discountAmount, serviceCharge, tax, grandTotal, target, isReprint = false, itemsToPrint = null) {
-    const namaResto = configData["NAMA_PERUSAAN"] || "RESTO";
-    const alamat = configData["ALAMAT"] || "";
-    const footerStruk = configData["FOOTER_STRUK"] || "Terima Kasih Atas Kunjungannya!";
-    
-    const currentDateStr = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' });
-    const currentTimeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-    const items = itemsToPrint || cart; // Prioritaskan itemsToPrint (jika dipanggil dari history reprint)
-    let finalReceipt = "";
-    let reprintTag = isReprint ? "[C]<b>*** REPRINT / SALINAN ***</b>\n" : "";
-
-    // PERBAIKAN: Izinkan pencetakan struk tagihan meskipun meja masih AKTIF ("Open")
-    if (target === "All" && (status === "Paid" || status === "Open")) {
-        finalReceipt += reprintTag;
-        finalReceipt += `[C]<b>${namaResto}</b>\n[C]${alamat}\n[C]--------------------------------\n[L]ID   : ${orderId}\n[L]Meja : ${table}\n[L]Kasir: ${cashierInfo.name}\n[L]Tgl  : ${currentDateStr} [R]${currentTimeStr}\n[C]--------------------------------\n`;
-        items.forEach(item => {
-            finalReceipt += `[L]<b>${item.name}</b>\n`;
-            if(item.notes) finalReceipt += `[L]  *${item.notes}\n`;
-            finalReceipt += `[L]${item.qty}x ${item.price.toLocaleString('id-ID')} [R]${item.subtotal.toLocaleString('id-ID')}\n`;
-        });
-        finalReceipt += `[C]--------------------------------\n[L]Subtotal [R]${subtotal.toLocaleString('id-ID')}\n`;
-        if(discountAmount > 0) finalReceipt += `[L]Total Diskon [R]-${discountAmount.toLocaleString('id-ID')}\n`;
-        if(serviceCharge > 0) finalReceipt += `[L]Layanan/Service [R]${serviceCharge.toLocaleString('id-ID')}\n`;
-        if(tax > 0) finalReceipt += `[L]Pajak/Tax [R]${tax.toLocaleString('id-ID')}\n`;
-        finalReceipt += `[L]<b>TOTAL</b> [R]<b>${grandTotal.toLocaleString('id-ID')}</b>\n[C]--------------------------------\n`;
-        
-        if (status === "Paid") {
-            finalReceipt += `[C]Status : LUNAS (${payMethod})\n[C]${footerStruk}\n\n\n`;
-        } else {
-            // Label jika dicetak saat meja masih aktif (belum bayar)
-            finalReceipt += `[C]Status : BELUM BAYAR (TAGIHAN)\n[C]Harap simpan struk ini untuk pembayaran\n\n\n`;
-        }
-        finalReceipt += `[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
-    }
-
-    if (target === "All" || target === "Kitchen") {
-        const kitchenItems = items.filter(item => item.route === "Kitchen");
-        if (kitchenItems.length > 0) {
-            finalReceipt += reprintTag;
-            finalReceipt += `[C]<b>KITCHEN ORDER (DAPUR)</b>\n[L]Meja : <b>${table}</b>\n[L]ID   : ${orderId}\n[L]Jam  : <b>${currentTimeStr} WITA</b>\n[C]--------------------------------\n`;
-            kitchenItems.forEach(item => {
-                finalReceipt += `[L]<b>[ ] ${item.qty}x  ${item.name}</b>\n`;
-                if(item.notes) finalReceipt += `[L]   *Catatan: ${item.notes}\n`;
-                finalReceipt += `[L]--------------------------------\n`;
-            });
-            finalReceipt += `\n\n\n[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
-        }
-    }
-
-    if (target === "All" || target === "Bar") {
-        const barItems = items.filter(item => item.route === "Bar");
-        if (barItems.length > 0) {
-            finalReceipt += reprintTag;
-            finalReceipt += `[C]<b>BAR ORDER (MINUMAN)</b>\n[L]Meja : <b>${table}</b>\n[L]ID   : ${orderId}\n[L]Jam  : <b>${currentTimeStr} WITA</b>\n[C]--------------------------------\n`;
-            barItems.forEach(item => {
-                finalReceipt += `[L]<b>[ ] ${item.qty}x  ${item.name}</b>\n`;
-                if(item.notes) finalReceipt += `[L]   *Catatan: ${item.notes}\n`;
-                finalReceipt += `[L]--------------------------------\n`;
-            });
-            finalReceipt += `\n\n\n`;
-        }
-    }
-
-    if (finalReceipt !== "") {
-        const base64Data = btoa(unescape(encodeURIComponent(finalReceipt)));
-        const intentUrl = `intent:base64,${base64Data}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
-        window.location.href = intentUrl;
-    }
-}
-
-// FILE: pos-checkout.js (Tambahkan di bagian paling bawah)
-
-let splitOriginalItems = []; // Menyimpan sisa item di meja asli
-let splitTargetItems = [];   // Menyimpan item yang dipisah
-
+// --- LOGIKA SPLIT BILL ---
 function openSplitModal() {
     if (!activeOrderId) return alert("Pilih meja aktif terlebih dahulu dari riwayat!");
-    
-    // Duplikasi isi keranjang saat ini ke dalam sistem split
     splitOriginalItems = JSON.parse(JSON.stringify(cart));
     splitTargetItems = [];
-    
     renderSplitUI();
     openModal('modal-split-bill');
 }
@@ -692,7 +517,6 @@ function renderSplitUI() {
     const origContainer = document.getElementById('split-original-container');
     const targetContainer = document.getElementById('split-target-container');
     
-    // Render Kolom Kiri (Sisa Tagihan Asli)
     origContainer.innerHTML = splitOriginalItems.map((item, idx) => `
         <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl flex justify-between items-center">
             <div class="pr-2">
@@ -705,7 +529,6 @@ function renderSplitUI() {
         </div>
     `).join('');
 
-    // Render Kolom Kanan (Tagihan Baru)
     targetContainer.innerHTML = splitTargetItems.map((item, idx) => `
         <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl flex justify-between items-center">
             <button onclick="moveItemToOriginal(${idx})" class="w-7 h-7 bg-slate-800 rounded-lg text-slate-400 hover:bg-red-500 hover:text-white flex items-center justify-center font-bold text-sm smooth-transition">
@@ -718,10 +541,8 @@ function renderSplitUI() {
         </div>
     `).join('');
 
-    // Hitung Total Nilai Bill yang Dipisahkan
     const splitTotal = splitTargetItems.reduce((sum, item) => sum + item.subtotal, 0);
     document.getElementById('split-total-amount').innerText = "Rp " + splitTotal.toLocaleString('id-ID');
-    
     lucide.createIcons();
 }
 
@@ -729,11 +550,9 @@ function moveItemToSplit(index) {
     const item = splitOriginalItems[index];
     if (item.qty <= 0) return;
 
-    // Kurangi qty di Bill Asli
     item.qty--;
     item.subtotal = item.qty * item.price;
 
-    // Cari apakah item sudah pernah dipindah ke kanan
     const exist = splitTargetItems.find(i => i.menuId === item.menuId);
     if (exist) {
         exist.qty++;
@@ -742,11 +561,9 @@ function moveItemToSplit(index) {
         splitTargetItems.push({ ...item, qty: 1, subtotal: item.price, notes: '' });
     }
 
-    // Bersihkan item asli jika qty mencapai 0
     if (item.qty === 0) {
         splitOriginalItems.splice(index, 1);
     }
-
     renderSplitUI();
 }
 
@@ -754,11 +571,9 @@ function moveItemToOriginal(index) {
     const item = splitTargetItems[index];
     if (item.qty <= 0) return;
 
-    // Kurangi qty di Bill Baru
     item.qty--;
     item.subtotal = item.qty * item.price;
 
-    // Tambahkan kembali ke kiri
     const exist = splitOriginalItems.find(i => i.menuId === item.menuId);
     if (exist) {
         exist.qty++;
@@ -767,25 +582,20 @@ function moveItemToOriginal(index) {
         splitOriginalItems.push({ ...item, qty: 1, subtotal: item.price, notes: '' });
     }
 
-    // Bersihkan item baru jika qty mencapai 0
     if (item.qty === 0) {
         splitTargetItems.splice(index, 1);
     }
-
     renderSplitUI();
 }
 
-// EKSEKUSI PISAH TAGIHAN
 async function confirmSplit() {
     if (splitTargetItems.length === 0) return alert("Pindahkan minimal 1 item ke Bill Baru!");
-
     const origTableNo = document.getElementById('order-table').value.trim();
     
     if (!confirm(`Sistem akan memperbarui tagihan meja asli ${origTableNo} dan memuat tagihan baru ke keranjang untuk dilunasi.`)) {
         return;
     }
 
-    // 1. UPDATE BILL ASLI DI SPREADSHEET (MENGIRIM SISA ITEM)
     const subtotalOrig = splitOriginalItems.reduce((sum, item) => sum + item.subtotal, 0);
     const servicePerc = parseFloat(configData["SERVICE_CHARGE"] || 0);
     const serviceChargeOrig = subtotalOrig * (servicePerc / 100);
@@ -798,44 +608,244 @@ async function confirmSplit() {
     const payloadOrigUpdate = {
         action: "placeOrder",
         data: {
-            orderId: activeOrderId, // Tetap menggunakan ID Meja Aktif saat ini
+            orderId: activeOrderId, 
             tableNo: origTableNo,
             kasirId: cashierInfo.userId,
             area: userArea,
-            discount: "DISC-00", // Reset diskon promo di meja asli biar adil, atau sesuaikan
+            discount: "DISC-00", 
             voucherCode: "",
             tax: taxOrig,
             serviceCharge: serviceChargeOrig,
             totalAmount: grandTotalOrig,
             paymentMethod: "-",
-            orderStatus: "Open", // Meja asli tetap "Open" (Meja Aktif)
+            orderStatus: "Open", 
             items: splitOriginalItems
         }
     };
 
     try {
-        // Kirim update meja asli ke Google Sheets
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payloadOrigUpdate) });
         const json = await res.json();
         
         if (json.success) {
-            // 2. LOAD BILL BARU (SPLIT) KE KERANJANG AKTIF KASIR UNTUK SEGERA DILUNASI
-            activeOrderId = null; // Putuskan hubungan dari meja asli (menjadi transaksi baru)
-            document.getElementById('order-table').value = origTableNo + " (Split)"; // Beri label sub-meja
-            
-            cart = splitTargetItems; // Muat item yang dipisahkan ke keranjang utama
+            activeOrderId = null; 
+            document.getElementById('order-table').value = origTableNo + " (Split)"; 
+            cart = splitTargetItems; 
             
             const ind = document.getElementById('draft-indicator');
-            if (ind) ind.classList.add('hidden-screen'); // Keluar dari mode edit draft
+            if (ind) ind.classList.add('hidden-screen'); 
             
-            renderCart(); // Render ulang keranjang belanja kasir
+            renderCart(); 
             closeModal('modal-split-bill');
-            
             alert("Bill berhasil dipisah! Keranjang sekarang berisi Bill Baru yang siap dilunasi.");
         } else {
             alert("Gagal memperbarui bill asli: " + json.message);
         }
     } catch (e) {
         alert("Gagal koneksi ke server untuk memproses split bill.");
+    }
+}
+
+// --- ENGINE REPRINT INTEGRASI DETAIL ASLI ---
+function reprintOrder(orderId) {
+    const bill = historyDataRaw.find(b => b.orderId === orderId);
+    if(!bill) return;
+
+    const subtotal = bill.items.reduce((sum, item) => sum + item.subtotal, 0);
+    const totalDiscountAmount = (subtotal + bill.tax + bill.serviceCharge) - bill.totalAmount; 
+
+    executeRoutingPrint(bill.orderId, bill.tableNo, bill.status, bill.paymentMethod, subtotal, totalDiscountAmount, bill.serviceCharge, bill.tax, bill.totalAmount, "All", true, bill.items);
+}
+
+// --- HELPER: KIRIM INTENT PRINTER RAWBT SPESIFIK ---
+function sendIntentToRawBT(base64Data, printerProfileName) {
+    const intentUrl = `intent:base64,${base64Data}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.printer=${printerProfileName};end;`;
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = intentUrl;
+    document.body.appendChild(iframe);
+    
+    setTimeout(() => {
+        document.body.removeChild(iframe);
+    }, 1000);
+}
+
+// --- PRINTER ENGINE 1: DRAFT TO OPEN (KITCHEN & BAR BYPASS) ---
+function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
+    const printerKitchenProfile = configData["PRINTER_KITCHEN"] || "Kitchen";
+    const printerBarProfile = configData["PRINTER_BAR"] || "Bar";
+    const currentTimeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    let finalReceipt = "";
+
+    // 1. KITCHEN PRINT
+    const kitchenItems = bill.items.filter(item => item.route === "Kitchen");
+    if (kitchenItems.length > 0) {
+        let kitchenReceipt = "";
+        kitchenReceipt += `[C]<b>KITCHEN ORDER (DAPUR)</b>\n`;
+        kitchenReceipt += `[C]--------------------------------\n`;
+        kitchenReceipt += `[L]Meja : <b>${bill.tableNo}</b>\n`;
+        kitchenReceipt += `[L]ID   : ${bill.orderId}\n`;
+        kitchenReceipt += `[L]Jam  : ${currentTimeStr} WITA\n`;
+        kitchenReceipt += `[C]--------------------------------\n`;
+        kitchenItems.forEach(item => {
+            kitchenReceipt += `[L]<b>[ ] ${item.qty}x  ${item.name}</b>\n`;
+            if(item.notes) kitchenReceipt += `[L]   *Catatan: ${item.notes}\n`;
+            kitchenReceipt += `[L]--------------------------------\n`;
+        });
+        kitchenReceipt += `\n\n\n[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
+        
+        sendIntentToRawBT(kitchenReceipt, printerKitchenProfile);
+    }
+
+    // 2. BAR PRINT (DELAYED SECONDS TO PREVENT JAM/COLLISION)
+    const barItems = bill.items.filter(item => item.route === "Bar");
+    if (barItems.length > 0) {
+        let barReceipt = "";
+        barReceipt += `[C]<b>BAR ORDER (MINUMAN)</b>\n`;
+        barReceipt += `[C]--------------------------------\n`;
+        barReceipt += `[L]Meja : <b>${bill.tableNo}</b>\n`;
+        barReceipt += `[L]ID   : ${bill.orderId}\n`;
+        barReceipt += `[L]Jam  : ${currentTimeStr} WITA\n`;
+        barReceipt += `[C]--------------------------------\n`;
+        barItems.forEach(item => {
+            barReceipt += `[L]<b>[ ] ${item.qty}x  ${item.name}</b>\n`;
+            if(item.notes) barReceipt += `[L]   *Catatan: ${item.notes}\n`;
+            barReceipt += `[L]--------------------------------\n`;
+        });
+        barReceipt += `\n\n\n`;
+        
+        setTimeout(() => {
+            sendIntentToRawBT(barReceipt, printerBarProfile);
+        }, 1200); 
+    }
+}
+
+// --- PRINTER ENGINE 2: CHASE OUT & INTERFACE ROUTING (Paid, Open, & Reprint) ---
+function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discountAmount, serviceCharge, tax, grandTotal, target, isReprint = false, itemsToPrint = null) {
+    const printerKasirProfile = configData["PRINTER_KASIR"] || "Bloetooth";
+    const printerKitchenProfile = configData["PRINTER_KITCHEN"] || "Kitchen";
+    const printerBarProfile = configData["PRINTER_BAR"] || "Bar";
+    
+    const namaResto = configData["NAMA_PERUSAAN"] || "LABARAC BAR";
+    const alamat = configData["ALAMAT"] || "Denpasar, Bali";
+    const footerStruk = configData["FOOTER_STRUK"] || "Terima Kasih Atas Kunjungannya!";
+    
+    const currentDateStr = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    const currentTimeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    const items = itemsToPrint || cart; 
+    let delayMultiplier = 0; 
+
+    // 1. BILL UTAMA / STRUK LUNAS (KASIR PRINTER)
+    if (target === "All" && (status === "Paid" || status === "Open")) {
+        const generateInvoiceBody = (copyLabel) => {
+            let body = "";
+            if (isReprint) body += `[C]<b>*** REPRINT / SALINAN ***</b>\n`;
+            body += `[C]<b>${namaResto}</b>\n`;
+            body += `[C]${alamat}\n`;
+            body += `[C]--------------------------------\n`;
+            body += `[C]<b>${copyLabel}</b>\n`;
+            body += `[C]--------------------------------\n`;
+            body += `[L]ID   : ${orderId}\n`;
+            body += `[L]Meja : <b>${table}</b>\n`;
+            body += `[L]Kasir: ${cashierInfo.name}\n`;
+            body += `[L]Tgl  : ${currentDateStr} [R]${currentTimeStr}\n`;
+            body += `[C]--------------------------------\n`;
+            
+            items.forEach(item => {
+                body += `[L]<b>${item.name}</b>\n`;
+                if(item.notes) body += `[L]  *${item.notes}\n`;
+                body += `[L]${item.qty}x ${item.price.toLocaleString('id-ID')} [R]${item.subtotal.toLocaleString('id-ID')}\n`;
+            });
+            
+            body += `[C]--------------------------------\n`;
+            body += `[L]Subtotal [R]${subtotal.toLocaleString('id-ID')}\n`;
+            if(discountAmount > 0) body += `[L]Total Diskon [R]-${discountAmount.toLocaleString('id-ID')}\n`;
+            if(serviceCharge > 0) body += `[L]Service Charge [R]${serviceCharge.toLocaleString('id-ID')}\n`;
+            if(tax > 0) body += `[L]Pajak PB1 [R]${tax.toLocaleString('id-ID')}\n`;
+            body += `[C]--------------------------------\n`;
+            body += `[L]<b>GRAND TOTAL</b> [R]<b>${grandTotal.toLocaleString('id-ID')}</b>\n`;
+            
+            if (status === "Paid") {
+                const tunai = window.lastCashReceived || grandTotal;
+                const kembalian = window.lastCashChange || 0;
+                body += `[L]Bayar (${payMethod}) [R]${tunai.toLocaleString('id-ID')}\n`;
+                body += `[L]Kembalian [R]${kembalian.toLocaleString('id-ID')}\n`;
+                body += `[C]--------------------------------\n`;
+                body += `[C]<b>STATUS : LUNAS</b>\n`;
+                body += `[C]${footerStruk}\n`;
+            } else {
+                body += `[C]--------------------------------\n`;
+                body += `[C]<b>STATUS : TAGIHAN SEMENTARA</b>\n`;
+                body += `[C]Harap lakukan pembayaran di kasir\n`;
+            }
+            body += `\n\n\n`;
+            return body;
+        };
+
+        let cashierReceipt = "";
+        if (status === "Paid") {
+            cashierReceipt += generateInvoiceBody("STRUK PELANGGAN");
+            cashierReceipt += `[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
+            cashierReceipt += generateInvoiceBody("ARSIP TOKO / DAPUR");
+            cashierReceipt += `[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
+        } else {
+            cashierReceipt += generateInvoiceBody("BILL TAGIHAN MEJA");
+            cashierReceipt += `[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
+        }
+
+        sendIntentToRawBT(cashierReceipt, printerKasirProfile);
+        delayMultiplier++;
+    }
+
+    // 2. KITCHEN ORDER (DAPUR)
+    if (target === "All" || target === "Kitchen") {
+        const kitchenItems = items.filter(item => item.route === "Kitchen");
+        if (kitchenItems.length > 0) {
+            let kitchenReceipt = "";
+            if (isReprint) kitchenReceipt += `[C]<b>*** REPRINT / SALINAN ***</b>\n`;
+            kitchenReceipt += `[C]<b>KITCHEN ORDER (DAPUR)</b>\n`;
+            kitchenReceipt += `[C]--------------------------------\n`;
+            kitchenReceipt += `[L]Meja : <b>${table}</b>\n`;
+            kitchenReceipt += `[L]ID   : ${orderId}\n`;
+            kitchenReceipt += `[L]Jam  : ${currentTimeStr} WITA\n`;
+            kitchenReceipt += `[C]--------------------------------\n`;
+            kitchenItems.forEach(item => {
+                kitchenReceipt += `[L]<b>[ ] ${item.qty}x  ${item.name}</b>\n`;
+                if(item.notes) kitchenReceipt += `[L]   *Catatan: ${item.notes}\n`;
+                kitchenReceipt += `[L]--------------------------------\n`;
+            });
+            kitchenReceipt += `\n\n\n[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
+
+            setTimeout(() => {
+                sendIntentToRawBT(kitchenReceipt, printerKitchenProfile);
+            }, delayMultiplier * 1200);
+            delayMultiplier++;
+        }
+    }
+
+    // 3. BAR ORDER (MINUMAN)
+    if (target === "All" || target === "Bar") {
+        const barItems = items.filter(item => item.route === "Bar");
+        if (barItems.length > 0) {
+            let barReceipt = "";
+            if (isReprint) barReceipt += `[C]<b>*** REPRINT / SALINAN ***</b>\n`;
+            barReceipt += `[C]<b>BAR ORDER (MINUMAN)</b>\n`;
+            barReceipt += `[C]--------------------------------\n`;
+            barReceipt += `[L]Meja : <b>${table}</b>\n`;
+            barReceipt += `[L]ID   : ${orderId}\n`;
+            barReceipt += `[L]Jam  : ${currentTimeStr} WITA\n`;
+            barReceipt += `[C]--------------------------------\n`;
+            barItems.forEach(item => {
+                barReceipt += `[L]<b>[ ] ${item.qty}x  ${item.name}</b>\n`;
+                if(item.notes) barReceipt += `[L]   *Catatan: ${item.notes}\n`;
+                barReceipt += `[L]--------------------------------\n`;
+            });
+            barReceipt += `\n\n\n`;
+
+            setTimeout(() => {
+                sendIntentToRawBT(barReceipt, printerBarProfile);
+            }, delayMultiplier * 1200);
+        }
     }
 }
