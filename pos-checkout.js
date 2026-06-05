@@ -1,9 +1,9 @@
 /**
  * MODUL 3: CHECKOUT, HISTORY, VOID, PRINTER & RESPONSIVE PORTRAIT
- * UPDATE: Fix Auto-Sync History & Cashier Checkout Flow
+ * UPDATE: Fix Struk Meja Aktif (Open Bill), Reprint Akurat, & Voucher Tab Match
  */
 
-let currentTransactionTotal = 0; // State Penyimpan Tagihan Aktif
+let currentTransactionTotal = 0; 
 
 async function checkNewDraftNotifications() {
     if (!navigator.onLine) return;
@@ -235,7 +235,7 @@ async function activateAndPrintDraft(orderId) {
         if (json.success) {
             alert(`Meja ${bill.tableNo} berhasil diaktifkan & pesanan dikirim ke printer!`);
             switchTab('Open');
-            checkNewDraftNotifications(); // Auto-sync
+            checkNewDraftNotifications(); 
         } else {
             alert("Gagal mengaktifkan meja: " + json.message);
         }
@@ -250,7 +250,7 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
 
     const kitchenItems = bill.items.filter(item => item.route === "Kitchen");
     if (kitchenItems.length > 0) {
-        finalReceipt += `[C]<b>KITCHEN ORDER (DAPUR)</b>\n[L]Meja : <b><font size="big">${bill.tableNo}</font></b>\n[L]ID   : ${bill.orderId}\n[L]Jam  : <b>${currentTimeStr} WITA</b>\n[C]--------------------------------\n`;
+        finalReceipt += `[C]<b>KITCHEN ORDER (DAPUR)</b>\n[L]Meja : <b>${bill.tableNo}</b>\n[L]ID   : ${bill.orderId}\n[L]Jam  : <b>${currentTimeStr} WITA</b>\n[C]--------------------------------\n`;
         kitchenItems.forEach(item => {
             finalReceipt += `[L]<b>[ ] ${item.qty}x  ${item.name}</b>\n`;
             if(item.notes) finalReceipt += `[L]   *Catatan: ${item.notes}\n`;
@@ -261,7 +261,7 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
 
     const barItems = bill.items.filter(item => item.route === "Bar");
     if (barItems.length > 0) {
-        finalReceipt += `[C]<b>BAR ORDER (MINUMAN)</b>\n[L]Meja : <b><font size="big">${bill.tableNo}</font></b>\n[L]ID   : ${bill.orderId}\n[L]Jam  : <b>${currentTimeStr} WITA</b>\n[C]--------------------------------\n`;
+        finalReceipt += `[C]<b>BAR ORDER (MINUMAN)</b>\n[L]Meja : <b>${bill.tableNo}</b>\n[L]ID   : ${bill.orderId}\n[L]Jam  : <b>${currentTimeStr} WITA</b>\n[C]--------------------------------\n`;
         barItems.forEach(item => {
             finalReceipt += `[L]<b>[ ] ${item.qty}x  ${item.name}</b>\n`;
             if(item.notes) finalReceipt += `[L]   *Catatan: ${item.notes}\n`;
@@ -509,7 +509,7 @@ async function submitOrderPayload(statusTarget, printTarget) {
         } else {
             alert(`⚠️ Offline! Transaksi ${orderStatus} disimpan di antrean lokal.`);
             resetCartState();
-            checkNewDraftNotifications(); // Auto-Sync Manual
+            checkNewDraftNotifications(); 
         }
         updateOfflineBadge();
         return;
@@ -531,7 +531,7 @@ async function submitOrderPayload(statusTarget, printTarget) {
             } else {
                 alert(`Pesanan berhasil disimpan sebagai ${orderStatus}!`);
                 resetCartState();
-                checkNewDraftNotifications(); // Auto-sync History pasca simpan draft/open
+                checkNewDraftNotifications(); 
             }
 
             if (window.innerWidth < 768) {
@@ -556,7 +556,7 @@ function showSuccessChangeModal(total, received, change) {
 function closeSuccessChangeModal() {
     closeModal('modal-success-change');
     resetCartState(); 
-    checkNewDraftNotifications(); // Auto-sync History pasca LUNAS
+    checkNewDraftNotifications(); 
 }
 
 function resetCartState() {
@@ -596,10 +596,12 @@ function reprintOrder(orderId) {
     const subtotal = bill.items.reduce((sum, item) => sum + item.subtotal, 0);
     const totalDiscountAmount = (subtotal + bill.tax + bill.serviceCharge) - bill.totalAmount; 
 
-    executeRoutingPrint(bill.orderId, bill.tableNo, bill.status, bill.paymentMethod, subtotal, totalDiscountAmount, bill.serviceCharge, bill.tax, bill.totalAmount, "All", true);
+    // PERBAIKAN: Masukkan array "bill.items" (bukan keranjang aktif) agar pencetakan ulang detail struk tidak Rp 0
+    executeRoutingPrint(bill.orderId, bill.tableNo, bill.status, bill.paymentMethod, subtotal, totalDiscountAmount, bill.serviceCharge, bill.tax, bill.totalAmount, "All", true, bill.items);
 }
 
-function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discountAmount, serviceCharge, tax, grandTotal, target, isReprint = false) {
+// FORMAT PRINTER BERSIH RAWBT (MENDUKUNG BILL MEJA MEJA AKTIF / OPEN BILL & BEBAS TAG HTML MENTAH)
+function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discountAmount, serviceCharge, tax, grandTotal, target, isReprint = false, itemsToPrint = null) {
     const namaResto = configData["NAMA_PERUSAAN"] || "RESTO";
     const alamat = configData["ALAMAT"] || "";
     const footerStruk = configData["FOOTER_STRUK"] || "Terima Kasih Atas Kunjungannya!";
@@ -607,31 +609,39 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
     const currentDateStr = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' });
     const currentTimeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
+    const items = itemsToPrint || cart; // Prioritaskan itemsToPrint (jika dipanggil dari history reprint)
     let finalReceipt = "";
     let reprintTag = isReprint ? "[C]<b>*** REPRINT / SALINAN ***</b>\n" : "";
 
-    if (target === "All" && status === "Paid") {
+    // PERBAIKAN: Izinkan pencetakan struk tagihan meskipun meja masih AKTIF ("Open")
+    if (target === "All" && (status === "Paid" || status === "Open")) {
         finalReceipt += reprintTag;
         finalReceipt += `[C]<b>${namaResto}</b>\n[C]${alamat}\n[C]--------------------------------\n[L]ID   : ${orderId}\n[L]Meja : ${table}\n[L]Kasir: ${cashierInfo.name}\n[L]Tgl  : ${currentDateStr} [R]${currentTimeStr}\n[C]--------------------------------\n`;
-        cart.forEach(item => {
+        items.forEach(item => {
             finalReceipt += `[L]<b>${item.name}</b>\n`;
             if(item.notes) finalReceipt += `[L]  *${item.notes}\n`;
             finalReceipt += `[L]${item.qty}x ${item.price.toLocaleString('id-ID')} [R]${item.subtotal.toLocaleString('id-ID')}\n`;
         });
         finalReceipt += `[C]--------------------------------\n[L]Subtotal [R]${subtotal.toLocaleString('id-ID')}\n`;
-        if(discountAmount > 0) finalReceipt += `[L]Diskon/Voucher [R]-${discountAmount.toLocaleString('id-ID')}\n`;
+        if(discountAmount > 0) finalReceipt += `[L]Total Diskon [R]-${discountAmount.toLocaleString('id-ID')}\n`;
         if(serviceCharge > 0) finalReceipt += `[L]Layanan/Service [R]${serviceCharge.toLocaleString('id-ID')}\n`;
         if(tax > 0) finalReceipt += `[L]Pajak/Tax [R]${tax.toLocaleString('id-ID')}\n`;
         finalReceipt += `[L]<b>TOTAL</b> [R]<b>${grandTotal.toLocaleString('id-ID')}</b>\n[C]--------------------------------\n`;
-        finalReceipt += `[C]Status : LUNAS (${payMethod})\n[C]${footerStruk}\n\n\n`;
+        
+        if (status === "Paid") {
+            finalReceipt += `[C]Status : LUNAS (${payMethod})\n[C]${footerStruk}\n\n\n`;
+        } else {
+            // Label jika dicetak saat meja masih aktif (belum bayar)
+            finalReceipt += `[C]Status : BELUM BAYAR (TAGIHAN)\n[C]Harap simpan struk ini untuk pembayaran\n\n\n`;
+        }
         finalReceipt += `[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
     }
 
     if (target === "All" || target === "Kitchen") {
-        const kitchenItems = cart.filter(item => item.route === "Kitchen");
+        const kitchenItems = items.filter(item => item.route === "Kitchen");
         if (kitchenItems.length > 0) {
             finalReceipt += reprintTag;
-            finalReceipt += `[C]<b>KITCHEN ORDER (DAPUR)</b>\n[L]Meja : <b><font size="big">${table}</font></b>\n[L]ID   : ${orderId}\n[L]Jam  : <b>${currentTimeStr} WITA</b>\n[C]--------------------------------\n`;
+            finalReceipt += `[C]<b>KITCHEN ORDER (DAPUR)</b>\n[L]Meja : <b>${table}</b>\n[L]ID   : ${orderId}\n[L]Jam  : <b>${currentTimeStr} WITA</b>\n[C]--------------------------------\n`;
             kitchenItems.forEach(item => {
                 finalReceipt += `[L]<b>[ ] ${item.qty}x  ${item.name}</b>\n`;
                 if(item.notes) finalReceipt += `[L]   *Catatan: ${item.notes}\n`;
@@ -642,10 +652,10 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
     }
 
     if (target === "All" || target === "Bar") {
-        const barItems = cart.filter(item => item.route === "Bar");
+        const barItems = items.filter(item => item.route === "Bar");
         if (barItems.length > 0) {
             finalReceipt += reprintTag;
-            finalReceipt += `[C]<b>BAR ORDER (MINUMAN)</b>\n[L]Meja : <b><font size="big">${table}</font></b>\n[L]ID   : ${orderId}\n[L]Jam  : <b>${currentTimeStr} WITA</b>\n[C]--------------------------------\n`;
+            finalReceipt += `[C]<b>BAR ORDER (MINUMAN)</b>\n[L]Meja : <b>${table}</b>\n[L]ID   : ${orderId}\n[L]Jam  : <b>${currentTimeStr} WITA</b>\n[C]--------------------------------\n`;
             barItems.forEach(item => {
                 finalReceipt += `[L]<b>[ ] ${item.qty}x  ${item.name}</b>\n`;
                 if(item.notes) finalReceipt += `[L]   *Catatan: ${item.notes}\n`;
