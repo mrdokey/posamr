@@ -108,76 +108,109 @@
             </div>
         </div>
 
-        <!-- RIGHT PANEL: CART & CHECKOUT (SEMBUNYI DI HP, JADI SIDEBAR DI TABLET LANDSCAPE) [1] -->
-        <div id="cart-panel" class="hidden md:flex w-full md:w-[420px] bg-slate-900 flex-col h-full z-20 shadow-2xl relative border-l border-slate-800 smooth-transition">
+        <!-- FILE: index.html (Pembaruan Panel Kanan - Dashboard Kasir Lebar 540px) -->
+
+        <!-- RIGHT PANEL: CART & CHECKOUT (DIPERLEBAR MENJADI 540px UNTUK LAYOUT BERDAMPINGAN) -->
+        <div id="cart-panel" class="hidden md:flex w-full md:w-[540px] bg-slate-900 flex-col h-full z-20 shadow-2xl relative border-l border-slate-800 smooth-transition">
+            
+            <!-- Header Panel -->
             <div class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-950 shrink-0">
-                <h2 class="font-black text-amber-500 text-lg flex items-center gap-2"><i data-lucide="shopping-basket" class="w-5 h-5 text-indigo-500"></i> Pesanan <span id="cart-count" class="bg-amber-500 text-slate-900 text-xs px-2 py-0.5 rounded-full">0</span></h2>
+                <h2 class="font-black text-amber-500 text-lg flex items-center gap-2">
+                    <i data-lucide="shopping-basket" class="text-indigo-500"></i> Pesanan 
+                    <span id="cart-count" class="bg-amber-500 text-slate-900 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+                </h2>
                 <div class="flex gap-2">
-                    <!-- Tombol Kembali khusus HP untuk menutup slide keranjang [1] -->
                     <button onclick="toggleMobileCart()" class="md:hidden text-xs font-bold text-slate-400 bg-slate-800 px-3 py-1.5 rounded-xl">Kembali</button>
                     <button onclick="clearCart()" class="text-xs text-rose-500 font-bold hover:bg-rose-950/30 px-3 py-1.5 rounded-lg smooth-transition">Batal</button>
                 </div>
             </div>
 
-            <div class="p-5 border-b border-slate-800 shrink-0 bg-slate-900">
+            <!-- Input Meja -->
+            <div class="p-4 border-b border-slate-800 shrink-0 bg-slate-900">
                 <label class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Meja / Nama Tamu</label>
-                <input type="text" id="order-table" placeholder="M-01 / Takeaway" class="w-full mt-2 px-4 py-3.5 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none focus:border-amber-500 font-black text-lg smooth-transition">
-                <p id="draft-indicator" class="hidden-screen text-xs text-emerald-400 mt-2 font-bold animate-pulse"><i data-lucide="edit-3" class="w-3 h-3 inline"></i> Mode Edit Draft Aktif</p>
+                <input type="text" id="order-table" placeholder="M-01 / Takeaway" class="w-full mt-1.5 px-4 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none focus:border-amber-500 font-black text-lg smooth-transition">
+                <p id="draft-indicator" class="hidden-screen text-xs text-emerald-400 mt-2 font-bold animate-pulse">
+                    <i data-lucide="edit-3" class="w-3 h-3 inline"></i> Mode Edit Draft Aktif
+                </p>
             </div>
 
+            <!-- List Item Belanja (Sangat Lega & Spasial) -->
             <div id="cart-container" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-900/50">
+                <!-- Diisi otomatis oleh js -->
             </div>
 
-            <!-- FILE: index.html (Seksi Perhitungan Pembayaran Baru yang Compact) -->
+            <!-- SEKSI PERHITUNGAN & PROMO DUA KOLOM BERDAMPINGAN (DASHBOARD STYLE) -->
+            <div class="p-4 border-t border-slate-800 bg-slate-950 shrink-0">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    
+                    <!-- KOLOM KIRI: FILTERS, DISKON, & VOUCHER KLAIM -->
+                    <div class="space-y-3 flex flex-col justify-between">
+                        <!-- Pilihan Diskon -->
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Diskon Level</label>
+                            <select id="cart-discount-select" onchange="renderCart()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 outline-none text-xs font-bold text-white cursor-pointer focus:border-amber-500 transition">
+                                <option value="0" data-id="DISC-00">Tanpa Discount (0%)</option>
+                            </select>
+                        </div>
 
-            <div class="p-4 border-t border-slate-800 bg-slate-950 shrink-0 space-y-3">
-                <!-- Grid Informasi Pembayaran -->
-                <div class="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-slate-400">
-                    <div class="flex justify-between">
-                        <span>Subtotal:</span>
-                        <span id="cart-subtotal" class="text-white font-bold">Rp 0</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span>Diskon:</span>
-                        <select id="cart-discount-select" onchange="renderCart()" class="bg-slate-850 border border-slate-700 rounded px-1.5 py-0.5 outline-none text-[10px] font-bold text-white cursor-pointer">
-                            <option value="0" data-id="DISC-00">0%</option>
-                        </select>
-                    </div>
-                    <div class="col-span-2" id="voucher-input-container">
-                        <div class="flex items-center gap-1.5">
-                            <input type="text" id="voucher-input" placeholder="KODE VOUCHER" class="bg-slate-800 text-white px-2.5 py-1.5 rounded-lg text-[10px] outline-none focus:border-amber-500 border border-slate-700 w-full uppercase">
-                            <button onclick="applyVoucher()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 px-3 py-1.5 rounded-lg text-[10px] font-bold transition shrink-0">Klaim</button>
+                        <!-- Input Klaim Voucher -->
+                        <div id="voucher-input-container" class="space-y-1.5">
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Kode Voucher</label>
+                            <div class="flex items-center gap-1.5">
+                                <input type="text" id="voucher-input" placeholder="INPUT KODE" class="bg-slate-800 text-white px-3 py-2 rounded-lg text-xs outline-none focus:border-amber-500 border border-slate-700 w-full uppercase">
+                                <button onclick="applyVoucher()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 px-3 py-2 rounded-lg text-xs font-black transition shrink-0">Klaim</button>
+                            </div>
+                        </div>
+
+                        <!-- Panel Info Voucher Aktif (Ditampilkan dinamis) -->
+                        <div id="active-voucher-info" class="hidden justify-between items-center bg-emerald-950/30 border border-emerald-500/20 p-2.5 rounded-xl text-emerald-400">
+                            <p class="text-[10px] font-bold flex items-center gap-1">
+                                <i data-lucide="ticket" class="w-4 h-4"></i> 
+                                <span id="active-voucher-code"></span>
+                            </p>
+                            <div class="flex items-center gap-1.5 text-[10px]">
+                                <span id="active-voucher-value" class="font-bold"></span>
+                                <button onclick="removeVoucher()" class="text-rose-500 hover:text-rose-400">
+                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <div id="active-voucher-info" class="hidden col-span-2 justify-between items-center bg-emerald-950/30 border border-emerald-500/20 p-2 rounded-lg text-emerald-400">
-                        <p class="text-[10px] font-bold flex items-center gap-1"><i data-lucide="ticket" class="w-3.5 h-3.5"></i> <span id="active-voucher-code"></span></p>
-                        <div class="flex items-center gap-1.5 text-[10px]">
-                            <span id="active-voucher-value" class="font-bold"></span>
-                            <button onclick="removeVoucher()" class="text-rose-500 hover:text-rose-400"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+
+                    <!-- KOLOM KANAN: KONTROL NOMINAL & SUBMIT PEMBAYARAN -->
+                    <div class="space-y-3">
+                        <div class="space-y-1.5 text-xs text-slate-400">
+                            <div class="flex justify-between">
+                                <span>Subtotal:</span>
+                                <span id="cart-subtotal" class="text-white font-bold">Rp 0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Pajak & Servis:</span>
+                                <span id="cart-tax" class="text-white font-bold">Rp 0</span>
+                            </div>
+                        </div>
+
+                        <!-- Kotak Grand Total -->
+                        <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Grand Total</p>
+                            <p id="cart-grandtotal" class="text-lg font-black text-amber-500 tracking-tight">Rp 0</p>
+                        </div>
+
+                        <!-- Tombol Transaksi -->
+                        <div class="flex flex-col gap-2">
+                            <button id="btn-cashier-print" onclick="openPrintModal()" class="w-full py-3 bg-emerald-600 text-white rounded-xl font-black shadow-lg hover:bg-emerald-700 smooth-transition active:scale-95 flex items-center justify-center gap-2 text-xs">
+                                <i data-lucide="calculator" class="w-4 h-4"></i> <span>PROSES / BAYAR</span>
+                            </button>
+                            <button id="btn-save-draft" onclick="saveDraft()" class="w-full py-2 bg-slate-800 text-slate-300 rounded-lg font-bold hover:bg-slate-700 smooth-transition active:scale-95 flex items-center justify-center gap-1.5 border border-slate-700 text-[11px]">
+                                <i data-lucide="save" class="w-3.5 h-3.5 text-amber-500"></i> <span>Simpan Draft</span>
+                            </button>
                         </div>
                     </div>
-                    <div class="col-span-2 flex justify-between border-t border-slate-850 pt-1.5">
-                        <span>Pajak & Servis:</span>
-                        <span id="cart-tax" class="text-white font-bold">Rp 0</span>
-                    </div>
-                </div>
 
-                <!-- Grand Total Minimalis -->
-                <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-xl border border-slate-800">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Grand Total</p>
-                    <p id="cart-grandtotal" class="text-xl font-black text-amber-500 tracking-tight">Rp 0</p>
-                </div>
-                
-                <!-- Aksi Utama Kasir -->
-                <div class="grid grid-cols-2 gap-2">
-                    <button id="btn-cashier-print" onclick="openPrintModal()" class="col-span-2 py-3.5 bg-emerald-600 text-white rounded-xl font-black shadow-lg hover:bg-emerald-700 smooth-transition active:scale-95 flex items-center justify-center gap-2 text-sm">
-                        <i data-lucide="calculator" class="w-4 h-4"></i> <span>PROSES / BAYAR</span>
-                    </button>
-                    <button id="btn-save-draft" onclick="saveDraft()" class="col-span-2 py-2 bg-slate-800 text-slate-300 rounded-lg font-bold hover:bg-slate-700 smooth-transition active:scale-95 flex items-center justify-center gap-1.5 border border-slate-700 text-xs">
-                        <i data-lucide="save" class="w-3.5 h-3.5 text-amber-500"></i> <span>Simpan Draft</span>
-                    </button>
                 </div>
             </div>
+            
+        </div>
 
     <!-- 5. FLOATING CART BUTTON (HANYA MUNCUL DI HP/TABLET PORTRAIT) [1] -->
     <div id="mobile-cart-trigger" class="md:hidden fixed bottom-6 left-4 right-4 z-35 hidden-screen smooth-transition">
