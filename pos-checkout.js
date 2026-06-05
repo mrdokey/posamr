@@ -671,3 +671,171 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
         window.location.href = intentUrl;
     }
 }
+
+// FILE: pos-checkout.js (Tambahkan di bagian paling bawah)
+
+let splitOriginalItems = []; // Menyimpan sisa item di meja asli
+let splitTargetItems = [];   // Menyimpan item yang dipisah
+
+function openSplitModal() {
+    if (!activeOrderId) return alert("Pilih meja aktif terlebih dahulu dari riwayat!");
+    
+    // Duplikasi isi keranjang saat ini ke dalam sistem split
+    splitOriginalItems = JSON.parse(JSON.stringify(cart));
+    splitTargetItems = [];
+    
+    renderSplitUI();
+    openModal('modal-split-bill');
+}
+
+function renderSplitUI() {
+    const origContainer = document.getElementById('split-original-container');
+    const targetContainer = document.getElementById('split-target-container');
+    
+    // Render Kolom Kiri (Sisa Tagihan Asli)
+    origContainer.innerHTML = splitOriginalItems.map((item, idx) => `
+        <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl flex justify-between items-center">
+            <div class="pr-2">
+                <p class="text-xs font-bold text-white line-clamp-1">${item.name}</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">Rp ${item.price.toLocaleString('id-ID')} x ${item.qty}</p>
+            </div>
+            <button onclick="moveItemToSplit(${idx})" class="w-7 h-7 bg-slate-800 rounded-lg text-amber-500 hover:bg-amber-500 hover:text-slate-950 flex items-center justify-center font-bold text-sm smooth-transition">
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+        </div>
+    `).join('');
+
+    // Render Kolom Kanan (Tagihan Baru)
+    targetContainer.innerHTML = splitTargetItems.map((item, idx) => `
+        <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl flex justify-between items-center">
+            <button onclick="moveItemToOriginal(${idx})" class="w-7 h-7 bg-slate-800 rounded-lg text-slate-400 hover:bg-red-500 hover:text-white flex items-center justify-center font-bold text-sm smooth-transition">
+                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </button>
+            <div class="text-right pl-2">
+                <p class="text-xs font-bold text-white line-clamp-1">${item.name}</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">Rp ${item.price.toLocaleString('id-ID')} x ${item.qty}</p>
+            </div>
+        </div>
+    `).join('');
+
+    // Hitung Total Nilai Bill yang Dipisahkan
+    const splitTotal = splitTargetItems.reduce((sum, item) => sum + item.subtotal, 0);
+    document.getElementById('split-total-amount').innerText = "Rp " + splitTotal.toLocaleString('id-ID');
+    
+    lucide.createIcons();
+}
+
+function moveItemToSplit(index) {
+    const item = splitOriginalItems[index];
+    if (item.qty <= 0) return;
+
+    // Kurangi qty di Bill Asli
+    item.qty--;
+    item.subtotal = item.qty * item.price;
+
+    // Cari apakah item sudah pernah dipindah ke kanan
+    const exist = splitTargetItems.find(i => i.menuId === item.menuId);
+    if (exist) {
+        exist.qty++;
+        exist.subtotal = exist.qty * exist.price;
+    } else {
+        splitTargetItems.push({ ...item, qty: 1, subtotal: item.price, notes: '' });
+    }
+
+    // Bersihkan item asli jika qty mencapai 0
+    if (item.qty === 0) {
+        splitOriginalItems.splice(index, 1);
+    }
+
+    renderSplitUI();
+}
+
+function moveItemToOriginal(index) {
+    const item = splitTargetItems[index];
+    if (item.qty <= 0) return;
+
+    // Kurangi qty di Bill Baru
+    item.qty--;
+    item.subtotal = item.qty * item.price;
+
+    // Tambahkan kembali ke kiri
+    const exist = splitOriginalItems.find(i => i.menuId === item.menuId);
+    if (exist) {
+        exist.qty++;
+        exist.subtotal = exist.qty * exist.price;
+    } else {
+        splitOriginalItems.push({ ...item, qty: 1, subtotal: item.price, notes: '' });
+    }
+
+    // Bersihkan item baru jika qty mencapai 0
+    if (item.qty === 0) {
+        splitTargetItems.splice(index, 1);
+    }
+
+    renderSplitUI();
+}
+
+// EKSEKUSI PISAH TAGIHAN
+async function confirmSplit() {
+    if (splitTargetItems.length === 0) return alert("Pindahkan minimal 1 item ke Bill Baru!");
+
+    const origTableNo = document.getElementById('order-table').value.trim();
+    
+    if (!confirm(`Sistem akan memperbarui tagihan meja asli ${origTableNo} dan memuat tagihan baru ke keranjang untuk dilunasi.`)) {
+        return;
+    }
+
+    // 1. UPDATE BILL ASLI DI SPREADSHEET (MENGIRIM SISA ITEM)
+    const subtotalOrig = splitOriginalItems.reduce((sum, item) => sum + item.subtotal, 0);
+    const servicePerc = parseFloat(configData["SERVICE_CHARGE"] || 0);
+    const serviceChargeOrig = subtotalOrig * (servicePerc / 100);
+    const taxPerc = parseFloat(configData["PAJAK_PB1"] || 0); 
+    const taxOrig = (subtotalOrig + serviceChargeOrig) * (taxPerc / 100);
+    const grandTotalOrig = subtotalOrig + serviceChargeOrig + taxOrig;
+
+    let userArea = cashierInfo ? cashierInfo.area : "";
+
+    const payloadOrigUpdate = {
+        action: "placeOrder",
+        data: {
+            orderId: activeOrderId, // Tetap menggunakan ID Meja Aktif saat ini
+            tableNo: origTableNo,
+            kasirId: cashierInfo.userId,
+            area: userArea,
+            discount: "DISC-00", // Reset diskon promo di meja asli biar adil, atau sesuaikan
+            voucherCode: "",
+            tax: taxOrig,
+            serviceCharge: serviceChargeOrig,
+            totalAmount: grandTotalOrig,
+            paymentMethod: "-",
+            orderStatus: "Open", // Meja asli tetap "Open" (Meja Aktif)
+            items: splitOriginalItems
+        }
+    };
+
+    try {
+        // Kirim update meja asli ke Google Sheets
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payloadOrigUpdate) });
+        const json = await res.json();
+        
+        if (json.success) {
+            // 2. LOAD BILL BARU (SPLIT) KE KERANJANG AKTIF KASIR UNTUK SEGERA DILUNASI
+            activeOrderId = null; // Putuskan hubungan dari meja asli (menjadi transaksi baru)
+            document.getElementById('order-table').value = origTableNo + " (Split)"; // Beri label sub-meja
+            
+            cart = splitTargetItems; // Muat item yang dipisahkan ke keranjang utama
+            
+            const ind = document.getElementById('draft-indicator');
+            if (ind) ind.classList.add('hidden-screen'); // Keluar dari mode edit draft
+            
+            renderCart(); // Render ulang keranjang belanja kasir
+            closeModal('modal-split-bill');
+            
+            alert("Bill berhasil dipisah! Keranjang sekarang berisi Bill Baru yang siap dilunasi.");
+        } else {
+            alert("Gagal memperbarui bill asli: " + json.message);
+        }
+    } catch (e) {
+        alert("Gagal koneksi ke server untuk memproses split bill.");
+    }
+}

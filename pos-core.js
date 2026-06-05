@@ -295,6 +295,18 @@ function renderCart() {
             }
         }
     }
+    
+    // FILE: pos-core.js (Tambahkan baris ini di dalam fungsi renderCart paling bawah)
+
+    // Sembunyikan atau Tampilkan Tombol Split Bill
+    const btnSplit = document.getElementById('btn-split-trigger');
+    if (btnSplit) {
+        if (activeOrderId && cart.length > 0) {
+            btnSplit.classList.remove('hidden'); // Muncul jika sedang edit meja aktif
+        } else {
+            btnSplit.classList.add('hidden'); // Sembunyikan jika transaksi baru
+        }
+    }
 
     // UI Voucher Toggler
     const vInfo = document.getElementById('active-voucher-info');

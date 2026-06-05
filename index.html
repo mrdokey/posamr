@@ -115,12 +115,16 @@
         <div id="cart-panel" class="hidden md:flex w-full md:w-[600px] bg-slate-900 flex-col h-full z-20 shadow-2xl relative border-l border-slate-800 smooth-transition">
             
             <!-- Header Panel -->
+            <!-- FILE: index.html (Bagian Header Keranjang Belanja) -->
             <div class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-950 shrink-0">
                 <h2 class="font-black text-amber-500 text-lg flex items-center gap-2">
                     <i data-lucide="shopping-basket" class="text-indigo-500"></i> Pesanan 
                     <span id="cart-count" class="bg-amber-500 text-slate-900 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
                 </h2>
-                <div class="flex gap-2">
+                <div class="flex gap-2 items-center">
+                    <!-- TOMBOL SPLIT BILL (Hanya muncul saat mengedit Meja Aktif/Draft) -->
+                    <button id="btn-split-trigger" onclick="openSplitModal()" class="hidden text-xs text-amber-500 font-bold hover:bg-amber-950/40 px-3 py-1.5 rounded-lg border border-amber-500/20 smooth-transition">Split Bill</button>
+                    
                     <button onclick="toggleMobileCart()" class="md:hidden text-xs font-bold text-slate-400 bg-slate-800 px-3 py-1.5 rounded-xl">Kembali</button>
                     <button onclick="clearCart()" class="text-xs text-rose-500 font-bold hover:bg-rose-950/30 px-3 py-1.5 rounded-lg smooth-transition">Batal</button>
                 </div>
@@ -315,6 +319,41 @@
             </button>
         </div>
     </div>
+    
+    <!-- FILE: index.html (Letakkan di bawah modal-success-change) -->
+<div id="modal-split-bill" class="hidden-screen fixed inset-0 bg-black/85 z-[100] flex items-center justify-center p-4 smooth-transition">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl p-6 shadow-2xl flex flex-col h-[85vh]">
+        <div class="flex justify-between items-center mb-4 shrink-0">
+            <h3 class="text-lg font-black text-amber-500 flex items-center gap-2"><i data-lucide="scissors" class="w-5 h-5"></i> Pisah Tagihan (Split Bill)</h3>
+            <button onclick="closeModal('modal-split-bill')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 flex-1 overflow-hidden min-h-0">
+            <!-- KOLOM KIRI: TAGIHAN ASLI -->
+            <div class="flex flex-col border border-slate-800 rounded-2xl bg-slate-950/40 p-4 h-full min-h-0 overflow-hidden">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Sisa Tagihan Asli</h4>
+                <div id="split-original-container" class="flex-1 overflow-y-auto space-y-2 pr-1"></div>
+            </div>
+
+            <!-- KOLOM KANAN: TAGIHAN BARU (SPLIT) -->
+            <div class="flex flex-col border border-slate-800 rounded-2xl bg-slate-950/40 p-4 h-full min-h-0 overflow-hidden">
+                <h4 class="text-xs font-bold text-amber-500 uppercase tracking-wider mb-3">Tagihan Baru (Split)</h4>
+                <div id="split-target-container" class="flex-1 overflow-y-auto space-y-2 pr-1"></div>
+            </div>
+        </div>
+
+        <div class="mt-5 pt-4 border-t border-slate-800 flex justify-between items-center shrink-0">
+            <div class="text-left">
+                <p class="text-[10px] text-slate-500 uppercase font-bold">Total yang Dipisahkan</p>
+                <p id="split-total-amount" class="text-xl font-black text-amber-500">Rp 0</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="closeModal('modal-split-bill')" class="px-5 py-2.5 text-xs font-bold text-slate-400 hover:text-white transition">Batal</button>
+                <button onclick="confirmSplit()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-lg shadow-emerald-600/10">PROSES PISAH BILL</button>
+            </div>
+        </div>
+    </div>
+</div>
 
     <!-- MODAL: HISTORY & DRAFT MANAGEMENT -->
     <div id="modal-history" class="hidden-screen fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 sm:p-8 smooth-transition">
