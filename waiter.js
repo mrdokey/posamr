@@ -260,24 +260,27 @@ function renderMenuHTML(items) {
     
     if (items.length === 0) {
         container.innerHTML = `<div class="col-span-full py-20 text-center text-slate-500"><i data-lucide="search-x" class="w-16 h-16 mx-auto mb-3 opacity-30"></i>Menu tidak ditemukan</div>`;
-        lucide.createIcons();
+        if(typeof lucide !== 'undefined') lucide.createIcons();
         return;
     }
 
     container.innerHTML = items.map(item => {
         const fallbackImg = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&background=1e293b&color=f59e0b&size=200&font-size=0.33`;
-        const totalSoldData = parseInt(item.totalSold) || 0; 
-        const isHot = totalSoldData > 10;
+        const isHot = (parseInt(item.totalSold) || 0) > 10;
         const badgeHtml = isHot ? `<div class="absolute top-2 left-2 bg-rose-600 text-white text-[9px] font-black px-2 py-1 rounded-md shadow-md animate-pulse">🔥 HOT</div>` : ``;
+        
+        // KUNCI: Amankan tanda kutip agar tidak merusak tag div HTML
+        const safeName = item.name.replace(/'/g, "\\'"); 
 
+        // KUNCI: h-32 mutlak untuk gambar, min-h-[90px] mutlak untuk teks
         return `
-        <div onclick="addToCart('${item.id}', '${item.name}', ${item.price}, '${item.route}')" class="menu-card bg-slate-800 border border-slate-700 rounded-2xl flex flex-col overflow-hidden cursor-pointer hover:border-amber-500 relative h-full">
-            <div class="h-28 relative shrink-0 overflow-hidden bg-slate-900">
-                <img src="${item.image || fallbackImg}" onerror="this.onerror=null; this.src='${fallbackImg}';" class="w-full h-full object-cover transition-transform duration-700 hover:scale-110">
+        <div onclick="addToCart('${item.id}', '${safeName}', ${item.price}, '${item.route}')" class="bg-slate-800 border border-slate-700 rounded-2xl flex flex-col overflow-hidden cursor-pointer active:scale-95 transition-transform">
+            <div class="h-32 w-full relative shrink-0 bg-slate-900 border-b border-slate-700">
+                <img src="${item.image || fallbackImg}" onerror="this.onerror=null; this.src='${fallbackImg}';" class="w-full h-full object-cover">
                 ${badgeHtml}
-                <div class="absolute top-2 right-2 bg-slate-900/80 text-[9px] font-bold px-2 py-0.5 rounded border border-slate-700 text-slate-300 backdrop-blur-sm">${item.category}</div>
+                <div class="absolute top-2 right-2 bg-slate-900/90 text-[9px] font-bold px-2 py-0.5 rounded border border-slate-700 text-slate-300">${item.category}</div>
             </div>
-            <div class="p-3 flex flex-col justify-between flex-1 bg-slate-800 z-10">
+            <div class="p-3 flex flex-col flex-1 justify-between min-h-[90px] bg-slate-800">
                 <div>
                     <h3 class="text-xs font-bold text-white line-clamp-2 leading-tight">${item.name}</h3>
                     <p class="text-[9px] text-slate-400 mt-1 line-clamp-2">${item.description || ''}</p>
@@ -286,7 +289,8 @@ function renderMenuHTML(items) {
             </div>
         </div>
     `}).join('');
-    lucide.createIcons();
+    
+    if(typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 // --- KERANJANG BELANJA (CART SYSTEM) ---
