@@ -95,6 +95,8 @@ window.onload = () => {
     }, 1000); 
 };
 
+// FILE: config.js (Bagian checkState)
+
 function checkState() {
     if (!cashierInfo) {
         showScreen('login-screen');
@@ -108,6 +110,17 @@ function checkState() {
             pinInput.addEventListener('input', handlePhysicalKeyboard);
         }
     } else {
+        // FILTER KEAMANAN STARTUP: Jika data session ilegal (Pelayan), paksa logout
+        const allowedRoles = ["admin", "hrd", "manager", "owner"];
+        const jobdeskClean = cashierInfo.jobdesk ? cashierInfo.jobdesk.toLowerCase().trim() : "";
+        const roleClean = cashierInfo.role ? cashierInfo.role.toLowerCase().trim() : "";
+
+        if (jobdeskClean !== "kasir" && !allowedRoles.includes(roleClean)) {
+            localStorage.removeItem(STORAGE_USER);
+            window.location.reload();
+            return;
+        }
+
         showScreen('main-app');
         document.getElementById('kasir-name').innerText = cashierInfo.name;
         initApp();

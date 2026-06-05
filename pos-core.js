@@ -14,6 +14,8 @@ async function fetchConfigBg() {
     } catch(e) {}
 }
 
+// FILE: pos-core.js (Bagian loginKasir)
+
 async function loginKasir() {
     if(loginPinValue.length < 4) return;
     const btn = document.getElementById('btn-login');
@@ -22,8 +24,19 @@ async function loginKasir() {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) });
         const json = await res.json();
         if(json.success) {
-            localStorage.setItem(STORAGE_USER, JSON.stringify(json));
-            window.location.reload();
+            const allowedRoles = ["admin", "hrd", "manager", "owner"];
+            const jobdeskClean = json.jobdesk ? json.jobdesk.toLowerCase().trim() : "";
+            const roleClean = json.role ? json.role.toLowerCase().trim() : "";
+
+            // VALIDASI PERAN POS KASIR (Strict Role Validation)
+            if (jobdeskClean === "kasir" || allowedRoles.includes(roleClean)) {
+                localStorage.setItem(STORAGE_USER, JSON.stringify(json));
+                window.location.reload();
+            } else {
+                alert(`Akses Ditolak! Pelayan/Staff tidak diizinkan masuk ke aplikasi POS Utama.`);
+                clearPin();
+                if (btn) btn.innerText = "Buka Mesin POS";
+            }
         } else {
             alert(json.message);
             clearPin();
