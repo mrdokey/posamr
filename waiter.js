@@ -1,10 +1,11 @@
 /**
  * MODUL 4: WAITER/PELAYAN ENGINE (FULL RESPONSIVE & DRAFT ORDER)
+ * UPDATE: Proteksi Ketat (Kasir Dilarang Masuk) & Multi-Branch Area
  */
 
 lucide.createIcons();
 
-// ⚠️ URL GAS SUHU (HARDCODED SEMENTARA)
+// URL GAS (Hardcoded)
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxUP-K2iIaP8qF8ZBjeOI3h0OG7du_wcJQE2qM507YTb7magRRZejs6DZmqzy-Dulgy/exec";
 const STORAGE_USER = "MRD_WAITER_SESSION";
 const OFFLINE_QUEUE_KEY = "MRD_OFFLINE_WAITER_QUEUE";
@@ -75,7 +76,6 @@ window.onload = () => {
         }
     }, 1000); 
     
-    // Pastikan tombol keranjang melayang diupdate jika ukuran layar berubah
     window.addEventListener('resize', updateMobileCartButtonVisibility);
 };
 
@@ -85,6 +85,18 @@ function checkState() {
         fetchConfigBg();
         clearPin();
     } else {
+        // FILTER KEAMANAN STARTUP: Tendang keluar jika dia adalah Kasir
+        const allowedRoles = ["admin", "hrd", "manager", "owner"];
+        const jobdeskClean = cashierInfo.jobdesk ? cashierInfo.jobdesk.toLowerCase().trim() : "";
+        const roleClean = cashierInfo.role ? cashierInfo.role.toLowerCase().trim() : "";
+
+        // Jika dia Kasir ATAU (bukan pelayan dan bukan manajemen), HAPUS SESI!
+        if (jobdeskClean === "kasir" || (jobdeskClean !== "pelayan" && !allowedRoles.includes(roleClean))) {
+            localStorage.removeItem(STORAGE_USER);
+            window.location.reload();
+            return;
+        }
+
         showScreen('main-app');
         document.getElementById('kasir-name').innerText = cashierInfo.name;
         initApp();
@@ -123,16 +135,30 @@ async function loginWaiter() {
     if(loginPinValue.length < 4) return;
     const statusText = document.getElementById('login-status');
     statusText.innerText = "Memeriksa Akses Pelayan...";
+    
     try {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) });
         const json = await res.json();
+        
         if(json.success) {
-            // Meloloskan Pelayan atau Staff (Pintu Khusus Waiter PWA)
-            if (json.jobdesk.toLowerCase() === "pelayan" || json.role.toLowerCase() === "staff") {
+            const allowedRoles = ["admin", "hrd", "manager", "owner"];
+            const jobdeskClean = json.jobdesk ? json.jobdesk.toLowerCase().trim() : "";
+            const roleClean = json.role ? json.role.toLowerCase().trim() : "";
+
+            // BLOKIR KERAS JIKA JOBDESK = KASIR
+            if (jobdeskClean === "kasir") {
+                alert("Akses Ditolak! Anda adalah Kasir. Silakan login di Mesin POS Utama.");
+                clearPin();
+                statusText.innerText = "";
+            } 
+            // LOLOSKAN JIKA PELAYAN ATAU MANAJEMEN
+            else if (jobdeskClean === "pelayan" || allowedRoles.includes(roleClean)) {
                 localStorage.setItem(STORAGE_USER, JSON.stringify(json));
                 window.location.reload();
-            } else {
-                alert("Akses Ditolak! Anda bukan Pelayan/Staff.");
+            } 
+            // SELAIN ITU TOLAK
+            else {
+                alert("Akses Ditolak! Aplikasi ini khusus Pelayan.");
                 clearPin();
                 statusText.innerText = "";
             }
@@ -166,15 +192,17 @@ async function initApp() {
         renderMenuHTML(filteredData); 
     }
 
+    let userArea = cashierInfo ? cashierInfo.area : "";
+
     try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getMenu' }) });
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getMenu', data: { area: userArea } }) });
         const json = await res.json();
         if(json.success) {
             menuData = json.data;
             localStorage.setItem('localMenu', JSON.stringify(menuData));
             filterMenu(currentCategory, document.getElementById(`btn-cat-${currentCategory}`)); 
         }
-        const resConf = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) });
+        const resConf = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig', data: { area: userArea } }) });
         const jsonConf = await resConf.json();
         if(jsonConf.success) {
             configData = jsonConf.data;
@@ -284,7 +312,7 @@ function clearCart() {
         cart = []; 
         document.getElementById('order-table').value = ""; 
         renderCart(); 
-        toggleMobileCart(); // Tutup laci
+        toggleMobileCart(); 
     }
 }
 
@@ -295,13 +323,13 @@ function renderCart() {
     const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
 
     // Update Grand Total di Laci
-    document.getElementById('cart-grandtotal').innerText = "Rp " + subtotal.toLocaleString();
+    document.getElementById('cart-grandtotal').innerText = "Rp " + subtotal.toLocaleString('id-ID');
 
     // Update di Tombol Melayang Mobile
     const mobCount = document.getElementById('mobile-cart-count');
     const mobTotal = document.getElementById('mobile-cart-total');
     if (mobCount) mobCount.innerText = cart.reduce((sum, item) => sum + item.qty, 0);
-    if (mobTotal) mobTotal.innerText = "Rp " + subtotal.toLocaleString();
+    if (mobTotal) mobTotal.innerText = "Rp " + subtotal.toLocaleString('id-ID');
 
     updateMobileCartButtonVisibility();
 
@@ -316,7 +344,7 @@ function renderCart() {
             <div class="flex justify-between items-start mb-2">
                 <div class="pr-2">
                     <h4 class="text-xs font-bold leading-tight">${item.name}</h4>
-                    <p class="text-xs text-amber-500 font-black mt-1">Rp ${item.subtotal.toLocaleString()}</p>
+                    <p class="text-xs text-amber-500 font-black mt-1">Rp ${item.subtotal.toLocaleString('id-ID')}</p>
                 </div>
                 <div class="flex items-center bg-slate-900 border border-slate-700 rounded-xl p-0.5 shrink-0">
                     <button onclick="updateQty(${idx}, -1)" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 font-bold"><i data-lucide="minus" class="w-3 h-3"></i></button>
@@ -350,7 +378,6 @@ function updateMobileCartButtonVisibility() {
     const trigger = document.getElementById('mobile-cart-trigger');
     if (!trigger) return;
 
-    // Di PWA Pelayan, tombol melayang selalu muncul jika ada barang di keranjang
     if (count > 0 && cashierInfo) {
         trigger.classList.remove('hidden-screen');
     } else {
@@ -365,26 +392,28 @@ async function sendOrderToCashier() {
     if(!tableNo) return alert("Mohon isi Nomor Meja!");
 
     const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
+    let userArea = cashierInfo ? cashierInfo.area : "";
 
     const payload = {
         action: "placeOrder", 
         data: {
-            orderId: "", // ID Baru karena pelayan selalu kirim draft baru
+            orderId: "", // ID Baru
             tableNo: tableNo,
             kasirId: cashierInfo.userId, 
+            area: userArea, // DATA AREA DIKIRIM
             discount: "DISC-00", 
+            voucherCode: "",
             tax: 0, 
             serviceCharge: 0, 
             totalAmount: subtotal, 
             paymentMethod: "-",
-            orderStatus: "Draft", // KIRIM SEBAGAI DRAFT!
+            orderStatus: "Draft", // KIRIM SEBAGAI DRAFT
             items: cart
         }
     };
 
     const btn = document.getElementById('btn-send');
     if (!navigator.onLine) {
-        // SIMPAN KE ANTREAN OFFLINE PELAYAN
         let queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || "[]");
         queue.push(payload);
         localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
@@ -403,10 +432,8 @@ async function sendOrderToCashier() {
         const json = await res.json();
         
         if(json.success) {
-            // Tampilkan Layar Sukses Pelayan
             showScreen('success-screen');
             
-            // Auto Reset Form
             setTimeout(() => {
                 cart = [];
                 document.getElementById('order-table').value = "";
@@ -414,7 +441,7 @@ async function sendOrderToCashier() {
                 btn.innerHTML = `<i data-lucide="send" class="w-5 h-5"></i> <span>KIRIM KE KASIR (DRAFT)</span>`;
                 btn.disabled = false;
                 showScreen('main-app');
-                toggleMobileCart(); // Tutup laci
+                toggleMobileCart(); 
             }, 3000);
         } else {
             alert("Error Server: " + json.message);
