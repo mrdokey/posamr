@@ -265,27 +265,32 @@ function renderMenuHTML(items) {
     }
 
     container.innerHTML = items.map(item => {
-        const fallbackImg = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&background=1e293b&color=f59e0b&size=200&font-size=0.33`;
+        // SANITASI EKSTRIM: Mencegah karakter dari Spreadsheet merusak HTML DOM
+        const safeId = String(item.id || '').replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        const safeName = String(item.name || 'Menu').replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        const safeRoute = String(item.route || 'Kitchen').replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        const safeDesc = String(item.description || '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const safeCat = String(item.category || '-');
+        const safePrice = Number(item.price) || 0;
+        
+        const fallbackImg = `https://ui-avatars.com/api/?name=${encodeURIComponent(safeName)}&background=1e293b&color=f59e0b&size=200&font-size=0.33`;
         const isHot = (parseInt(item.totalSold) || 0) > 10;
         const badgeHtml = isHot ? `<div class="absolute top-2 left-2 bg-rose-600 text-white text-[9px] font-black px-2 py-1 rounded-md shadow-md animate-pulse">🔥 HOT</div>` : ``;
-        
-        // KUNCI: Amankan tanda kutip agar tidak merusak tag div HTML
-        const safeName = item.name.replace(/'/g, "\\'"); 
 
-        // KUNCI: h-32 mutlak untuk gambar, min-h-[90px] mutlak untuk teks
+        // STRUKTUR CSS KASIR (Terbukti Stabil)
         return `
-        <div onclick="addToCart('${item.id}', '${safeName}', ${item.price}, '${item.route}')" class="bg-slate-800 border border-slate-700 rounded-2xl flex flex-col overflow-hidden cursor-pointer active:scale-95 transition-transform">
-            <div class="h-32 w-full relative shrink-0 bg-slate-900 border-b border-slate-700">
+        <div onclick="addToCart('${safeId}', '${safeName}', ${safePrice}, '${safeRoute}')" class="menu-card bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden cursor-pointer active:scale-95 transition-transform relative">
+            <div class="h-28 relative shrink-0 overflow-hidden bg-slate-900">
                 <img src="${item.image || fallbackImg}" onerror="this.onerror=null; this.src='${fallbackImg}';" class="w-full h-full object-cover">
                 ${badgeHtml}
-                <div class="absolute top-2 right-2 bg-slate-900/90 text-[9px] font-bold px-2 py-0.5 rounded border border-slate-700 text-slate-300">${item.category}</div>
+                <div class="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-md text-slate-300 text-[9px] font-bold px-2 py-0.5 rounded border border-slate-700">${safeCat}</div>
             </div>
-            <div class="p-3 flex flex-col flex-1 justify-between min-h-[90px] bg-slate-800">
+            <div class="p-3 flex flex-col justify-between flex-1 bg-slate-800">
                 <div>
-                    <h3 class="text-xs font-bold text-white line-clamp-2 leading-tight">${item.name}</h3>
-                    <p class="text-[9px] text-slate-400 mt-1 line-clamp-2">${item.description || ''}</p>
+                    <h3 class="text-xs font-bold text-white line-clamp-2 leading-snug">${safeName}</h3>
+                    <p class="text-[9px] text-slate-400 mt-1 line-clamp-2">${safeDesc}</p>
                 </div>
-                <p class="text-xs font-black text-amber-500 mt-2">Rp ${(item.price || 0).toLocaleString('id-ID')}</p>
+                <p class="text-xs font-black text-amber-500 mt-2 tracking-tight">Rp ${safePrice.toLocaleString('id-ID')}</p>
             </div>
         </div>
     `}).join('');
