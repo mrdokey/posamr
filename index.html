@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" href="https://i.ibb.co.com/934bwtWJ/1780277980692.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
         button, input, select { touch-action: manipulation; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f172a; overflow: hidden; }
@@ -16,38 +16,38 @@
         .smooth-transition { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .fade-out { animation: fadeOut 0.5s forwards; }
         @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
+        .mono-font { font-family: 'Share Tech Mono', monospace; }
     </style>
 </head>
 <body class="h-[100dvh] w-screen flex flex-col select-none text-slate-100">
 
     <!-- 1. SPLASH SCREEN -->
     <div id="splash-screen" class="fixed inset-0 bg-[#0f172a] z-[100] flex flex-col items-center justify-center smooth-transition">
-        <img src="https://i.ibb.co.com/934bwtWJ/1780277980692.png" alt="Loading" class="w-48 animate-pulse mb-4">
-        <p class="text-slate-300 text-sm font-semibold tracking-widest animate-bounce">MEMUAT SISTEM ABSENSI...</p>
+        <img src="https://i.ibb.co.com/934bwtWJ/1780277980692.png" class="w-32 animate-pulse mb-4">
+        <p class="text-slate-300 text-sm font-semibold tracking-widest animate-bounce">MEMUAT SISTEM AMR...</p>
     </div>
 
     <!-- 2. SCREEN AKTIVASI -->
     <div id="activation-screen" class="hidden-screen fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4 smooth-transition">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl w-full max-w-md p-8 text-center">
             <img src="https://i.ibb.co.com/934bwtWJ/1780277980692.png" class="w-24 h-24 mx-auto mb-4">
-            <h2 class="text-2xl font-bold text-white mb-2">Aktivasi Absensi</h2>
+            <h2 class="text-2xl font-bold text-white mb-2">Aktivasi Kiosk</h2>
             <p class="text-xs text-slate-400 mb-6">Masukkan URL API dari MRD Solution</p>
             <input type="url" id="api-input" placeholder="Masukkan URL API..." class="w-full px-4 py-3 bg-slate-950 border-2 border-slate-800 text-white rounded-xl focus:border-amber-500 outline-none mb-4 text-sm text-center smooth-transition">
-            <button onclick="activateSystem()" id="btn-activate" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 rounded-xl smooth-transition shadow-lg shadow-amber-500/20">Aktifkan Kiosk</button>
+            <button onclick="activateSystem()" id="btn-activate" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 rounded-xl smooth-transition shadow-lg">Aktifkan Kiosk</button>
         </div>
     </div>
 
-    <!-- 3. SCREEN PIN INPUT -->
+    <!-- 3. SCREEN PIN INPUT (LOGIN) -->
     <div id="pin-screen" class="hidden-screen h-full w-full flex flex-col items-center justify-center p-6 bg-slate-900 relative">
-        <!-- Ikon Buka Manual Aplikasi POS -->
         <button onclick="openManualLogin()" class="absolute top-6 right-6 flex flex-col items-center justify-center text-slate-500 hover:text-amber-500 transition">
             <i data-lucide="layout-grid" class="w-6 h-6"></i>
             <span class="text-[9px] font-bold mt-1 uppercase tracking-widest">Aplikasi</span>
         </button>
 
         <img src="https://i.ibb.co.com/934bwtWJ/1780277980692.png" class="w-20 h-20 mb-3">
-        <h2 id="absen-resto-name" class="text-lg font-black text-white uppercase tracking-widest mb-1">AMR SYSTEM</h2>
-        <p class="text-[10px] bg-slate-800 text-slate-400 px-3 py-1 rounded-full font-bold mb-6 tracking-widest border border-slate-700">KIOSK ABSENSI</p>
+        <h2 id="absen-resto-name" class="text-lg font-black text-white uppercase tracking-widest mb-1">AMR BAR</h2>
+        <p class="text-[10px] bg-slate-800 text-slate-400 px-3 py-1 rounded-full font-bold mb-6 tracking-widest border border-slate-700">PORTAL KARYAWAN</p>
         
         <div class="flex gap-4 justify-center mb-8">
             <span class="pin-dot w-4 h-4 rounded-full border-2 border-slate-600 bg-transparent transition-all"></span>
@@ -57,30 +57,59 @@
         </div>
 
         <div class="grid grid-cols-3 gap-4 w-full max-w-xs mb-4">
-            <button onclick="pressNum('1')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-2xl active:scale-95 smooth-transition">1</button>
-            <button onclick="pressNum('2')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-2xl active:scale-95 smooth-transition">2</button>
-            <button onclick="pressNum('3')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-2xl active:scale-95 smooth-transition">3</button>
-            <button onclick="pressNum('4')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-2xl active:scale-95 smooth-transition">4</button>
-            <button onclick="pressNum('5')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-2xl active:scale-95 smooth-transition">5</button>
-            <button onclick="pressNum('6')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-2xl active:scale-95 smooth-transition">6</button>
-            <button onclick="pressNum('7')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-2xl active:scale-95 smooth-transition">7</button>
-            <button onclick="pressNum('8')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-2xl active:scale-95 smooth-transition">8</button>
-            <button onclick="pressNum('9')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-2xl active:scale-95 smooth-transition">9</button>
-            <button onclick="clearPin()" class="h-16 rounded-2xl bg-red-950/40 text-red-500 font-bold text-sm active:scale-95 smooth-transition">CLEAR</button>
-            <button onclick="pressNum('0')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-2xl active:scale-95 smooth-transition">0</button>
-            <button onclick="backspacePin()" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-lg active:scale-95 smooth-transition flex items-center justify-center text-amber-500"><i data-lucide="delete" class="w-6 h-6"></i></button>
+            <button onclick="pressNum('1')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-2xl active:scale-95 transition">1</button>
+            <button onclick="pressNum('2')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-2xl active:scale-95 transition">2</button>
+            <button onclick="pressNum('3')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-2xl active:scale-95 transition">3</button>
+            <button onclick="pressNum('4')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-2xl active:scale-95 transition">4</button>
+            <button onclick="pressNum('5')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-2xl active:scale-95 transition">5</button>
+            <button onclick="pressNum('6')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-2xl active:scale-95 transition">6</button>
+            <button onclick="pressNum('7')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-2xl active:scale-95 transition">7</button>
+            <button onclick="pressNum('8')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-2xl active:scale-95 transition">8</button>
+            <button onclick="pressNum('9')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-2xl active:scale-95 transition">9</button>
+            <button onclick="clearPin()" class="h-16 rounded-2xl bg-red-950/40 text-red-500 font-bold text-sm active:scale-95 transition">CLEAR</button>
+            <button onclick="pressNum('0')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-2xl active:scale-95 transition">0</button>
+            <button onclick="backspacePin()" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-lg active:scale-95 transition flex justify-center items-center text-amber-500"><i data-lucide="delete"></i></button>
         </div>
         <button onclick="resetLicense()" class="text-[9px] text-red-500 uppercase font-bold mt-4 tracking-widest hover:underline">Hapus Lisensi API</button>
     </div>
 
-    <!-- 4. SCREEN ACTION SELECTION -->
-    <div id="action-screen" class="hidden-screen fixed inset-0 bg-slate-900 flex flex-col items-center justify-center p-6 smooth-transition z-[40]">
-        <div class="w-full max-w-sm text-center relative z-[50]">
-            <!-- INFORMASI AREA & NAMA -->
-            <p class="text-[10px] text-amber-500 font-bold tracking-widest uppercase mb-1 flex justify-center items-center gap-1"><i data-lucide="map-pin" class="w-3 h-3"></i> Cabang <span id="emp-area">-</span></p>
-            <h2 id="emp-name" class="text-3xl font-black text-white tracking-tight">Karyawan</h2>
+    <!-- 4. DASHBOARD UTAMA (SETELAH MASUK PIN) -->
+    <div id="dashboard-screen" class="hidden-screen fixed inset-0 bg-slate-900 flex flex-col items-center justify-center p-6 z-[40]">
+        <div class="w-full max-w-sm text-center">
             
-            <div class="my-6 bg-slate-950/50 border border-slate-800 rounded-2xl p-5 relative z-[50]">
+            <p class="text-[10px] text-amber-500 font-bold tracking-widest uppercase mb-1"><i data-lucide="map-pin" class="w-3 h-3 inline"></i> Cabang <span id="emp-area">-</span></p>
+            <h2 id="emp-name" class="text-3xl font-black text-white tracking-tight mb-8">Karyawan</h2>
+
+            <div class="space-y-4">
+                <!-- NAVIGASI 1: ABSENSI -->
+                <button onclick="openSubScreen('absen')" class="w-full py-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-sm flex items-center justify-between px-6 shadow-lg active:scale-95 transition">
+                    <div class="flex items-center gap-3"><i data-lucide="clock" class="w-5 h-5"></i> <span>MENU ABSENSI</span></div>
+                    <i data-lucide="chevron-right" class="w-5 h-5 opacity-50"></i>
+                </button>
+
+                <!-- NAVIGASI 2: OTP GENERATOR -->
+                <button onclick="openSubScreen('otp')" class="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-sm flex items-center justify-between px-6 shadow-lg active:scale-95 transition">
+                    <div class="flex items-center gap-3"><i data-lucide="shield-check" class="w-5 h-5"></i> <span>KODE OTP (OTORISASI)</span></div>
+                    <i data-lucide="chevron-right" class="w-5 h-5 opacity-50"></i>
+                </button>
+
+                <!-- NAVIGASI 3: UBAH PIN -->
+                <button onclick="openSubScreen('pin')" class="w-full py-5 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl font-black text-sm flex items-center justify-between px-6 shadow-lg active:scale-95 transition border border-slate-700">
+                    <div class="flex items-center gap-3"><i data-lucide="key-round" class="w-5 h-5 text-amber-500"></i> <span>UBAH PIN SAYA</span></div>
+                    <i data-lucide="chevron-right" class="w-5 h-5 opacity-50"></i>
+                </button>
+            </div>
+
+            <button onclick="logoutDashboard()" class="mt-10 py-3 px-6 text-rose-500 bg-rose-500/10 hover:bg-rose-500/20 rounded-full font-bold text-xs transition uppercase tracking-widest">KELUAR</button>
+        </div>
+    </div>
+
+    <!-- 5A. SUB-SCREEN: MENU ABSENSI -->
+    <div id="sub-absen-screen" class="hidden-screen fixed inset-0 bg-slate-900 flex flex-col items-center justify-center p-6 z-[50]">
+        <div class="w-full max-w-sm text-center">
+            <h3 class="text-xl font-black text-white mb-6 flex justify-center items-center gap-2"><i data-lucide="clock" class="text-amber-500"></i> Menu Absensi</h3>
+            
+            <div class="bg-slate-950/50 border border-slate-800 rounded-2xl p-5 mb-6">
                 <p id="status-msg" class="text-sm font-semibold text-slate-300">Memeriksa status...</p>
                 <div id="timer-container" class="mt-4 hidden-screen">
                     <p class="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Tombol Pulang Aktif Dalam:</p>
@@ -89,22 +118,60 @@
                 <p id="status-sub" class="text-xs mt-3 font-bold text-amber-500"></p>
             </div>
 
-            <!-- TOMBOL AKSI UTAMA -->
-            <div class="flex flex-col gap-3 w-full relative z-[60]">
-                <button id="btn-clock-in" onclick="startCapture('IN')" class="hidden-screen py-4 bg-emerald-500 hover:bg-emerald-600 text-slate-950 text-base font-black rounded-xl active:scale-95 smooth-transition shadow-lg">AMBIL ABSEN MASUK</button>
-                <button id="btn-clock-out" onclick="startCapture('OUT')" class="hidden-screen py-4 bg-rose-500 hover:bg-rose-600 text-white text-base font-black rounded-xl active:scale-95 smooth-transition shadow-lg">AMBIL ABSEN PULANG</button>
+            <div class="flex flex-col gap-3">
+                <button id="btn-clock-in" onclick="startCapture('IN')" class="hidden-screen py-4 bg-emerald-500 text-slate-950 text-base font-black rounded-xl active:scale-95 shadow-lg">AMBIL ABSEN MASUK</button>
+                <button id="btn-clock-out" onclick="startCapture('OUT')" class="hidden-screen py-4 bg-rose-500 text-white text-base font-black rounded-xl active:scale-95 shadow-lg">AMBIL ABSEN PULANG</button>
+                <button id="btn-bypass" onclick="triggerIzinCepat()" class="hidden-screen py-3 bg-amber-500/10 text-amber-500 border border-amber-500/30 text-xs font-bold rounded-xl active:scale-95 mt-2">IZIN PULANG CEPAT</button>
                 
-                <!-- TOMBOL MENUJU APLIKASI KERJA (SSO) -->
-                <button id="btn-goto-app" onclick="autoLoginApp()" class="hidden-screen py-4 bg-indigo-600 hover:bg-indigo-700 text-white text-base font-black rounded-xl active:scale-95 smooth-transition shadow-lg flex justify-center items-center gap-2"><i data-lucide="rocket" class="w-5 h-5"></i> BUKA APLIKASI KERJA</button>
-
-                <button id="btn-bypass" onclick="triggerIzinCepat()" class="hidden-screen py-3 bg-amber-500/10 text-amber-500 border border-amber-500/30 text-xs font-bold rounded-xl active:scale-95 smooth-transition mt-2">IZIN PULANG CEPAT</button>
-                <button onclick="cancelAction()" class="py-3 text-slate-500 hover:text-white font-semibold text-xs mt-2">Tutup / Batal</button>
+                <button onclick="backToDashboard()" class="py-3 text-slate-500 hover:text-white font-bold text-sm mt-4"><i data-lucide="arrow-left" class="inline w-4 h-4 mr-1"></i> Kembali ke Menu Utama</button>
             </div>
         </div>
     </div>
 
-    <!-- 5. SCREEN CAMERA & GPS CAPTURE -->
-    <div id="capture-screen" class="hidden-screen fixed inset-0 bg-slate-950 z-30 flex flex-col items-center justify-between p-6">
+    <!-- 5B. SUB-SCREEN: OTP GENERATOR -->
+    <div id="sub-otp-screen" class="hidden-screen fixed inset-0 bg-slate-900 flex flex-col items-center justify-center p-6 z-[50]">
+        <div class="w-full max-w-sm text-center">
+            <div class="bg-slate-950/80 border border-amber-500/30 p-8 rounded-3xl shadow-2xl">
+                <p class="text-[10px] text-amber-500 font-black uppercase tracking-widest mb-6">KODE OTP BERLAKU 1 JAM</p>
+                <h2 id="otp-text" class="text-6xl font-black text-amber-500 tracking-widest mono-font animate-pulse">0000</h2>
+                
+                <div class="relative w-24 h-24 mx-auto mt-8 mb-4">
+                    <svg class="w-full h-full transform -rotate-90">
+                        <circle cx="48" cy="48" r="42" stroke="#1e293b" stroke-width="6" fill="transparent" />
+                        <circle id="progress-bar" cx="48" cy="48" r="42" stroke="#f59e0b" stroke-width="6" fill="transparent" stroke-dasharray="264" stroke-dashoffset="0" class="transition-all duration-1000 ease-linear" />
+                    </svg>
+                    <span id="countdown-text" class="absolute inset-0 flex items-center justify-center text-sm font-bold text-slate-300 font-mono">60m</span>
+                </div>
+                <p class="text-[9px] text-slate-500 uppercase font-bold tracking-wider">BERIKAN KODE INI KEPADA KASIR<br>HANYA BISA DIGUNAKAN 1 KALI CETAK</p>
+            </div>
+            
+            <button onclick="backToDashboard()" class="py-3 text-slate-500 hover:text-white font-bold text-sm mt-8"><i data-lucide="arrow-left" class="inline w-4 h-4 mr-1"></i> Kembali ke Menu Utama</button>
+        </div>
+    </div>
+
+    <!-- 5C. SUB-SCREEN: UBAH PIN -->
+    <div id="sub-pin-screen" class="hidden-screen fixed inset-0 bg-slate-900 flex flex-col items-center justify-center p-6 z-[50]">
+        <div class="w-full max-w-sm text-center">
+            <h3 class="text-xl font-black text-white mb-6 flex justify-center items-center gap-2"><i data-lucide="key-round" class="text-amber-500"></i> Ubah PIN Aplikasi</h3>
+            
+            <div class="bg-slate-950/50 p-6 rounded-3xl border border-slate-800 text-left space-y-4">
+                <div>
+                    <label class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Konfirmasi PIN Lama</label>
+                    <input type="password" id="pin-old" maxlength="4" placeholder="••••" class="w-full px-4 py-3 bg-slate-900 border border-slate-800 text-white font-black text-center text-2xl tracking-[0.3em] rounded-xl focus:border-amber-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Masukkan PIN Baru (4 Angka)</label>
+                    <input type="password" id="pin-new" maxlength="4" placeholder="••••" class="w-full px-4 py-3 bg-slate-900 border border-slate-800 text-white font-black text-center text-2xl tracking-[0.3em] rounded-xl focus:border-amber-500 outline-none">
+                </div>
+                <button onclick="submitNewPin()" id="btn-save-pin" class="w-full py-4 mt-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-sm transition">SIMPAN PIN BARU</button>
+            </div>
+
+            <button onclick="backToDashboard()" class="py-3 text-slate-500 hover:text-white font-bold text-sm mt-6"><i data-lucide="arrow-left" class="inline w-4 h-4 mr-1"></i> Kembali ke Menu Utama</button>
+        </div>
+    </div>
+
+    <!-- 6. SCREEN CAMERA & GPS CAPTURE -->
+    <div id="capture-screen" class="hidden-screen fixed inset-0 bg-slate-950 z-[60] flex flex-col items-center justify-between p-6">
         <div class="text-center mt-4">
             <h2 class="text-xl font-bold text-white">Verifikasi Keamanan</h2>
             <p class="text-xs text-slate-400 mt-1">Mengunci GPS & Scan Wajah...</p>
@@ -120,24 +187,24 @@
                 <i data-lucide="map-pin" class="w-4 h-4 text-amber-500 animate-bounce"></i>
                 <span id="gps-status" class="font-semibold text-xs">Mengunci Lokasi GPS...</span>
             </div>
-            <button onclick="capture()" id="btn-snap" class="w-full py-4 bg-amber-500 text-slate-950 font-black rounded-2xl shadow-lg active:scale-95 smooth-transition" disabled>AMBIL FOTO</button>
-            <button onclick="cancelAction()" class="mt-4 text-sm text-red-500 font-bold">Batal</button>
+            <button onclick="capture()" id="btn-snap" class="w-full py-4 bg-amber-500 text-slate-950 font-black rounded-2xl shadow-lg active:scale-95 transition" disabled>AMBIL FOTO</button>
+            <button onclick="openSubScreen('absen')" class="mt-4 text-sm text-red-500 font-bold">Batal Absen</button>
         </div>
     </div>
 
-    <!-- 6. SCREEN SUCCESS (AUTO-ROUTING) -->
-    <div id="success-screen" class="hidden-screen fixed inset-0 bg-slate-900 z-50 flex flex-col items-center justify-center p-6 smooth-transition">
+    <!-- 7. SCREEN SUCCESS & AUTO-ROUTING -->
+    <div id="success-screen" class="hidden-screen fixed inset-0 bg-slate-900 z-[70] flex flex-col items-center justify-center p-6 transition">
         <div class="text-center">
             <div class="w-24 h-24 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto mb-6">
                 <i data-lucide="check" class="w-12 h-12 text-emerald-500"></i>
             </div>
             <h2 class="text-3xl font-black text-white tracking-tight">Sukses!</h2>
             <p id="success-msg" class="text-slate-400 mt-2 font-medium">Data absensi Anda telah tercatat.</p>
-            <p id="success-routing-msg" class="text-[10px] text-amber-500 uppercase tracking-widest mt-8 font-bold animate-pulse">Menyiapkan layar...</p>
+            <p id="success-routing-msg" class="text-[10px] text-amber-500 uppercase tracking-widest mt-8 font-bold animate-pulse">Menyiapkan Aplikasi Kerja...</p>
         </div>
     </div>
 
-    <!-- PANGGIL SCRIPT TERPISAH -->
-    <script src="absen.js?v=3"></script>
+    <!-- SCRIPT -->
+    <script src="absen.js?v=5"></script>
 </body>
 </html>
