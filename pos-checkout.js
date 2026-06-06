@@ -721,40 +721,60 @@ function reprintOrder(orderId) {
     executeRoutingPrint(bill.orderId, bill.tableNo, bill.status, bill.paymentMethod, subtotal, totalDiscountAmount, bill.serviceCharge, bill.tax, bill.totalAmount, "All", true, bill.items);
 }
 
-// FILE: pos-checkout.js (Tambahkan fungsi ini untuk handle Komplimen)
+// FILE: pos-checkout.js (Timpa fungsi proses Komplimen Anda dengan versi ini)
 
 function processComplimentPayment() {
-    // 1. Minta Otorisasi PIN Manager/Owner sebelum meloloskan tagihan gratis
-    const pin = prompt("OTORISASI KASIR:\nMasukkan PIN Manager/Owner untuk menyetujui Komplimen (FOC):");
-    if (!pin) return;
+    const type = prompt("PILIH JENIS KOMPLIMEN:\nKetik 1 : VIP / Owner Treat (Butuh OTP Manager)\nKetik 2 : Kesalahan Staff / Potong Gaji (Butuh PIN Staff Bersangkutan)");
+    if (!type) return;
 
-    // 2. Verifikasi PIN ke server GAS
+    if (type === "1") {
+        // VIP / Owner Treat
+        const otp = prompt("Masukkan 4-Digit OTP Manager:");
+        if (!otp) return;
+        verifyComplimentCode(otp, "VIP");
+    } else if (type === "2") {
+        // Kesalahan Staff (Potong Gaji)
+        const pin = prompt("PENGAKUAN SALAH:\nMasukkan PIN 4-Angka Staff yang melakukan kesalahan:");
+        if (!pin) return;
+        verifyComplimentCode(pin, "Staff-Error");
+    } else {
+        alert("Pilihan tidak valid!");
+    }
+}
+
+function verifyComplimentCode(inputCode, mode) {
     fetch(GAS_URL, { 
         method: 'POST', 
-        body: JSON.stringify({ action: "verifyVoidManager", data: { managerPin: pin } }) 
+        body: JSON.stringify({ action: "verifyVoidManager", data: { managerPin: inputCode } }) 
     })
     .then(res => res.json())
     .then(json => {
         if (json.success) {
-            // Set pencatatan uang tunai & kembalian menjadi Rp 0
             window.lastCashReceived = 0;
             window.lastCashChange = 0;
-            
             closeModal('modal-print');
-            
-            // Kirim transaksi ke database dengan status "Paid", total Rp 0, dan Metode "Compliment"
-            alert(`Komplimen Disetujui oleh: ${json.managerName}`);
-            submitComplimentPayload(json.managerName);
+
+            if (mode === "VIP") {
+                // Skenario VIP: Wajib diverifikasi dengan OTP Manager
+                if (json.type !== "VIP") {
+                    alert("Akses Ditolak! Harus menggunakan OTP Manager.");
+                    return;
+                }
+                alert(`Komplimen VIP Disetujui oleh: ${json.managerName}`);
+                submitComplimentPayload(`ACC: ${json.managerName}`, "Compliment", json.managerName);
+            } else {
+                // Skenario Potong Gaji: Membaca nama karyawan yang punya PIN tersebut
+                alert(`Kesalahan dicatat atas nama: ${json.managerName} (Beban Potong Gaji)`);
+                submitComplimentPayload(`POTONG GAJI: ${json.managerName}`, "Staff-Error", json.managerName);
+            }
         } else {
-            alert("Gagal! PIN Verifikator Salah atau Tidak Memiliki Wewenang.");
+            alert(json.message || "Verifikasi Gagal!");
         }
     })
     .catch(err => alert("Gagal verifikasi keamanan. Periksa koneksi internet."));
 }
 
-// FILE: pos-checkout.js (Timpa fungsi submitComplimentPayload ini)
-
-async function submitComplimentPayload(approvedBy) {
+async function submitComplimentPayload(logAuditText, paymentMethodTarget, employeeName) {
     const tableNo = document.getElementById('order-table').value.trim();
     const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
     let userArea = cashierInfo ? cashierInfo.area : "";
@@ -768,20 +788,20 @@ async function submitComplimentPayload(approvedBy) {
             area: userArea, 
             discount: "COMP-100", 
             
-            // LOG AUDIT SEKURITI: Rekam persetujuan PIN Manager/Owner ke kolom Voucher
-            voucherCode: `ACC: ${approvedBy}`, 
+            // LOG AUDIT UTAMA (Mencatat ACC: Manager ATAU POTONG GAJI: Nama Staff di kolom Voucher)
+            voucherCode: logAuditText, 
             
             tax: 0,              
             serviceCharge: 0,    
             totalAmount: 0,      
-            paymentMethod: "Compliment", 
+            paymentMethod: paymentMethodTarget, // Tercatat "Compliment" atau "Staff-Error"
             orderStatus: "Paid", 
             items: cart.map(item => ({
                 menuId: item.menuId,
                 qty: item.qty,
                 price: item.price,
-                subtotal: item.subtotal, 
-                notes: `${item.notes || ""} (FOC ACC: ${approvedBy})` 
+                subtotal: item.subtotal, // Harga asli dikirim untuk kalkulasi HPP & pemotongan gaji
+                notes: `${item.notes || ""} (${logAuditText})` 
             }))
         }
     };
@@ -790,9 +810,9 @@ async function submitComplimentPayload(approvedBy) {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
         const json = await res.json();
         if(json.success) {
-            // Cetak struk lunas komplimen
-            executeRoutingPrint(activeOrderId || json.orderId, tableNo, "Paid", "COMPLIMENT", subtotal, subtotal, 0, 0, 0, "All");
-            alert(`Transaksi Komplimen Berhasil! Disetujui oleh: ${approvedBy}`);
+            // Cetak struk khusus komplimen/potong gaji
+            executeRoutingPrint(activeOrderId || json.orderId, tableNo, "Paid", paymentMethodTarget.toUpperCase(), subtotal, subtotal, 0, 0, 0, "All");
+            alert(`Transaksi Berhasil Dicatat! (${logAuditText})`);
             resetCartState();
             checkNewDraftNotifications();
         }
