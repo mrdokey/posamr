@@ -1,5 +1,6 @@
 /**
- * MODUL: PORTAL KARYAWAN (ABSENSI, UBAH PIN, OTP, & SSO ROUTING)
+ * MODUL: KIOSK ABSENSI, SINGLE SIGN-ON (SSO), OTP GENERATOR, & PIN CHANGER
+ * UPDATE: Architecture Finalization (No Bypass & Dynamic UI Router)
  */
 
 if ('serviceWorker' in navigator) {
@@ -23,7 +24,6 @@ let otpInterval = null;
 
 let isBypassRequest = false;
 let bypassReason = "";
-let bypassManagerPin = "";
 
 window.onload = () => {
     setTimeout(() => {
@@ -38,8 +38,6 @@ window.onload = () => {
     }, 1000); 
 };
 
-// FILE: absen.js (Cari dan ganti fungsi checkState)
-
 function checkState() {
     if (!GAS_URL) {
         showScreen('activation-screen');
@@ -48,16 +46,15 @@ function checkState() {
         const hasCashierSession = localStorage.getItem("MRD_CASHIER");
         const hasWaiterSession = localStorage.getItem("MRD_WAITER_SESSION");
         
-        // Tampilkan layar PIN, tapi biarkan tombol "Aplikasi" muncul jika ada session
         showScreen('pin-screen');
         
-        // Tombol Aplikasi Manual di layar PIN akan langsung mengarah ke session aktif
+        // Ikon shortcut kembali ke aplikasi hanya muncul jika karyawan sedang di tengah Shift
         const appShortcutBtn = document.getElementById('btn-manual-app-shortcut');
         if (appShortcutBtn) {
             if (hasCashierSession || hasWaiterSession) {
-                appShortcutBtn.classList.remove('hidden'); // Munculkan ikon kotak-kotak di pojok
+                appShortcutBtn.classList.remove('hidden'); 
             } else {
-                appShortcutBtn.classList.add('hidden'); // Sembunyikan jika belum login
+                appShortcutBtn.classList.add('hidden'); 
             }
         }
 
@@ -65,7 +62,20 @@ function checkState() {
     }
 }
 
-// Menampilkan layar utama, sembunyikan yang lain
+// Pintasan cerdas untuk kembali ke aplikasi kerja tanpa login ulang
+function openManualLogin() {
+    const isCashier = localStorage.getItem("MRD_CASHIER");
+    const isWaiter = localStorage.getItem("MRD_WAITER_SESSION");
+
+    if (isCashier) {
+        window.location.href = "pos.html";
+    } else if (isWaiter) {
+        window.location.href = "order.html";
+    } else {
+        alert("Sesi Anda telah berakhir. Silakan masukkan PIN untuk lanjut.");
+    }
+}
+
 function showScreen(id) {
     const screens = ['activation-screen', 'pin-screen', 'dashboard-screen', 'sub-absen-screen', 'sub-otp-screen', 'sub-pin-screen', 'capture-screen', 'success-screen'];
     screens.forEach(el => {
@@ -190,7 +200,7 @@ function logoutDashboard() {
     currentPin = "";
     verifiedUser = {};
     clearPin();
-    showScreen('pin-screen');
+    checkState(); // Validasi tombol shortcut lagi
 }
 
 function backToDashboard() {
@@ -203,6 +213,11 @@ function openSubScreen(menu) {
     if (menu === 'absen') {
         setupAbsensiMenu();
     } else if (menu === 'otp') {
+        // PERBAIKAN: OTP Tidak boleh digenerate jika karyawan belum absen masuk
+        if (verifiedUser.status === "OUT") {
+            alert("Akses Ditolak!\n\nAnda harus melakukan Absen Masuk terlebih dahulu sebelum bisa membuahkan OTP Komplimen.");
+            return;
+        }
         showScreen('sub-otp-screen');
         startOtpGenerator();
     } else if (menu === 'pin') {
@@ -229,11 +244,12 @@ function setupAbsensiMenu() {
     document.getElementById('btn-bypass').classList.add('hidden-screen');
 
     if (verifiedUser.status === "OUT") {
-        msg.innerText = "Status: BELUM ABSEN (OUT)";
+        msg.innerText = "Status Anda: BELUM ABSEN (OUT)";
         sub.innerText = "Silakan tekan Absen Masuk untuk mulai bekerja.";
         document.getElementById('btn-clock-in').classList.remove('hidden-screen');
     } else {
         msg.innerText = verifiedUser.message; 
+
         if (verifiedUser.canClockOut) {
             sub.innerText = "Shift Selesai. Anda diizinkan Absen Pulang.";
             document.getElementById('btn-clock-out').classList.remove('hidden-screen');
@@ -257,7 +273,7 @@ function startLiveTimer(durationMs) {
     function updateTimerVisual() {
         if (msRemaining <= 0) {
             clearInterval(countdownInterval);
-            verifyPin(); // Segarkan data jika waktu habis
+            verifyPin(); 
             return;
         }
         let hours = Math.floor(msRemaining / (1000 * 60 * 60));
@@ -356,12 +372,14 @@ async function submitAttendanceData(photoBase64) {
             document.getElementById('success-msg').innerText = json.message;
             showScreen('success-screen');
             
-            // JIKA MASUK (IN) -> LEMPAR KE APLIKASI KASIR/PELAYAN (SSO)
+            // JIKA MASUK (IN) -> LEMPAR KE APLIKASI KASIR/PELAYAN (SSO) SECARA OTOMATIS
             if (currentActionType === "IN") {
-                document.getElementById('success-routing-msg').innerText = "Mengalihkan ke Aplikasi Kerja...";
+                document.getElementById('success-routing-msg').innerText = "Otentikasi Berhasil. Menyiapkan Aplikasi Kerja...";
                 setTimeout(() => { autoLoginApp(); }, 2000); 
             } else {
-                // JIKA PULANG (OUT) -> KEMBALI KE LAYAR PIN AWAL
+                // JIKA PULANG (OUT) -> HAPUS SESSION LALU KEMBALI KE LAYAR PIN AWAL
+                localStorage.removeItem("MRD_CASHIER");
+                localStorage.removeItem("MRD_WAITER_SESSION");
                 document.getElementById('success-routing-msg').innerText = "Sampai Jumpa Besok...";
                 setTimeout(() => { logoutDashboard(); }, 3000); 
             }
@@ -375,10 +393,11 @@ async function submitAttendanceData(photoBase64) {
     } finally {
         isBypassRequest = false;
         bypassReason = "";
+        snapBtn.innerText = "AMBIL FOTO";
     }
 }
 
-// --- SINGLE SIGN-ON (SSO ROUTING) ---
+// --- SINGLE SIGN-ON (SSO ROUTING STRICT SECURITY) ---
 async function autoLoginApp() {
     try {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: currentPin } }) });
@@ -391,16 +410,16 @@ async function autoLoginApp() {
 
             if (jobdeskClean === "kasir" || allowedRoles.includes(roleClean)) {
                 localStorage.setItem("MRD_CASHIER", JSON.stringify(json));
-                window.location.href = "pos.html"; // Routing ke Kasir
+                window.location.href = "pos.html"; 
             } else if (jobdeskClean === "pelayan") {
                 localStorage.setItem("MRD_WAITER_SESSION", JSON.stringify(json));
-                window.location.href = "order.html"; // Routing ke Pelayan
+                window.location.href = "order.html"; 
             } else {
-                alert("Akses Aplikasi Ditolak.");
+                alert("Akses Aplikasi Ditolak. Hubungi Admin.");
                 logoutDashboard();
             }
         } else {
-            alert("Gagal masuk ke sistem POS.");
+            alert("Sistem POS terkunci: " + json.message);
             logoutDashboard();
         }
     } catch (e) {
@@ -469,75 +488,4 @@ function updateOtp() {
     
     document.getElementById('progress-bar').style.strokeDashoffset = 264 - progress;
     document.getElementById('countdown-text').innerText = minutesRemaining + "m";
-}
-
-// FILE: absen.js (Cari dan ganti fungsi openManualLogin)
-
-function openManualLogin() {
-    const isCashier = localStorage.getItem("MRD_CASHIER");
-    const isWaiter = localStorage.getItem("MRD_WAITER_SESSION");
-
-    if (isCashier) {
-        window.location.href = "pos.html";
-    } else if (isWaiter) {
-        window.location.href = "order.html";
-    } else {
-        alert("Sesi Anda telah berakhir. Silakan Absen Masuk atau Login ulang.");
-    }
-}
-
-// FILE: absen.js (Cari dan ganti fungsi openActionScreen)
-
-function openActionScreen() {
-    showScreen('action-screen');
-    toggleSubSection('main'); 
-    
-    document.getElementById('emp-name').innerText = verifiedUser.name;
-    document.getElementById('emp-area').innerText = verifiedUser.area || "PUSAT"; 
-    
-    const msg = document.getElementById('status-msg');
-    const sub = document.getElementById('status-sub');
-    const timerContainer = document.getElementById('timer-container');
-    
-    clearInterval(countdownInterval);
-    clearInterval(otpInterval);
-    timerContainer.classList.add('hidden-screen');
-    sub.innerHTML = "";
-
-    document.getElementById('btn-clock-in').classList.add('hidden-screen');
-    document.getElementById('btn-clock-out').classList.add('hidden-screen');
-    document.getElementById('btn-bypass').classList.add('hidden-screen');
-    document.getElementById('btn-goto-app').classList.add('hidden-screen');
-    document.getElementById('action-otp-container').classList.add('hidden-screen');
-
-    if (verifiedUser.status === "OUT") {
-        msg.innerText = "Status Anda: BELUM ABSEN (OUT)";
-        sub.innerText = "Silakan tekan Absen Masuk untuk mulai bekerja.";
-        document.getElementById('btn-clock-in').classList.remove('hidden-screen');
-    } else {
-        msg.innerText = verifiedUser.message; 
-        
-        // PERBAIKAN: Selalu tampilkan tombol "Buka Aplikasi Kerja" asalkan statusnya sudah IN
-        document.getElementById('btn-goto-app').classList.remove('hidden-screen');
-
-        const allowedVoidRoles = ["admin", "hrd", "manager", "owner"];
-        const roleClean = verifiedUser.role ? verifiedUser.role.toLowerCase().trim() : "";
-        if (allowedVoidRoles.includes(roleClean)) {
-            document.getElementById('action-otp-container').classList.remove('hidden-screen');
-            startOtpGenerator();
-        }
-
-        if (verifiedUser.canClockOut) {
-            sub.innerText = "Shift Selesai. Anda diizinkan Absen Pulang.";
-            document.getElementById('btn-clock-out').classList.remove('hidden-screen');
-        } else {
-            if (verifiedUser.remainingMs) {
-                startLiveTimer(verifiedUser.remainingMs);
-            } else {
-                sub.innerText = verifiedUser.remaining;
-            }
-            document.getElementById('btn-bypass').classList.remove('hidden-screen'); 
-        }
-    }
-    lucide.createIcons();
 }
