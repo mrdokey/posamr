@@ -38,11 +38,29 @@ window.onload = () => {
     }, 1000); 
 };
 
+// FILE: absen.js (Cari dan ganti fungsi checkState)
+
 function checkState() {
     if (!GAS_URL) {
         showScreen('activation-screen');
     } else {
+        // Cek apakah ada session aktif Kasir atau Pelayan di perangkat ini
+        const hasCashierSession = localStorage.getItem("MRD_CASHIER");
+        const hasWaiterSession = localStorage.getItem("MRD_WAITER_SESSION");
+        
+        // Tampilkan layar PIN, tapi biarkan tombol "Aplikasi" muncul jika ada session
         showScreen('pin-screen');
+        
+        // Tombol Aplikasi Manual di layar PIN akan langsung mengarah ke session aktif
+        const appShortcutBtn = document.getElementById('btn-manual-app-shortcut');
+        if (appShortcutBtn) {
+            if (hasCashierSession || hasWaiterSession) {
+                appShortcutBtn.classList.remove('hidden'); // Munculkan ikon kotak-kotak di pojok
+            } else {
+                appShortcutBtn.classList.add('hidden'); // Sembunyikan jika belum login
+            }
+        }
+
         fetchConfigBg();
     }
 }
@@ -453,11 +471,73 @@ function updateOtp() {
     document.getElementById('countdown-text').innerText = minutesRemaining + "m";
 }
 
-// --- FUNGSI BYPASS MANUAL (JAGA-JAGA) ---
+// FILE: absen.js (Cari dan ganti fungsi openManualLogin)
+
 function openManualLogin() {
-    let type = prompt("Akses Bypass Darurat:\nKetik 'KASIR' atau 'PELAYAN':");
-    if (type) {
-        if (type.toUpperCase() === "KASIR") window.location.href = "pos.html";
-        else if (type.toUpperCase() === "PELAYAN") window.location.href = "order.html";
+    const isCashier = localStorage.getItem("MRD_CASHIER");
+    const isWaiter = localStorage.getItem("MRD_WAITER_SESSION");
+
+    if (isCashier) {
+        window.location.href = "pos.html";
+    } else if (isWaiter) {
+        window.location.href = "order.html";
+    } else {
+        alert("Sesi Anda telah berakhir. Silakan Absen Masuk atau Login ulang.");
     }
+}
+
+// FILE: absen.js (Cari dan ganti fungsi openActionScreen)
+
+function openActionScreen() {
+    showScreen('action-screen');
+    toggleSubSection('main'); 
+    
+    document.getElementById('emp-name').innerText = verifiedUser.name;
+    document.getElementById('emp-area').innerText = verifiedUser.area || "PUSAT"; 
+    
+    const msg = document.getElementById('status-msg');
+    const sub = document.getElementById('status-sub');
+    const timerContainer = document.getElementById('timer-container');
+    
+    clearInterval(countdownInterval);
+    clearInterval(otpInterval);
+    timerContainer.classList.add('hidden-screen');
+    sub.innerHTML = "";
+
+    document.getElementById('btn-clock-in').classList.add('hidden-screen');
+    document.getElementById('btn-clock-out').classList.add('hidden-screen');
+    document.getElementById('btn-bypass').classList.add('hidden-screen');
+    document.getElementById('btn-goto-app').classList.add('hidden-screen');
+    document.getElementById('action-otp-container').classList.add('hidden-screen');
+
+    if (verifiedUser.status === "OUT") {
+        msg.innerText = "Status Anda: BELUM ABSEN (OUT)";
+        sub.innerText = "Silakan tekan Absen Masuk untuk mulai bekerja.";
+        document.getElementById('btn-clock-in').classList.remove('hidden-screen');
+    } else {
+        msg.innerText = verifiedUser.message; 
+        
+        // PERBAIKAN: Selalu tampilkan tombol "Buka Aplikasi Kerja" asalkan statusnya sudah IN
+        document.getElementById('btn-goto-app').classList.remove('hidden-screen');
+
+        const allowedVoidRoles = ["admin", "hrd", "manager", "owner"];
+        const roleClean = verifiedUser.role ? verifiedUser.role.toLowerCase().trim() : "";
+        if (allowedVoidRoles.includes(roleClean)) {
+            document.getElementById('action-otp-container').classList.remove('hidden-screen');
+            startOtpGenerator();
+        }
+
+        if (verifiedUser.canClockOut) {
+            sub.innerText = "Shift Selesai. Anda diizinkan Absen Pulang.";
+            document.getElementById('btn-clock-out').classList.remove('hidden-screen');
+        } else {
+            if (verifiedUser.remainingMs) {
+                startLiveTimer(verifiedUser.remainingMs);
+            } else {
+                sub.innerText = verifiedUser.remaining;
+            }
+            document.getElementById('btn-bypass').classList.remove('hidden-screen'); 
+        }
+    }
+    lucide.createIcons();
 }
