@@ -800,19 +800,3 @@ async function submitComplimentPayload(approvedBy) {
         alert("Gagal memproses data ke server pusat.");
     }
 }
-
-    // Eksekusi kirim ke Google Sheets
-    try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
-        const json = await res.json();
-        if(json.success) {
-            // Cetak struk lunas komplimen
-            executeRoutingPrint(activeOrderId || json.orderId, tableNo, "Paid", "COMPLIMENT", subtotal, subtotal, 0, 0, 0, "All");
-            alert("Transaksi Komplimen Berhasil Dicatat!");
-            resetCartState();
-            checkNewDraftNotifications();
-        }
-    } catch (e) {
-        alert("Gagal memproses data ke server pusat.");
-    }
-}
