@@ -50,9 +50,10 @@ async function loginKasir() {
 }
 
 function logoutKasir() {
-    if(confirm("Tutup shift kasir hari ini?")) {
+    if(confirm("Keluar dari sesi aplikasi saat ini?")) {
         localStorage.removeItem(STORAGE_USER);
-        window.location.reload();
+        // Mengalihkan pengguna kembali ke Pintu Utama (Kiosk Absensi)
+        window.location.href = "index.html"; 
     }
 }
 
