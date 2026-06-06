@@ -1,10 +1,10 @@
-<!-- FILE: manager-otp.html (Simpan di HP Manager/Owner) -->
+<!-- FILE: compliment.html (Full Code dengan Timer 1 Jam) -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LABARAC OTP GENERATOR</title>
+    <title>AMR OTP GENERATOR</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;750;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
@@ -14,43 +14,36 @@
 </head>
 <body class="h-[100dvh] flex flex-col justify-between p-6 text-slate-100 select-none">
 
-    <!-- Header -->
     <div class="text-center mt-6">
-        <h1 class="text-xs font-black text-amber-500 uppercase tracking-[0.25em]">LABARAC SECURITY</h1>
-        <p class="text-2xl font-black mt-2 tracking-tight">OTP Manager</p>
+        <h1 class="text-xs font-black text-amber-500 uppercase tracking-[0.25em]">AMR SECURITY</h1>
+        <p class="text-2xl font-black mt-2 tracking-tight">OTP Generator</p>
     </div>
 
-    <!-- Tampilan Utama Token -->
     <div class="flex flex-col items-center justify-center my-auto">
-        <!-- Input PIN Rahasia (Hanya Sekali di Awal) -->
-        <div id="pin-setup-section" class="w-full max-w-xs text-center space-y-4">
+        <div id="pin-setup-section" class="hidden w-full max-w-xs text-center space-y-4">
             <p class="text-xs text-slate-400">Masukkan PIN Rahasia Anda</p>
             <input type="password" id="manager-pin-input" placeholder="••••" maxlength="4" class="w-full text-center py-4 bg-slate-900 border-2 border-slate-800 focus:border-amber-500 outline-none text-3xl font-black rounded-2xl tracking-[0.5em] text-white transition-all">
             <button onclick="savePin()" class="w-full py-3.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-sm transition shadow-lg shadow-amber-500/10">AKTIFKAN TOKEN</button>
         </div>
 
-        <!-- Area OTP Display -->
         <div id="otp-display-section" class="hidden text-center space-y-6">
-            <p class="text-xs text-slate-400 uppercase tracking-widest font-bold">KODE OTORISASI SAAT INI</p>
+            <p class="text-xs text-slate-400 uppercase tracking-widest font-bold">KODE OTP BERLAKU 1 JAM</p>
             <h2 id="otp-text" class="text-7xl font-black text-amber-500 tracking-widest mono-font animate-pulse">0000</h2>
             
-            <!-- Circular Progress Countdown -->
-            <div class="relative w-16 h-16 mx-auto">
+            <div class="relative w-20 h-20 mx-auto">
                 <svg class="w-full h-full transform -rotate-90">
-                    <circle cx="32" cy="32" r="28" stroke="#1e293b" stroke-width="4" fill="transparent" />
-                    <circle id="progress-bar" cx="32" cy="32" r="28" stroke="#f59e0b" stroke-width="4" fill="transparent" stroke-dasharray="176" stroke-dashoffset="0" class="transition-all duration-1000 ease-linear" />
+                    <circle cx="40" cy="40" r="34" stroke="#1e293b" stroke-width="4" fill="transparent" />
+                    <circle id="progress-bar" cx="40" cy="40" r="34" stroke="#f59e0b" stroke-width="4" fill="transparent" stroke-dasharray="213" stroke-dashoffset="0" class="transition-all duration-1000 ease-linear" />
                 </svg>
-                <span id="countdown-text" class="absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-400 font-mono">60</span>
+                <span id="countdown-text" class="absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-400 font-mono">60m</span>
             </div>
             
             <button onclick="resetSetup()" class="text-[10px] text-red-500 hover:underline font-bold uppercase tracking-wider block mx-auto pt-6">Ganti / Reset PIN</button>
         </div>
     </div>
 
-    <!-- Footer -->
-    <p class="text-[9px] text-center text-slate-600 font-semibold uppercase tracking-widest mb-2">OTOMATIS BERUBAH TIAP 60 DETIK</p>
+    <p class="text-[9px] text-center text-slate-600 font-semibold uppercase tracking-widest mb-2">SAYARAT KEAMANAN: HANYA BISA DIGUNAKAN 1 KALI CETAK</p>
 
-    <!-- SCRIPT ALGORITMA TOTP-LITE -->
     <script>
         let managerPin = localStorage.getItem("MRD_OTP_KEY");
 
@@ -87,25 +80,28 @@
 
         function startGenerator() {
             updateOtp();
-            setInterval(updateOtp, 1000); // Sinkronisasi per detik
+            setInterval(updateOtp, 1000); 
         }
 
         function updateOtp() {
             const nowMs = Date.now();
-            const interval = Math.floor(nowMs / 60000); // Window 60 detik
-            const secondsRemaining = 60 - Math.floor((nowMs % 60000) / 1000);
+            const interval = Math.floor(nowMs / 3600000); // Window 1 Jam (3.600.000 ms)
+            
+            // Sisa menit di jam ini
+            const minutesRemaining = 60 - new Date(nowMs).getMinutes();
+            const secondsRemaining = 60 - new Date(nowMs).getSeconds();
 
-            // Algoritma Matematika TOTP-Lite (Anti-Tebak)
             const hash = (interval * 31 + parseInt(managerPin) * 17) % 10000;
             const otpCode = String(hash).padStart(4, '0');
 
-            // Tampilkan Kode
             document.getElementById('otp-text').innerText = otpCode;
 
-            // Update Progress Bar Mundur (Circle Dasharray = 176)
-            const progress = (secondsRemaining / 60) * 176;
-            document.getElementById('progress-bar').style.strokeDashoffset = 176 - progress;
-            document.getElementById('countdown-text').innerText = secondsRemaining;
+            // Total sisa detik dalam 1 jam (maks 3600)
+            const totalSecondsLeft = (minutesRemaining * 60) + secondsRemaining;
+            const progress = (totalSecondsLeft / 3600) * 213; // Stroke Dasharray 213
+            
+            document.getElementById('progress-bar').style.strokeDashoffset = 213 - progress;
+            document.getElementById('countdown-text').innerText = minutesRemaining + "m";
         }
     </script>
 </body>
