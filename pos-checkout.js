@@ -720,3 +720,99 @@ function reprintOrder(orderId) {
 
     executeRoutingPrint(bill.orderId, bill.tableNo, bill.status, bill.paymentMethod, subtotal, totalDiscountAmount, bill.serviceCharge, bill.tax, bill.totalAmount, "All", true, bill.items);
 }
+
+// FILE: pos-checkout.js (Tambahkan fungsi ini untuk handle Komplimen)
+
+function processComplimentPayment() {
+    // 1. Minta Otorisasi PIN Manager/Owner sebelum meloloskan tagihan gratis
+    const pin = prompt("OTORISASI KASIR:\nMasukkan PIN Manager/Owner untuk menyetujui Komplimen (FOC):");
+    if (!pin) return;
+
+    // 2. Verifikasi PIN ke server GAS
+    fetch(GAS_URL, { 
+        method: 'POST', 
+        body: JSON.stringify({ action: "verifyVoidManager", data: { managerPin: pin } }) 
+    })
+    .then(res => res.json())
+    .then(json => {
+        if (json.success) {
+            // Set pencatatan uang tunai & kembalian menjadi Rp 0
+            window.lastCashReceived = 0;
+            window.lastCashChange = 0;
+            
+            closeModal('modal-print');
+            
+            // Kirim transaksi ke database dengan status "Paid", total Rp 0, dan Metode "Compliment"
+            alert(`Komplimen Disetujui oleh: ${json.managerName}`);
+            submitComplimentPayload(json.managerName);
+        } else {
+            alert("Gagal! PIN Verifikator Salah atau Tidak Memiliki Wewenang.");
+        }
+    })
+    .catch(err => alert("Gagal verifikasi keamanan. Periksa koneksi internet."));
+}
+
+// FILE: pos-checkout.js (Timpa fungsi submitComplimentPayload ini)
+
+async function submitComplimentPayload(approvedBy) {
+    const tableNo = document.getElementById('order-table').value.trim();
+    const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
+    let userArea = cashierInfo ? cashierInfo.area : "";
+
+    const payload = {
+        action: "placeOrder", 
+        data: {
+            orderId: activeOrderId || "", 
+            tableNo: tableNo,
+            kasirId: cashierInfo.userId, 
+            area: userArea, 
+            discount: "COMP-100", 
+            
+            // LOG AUDIT SEKURITI: Rekam persetujuan PIN Manager/Owner ke kolom Voucher
+            voucherCode: `ACC: ${approvedBy}`, 
+            
+            tax: 0,              
+            serviceCharge: 0,    
+            totalAmount: 0,      
+            paymentMethod: "Compliment", 
+            orderStatus: "Paid", 
+            items: cart.map(item => ({
+                menuId: item.menuId,
+                qty: item.qty,
+                price: item.price,
+                subtotal: item.subtotal, 
+                notes: `${item.notes || ""} (FOC ACC: ${approvedBy})` 
+            }))
+        }
+    };
+
+    try {
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const json = await res.json();
+        if(json.success) {
+            // Cetak struk lunas komplimen
+            executeRoutingPrint(activeOrderId || json.orderId, tableNo, "Paid", "COMPLIMENT", subtotal, subtotal, 0, 0, 0, "All");
+            alert(`Transaksi Komplimen Berhasil! Disetujui oleh: ${approvedBy}`);
+            resetCartState();
+            checkNewDraftNotifications();
+        }
+    } catch (e) {
+        alert("Gagal memproses data ke server pusat.");
+    }
+}
+
+    // Eksekusi kirim ke Google Sheets
+    try {
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const json = await res.json();
+        if(json.success) {
+            // Cetak struk lunas komplimen
+            executeRoutingPrint(activeOrderId || json.orderId, tableNo, "Paid", "COMPLIMENT", subtotal, subtotal, 0, 0, 0, "All");
+            alert("Transaksi Komplimen Berhasil Dicatat!");
+            resetCartState();
+            checkNewDraftNotifications();
+        }
+    } catch (e) {
+        alert("Gagal memproses data ke server pusat.");
+    }
+}
