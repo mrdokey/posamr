@@ -721,22 +721,21 @@ function reprintOrder(orderId) {
     executeRoutingPrint(bill.orderId, bill.tableNo, bill.status, bill.paymentMethod, subtotal, totalDiscountAmount, bill.serviceCharge, bill.tax, bill.totalAmount, "All", true, bill.items);
 }
 
-// FILE: pos-checkout.js (Timpa fungsi proses Komplimen Anda dengan versi ini)
+// FILE: pos-checkout.js (Tambahkan fungsi-fungsi Komplimen ini)
 
+// --- SISTEM PEMBAYARAN KOMPLIMEN (FOC) DENGAN OTP ---
 function processComplimentPayment() {
-    const type = prompt("PILIH JENIS KOMPLIMEN:\nKetik 1 : VIP / Owner Treat (Butuh OTP Manager)\nKetik 2 : Kesalahan Staff / Potong Gaji (Butuh PIN Staff Bersangkutan)");
+    const type = prompt("PILIH JENIS KOMPLIMEN:\nKetik 1 : VIP / Owner Treat (Butuh OTP Manager)\nKetik 2 : Kesalahan Staff / Potong Gaji (Butuh OTP Staff Bersangkutan)");
     if (!type) return;
 
     if (type === "1") {
-        // VIP / Owner Treat
         const otp = prompt("Masukkan 4-Digit OTP Manager:");
         if (!otp) return;
         verifyComplimentCode(otp, "VIP");
     } else if (type === "2") {
-        // Kesalahan Staff (Potong Gaji)
-        const pin = prompt("PENGAKUAN SALAH:\nMasukkan PIN 4-Angka Staff yang melakukan kesalahan:");
-        if (!pin) return;
-        verifyComplimentCode(pin, "Staff-Error");
+        const otp = prompt("PENGAKUAN SALAH:\nMasukkan 4-Digit OTP Staff yang melakukan kesalahan:");
+        if (!otp) return;
+        verifyComplimentCode(otp, "Staff-Error");
     } else {
         alert("Pilihan tidak valid!");
     }
@@ -755,15 +754,13 @@ function verifyComplimentCode(inputCode, mode) {
             closeModal('modal-print');
 
             if (mode === "VIP") {
-                // Skenario VIP: Wajib diverifikasi dengan OTP Manager
                 if (json.type !== "VIP") {
-                    alert("Akses Ditolak! Harus menggunakan OTP Manager.");
+                    alert("Akses Ditolak! Harus menggunakan OTP Manager/Owner.");
                     return;
                 }
                 alert(`Komplimen VIP Disetujui oleh: ${json.managerName}`);
                 submitComplimentPayload(`ACC: ${json.managerName}`, "Compliment", json.managerName);
             } else {
-                // Skenario Potong Gaji: Membaca nama karyawan yang punya PIN tersebut
                 alert(`Kesalahan dicatat atas nama: ${json.managerName} (Beban Potong Gaji)`);
                 submitComplimentPayload(`POTONG GAJI: ${json.managerName}`, "Staff-Error", json.managerName);
             }
@@ -786,21 +783,18 @@ async function submitComplimentPayload(logAuditText, paymentMethodTarget, employ
             tableNo: tableNo,
             kasirId: cashierInfo.userId, 
             area: userArea, 
-            discount: "COMP-100", 
-            
-            // LOG AUDIT UTAMA (Mencatat ACC: Manager ATAU POTONG GAJI: Nama Staff di kolom Voucher)
-            voucherCode: logAuditText, 
-            
+            discount: "COMP-100", // Ditulis sebagai Compliment 100%
+            voucherCode: logAuditText, // LOG AUDIT TERCATAT DI KOLOM VOUCHER
             tax: 0,              
             serviceCharge: 0,    
-            totalAmount: 0,      
-            paymentMethod: paymentMethodTarget, // Tercatat "Compliment" atau "Staff-Error"
+            totalAmount: 0,      // Rp 0
+            paymentMethod: paymentMethodTarget, // "Compliment" atau "Staff-Error"
             orderStatus: "Paid", 
             items: cart.map(item => ({
                 menuId: item.menuId,
                 qty: item.qty,
                 price: item.price,
-                subtotal: item.subtotal, // Harga asli dikirim untuk kalkulasi HPP & pemotongan gaji
+                subtotal: item.subtotal, 
                 notes: `${item.notes || ""} (${logAuditText})` 
             }))
         }
@@ -810,7 +804,7 @@ async function submitComplimentPayload(logAuditText, paymentMethodTarget, employ
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
         const json = await res.json();
         if(json.success) {
-            // Cetak struk khusus komplimen/potong gaji
+            // Cetak struk Lunas (0 Rupiah)
             executeRoutingPrint(activeOrderId || json.orderId, tableNo, "Paid", paymentMethodTarget.toUpperCase(), subtotal, subtotal, 0, 0, 0, "All");
             alert(`Transaksi Berhasil Dicatat! (${logAuditText})`);
             resetCartState();
