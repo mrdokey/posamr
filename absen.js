@@ -1,7 +1,14 @@
 /**
  * MODUL: KIOSK ABSENSI & AUTO-ROUTING SSO
  */
-
+// REGISTRASI SERVICE WORKER UNTUK TOMBOL INSTALL PWA (NO-CACHE MODE)
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('Service Worker Aktif (Development Mode - Bebas Cache)'))
+            .catch(err => console.error('Gagal registrasi SW:', err));
+    });
+}
 lucide.createIcons();
 
 const STORAGE_API = "MRD_API_URL";

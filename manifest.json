@@ -1,19 +1,20 @@
 {
-  "name": "POS Kasir Labarak Bar",
-  "short_name": "POS Kasir",
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#111827",
-  "theme_color": "#4f46e5",
-  "orientation": "landscape",
+  "name": "AMR by MRD Digital Solution",
+  "short_name": "AMR Absen",
+  "description": "Kiosk Absensi & SSO Router AMR POS",
+  "start_url": "index.html",
+  "display": "fullscreen",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "https://i.ibb.co.com/JW1FFbCz/1780229137561.png",
+      "src": "https://i.ibb.co.com/934bwtWJ/1780277980692.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "https://i.ibb.co.com/JW1FFbCz/1780229137561.png",
+      "src": "https://i.ibb.co.com/934bwtWJ/1780277980692.png",
       "sizes": "512x512",
       "type": "image/png"
     }
