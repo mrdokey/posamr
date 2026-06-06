@@ -1,6 +1,5 @@
 /**
- * MODUL 3: CHECKOUT, HISTORY, VOID, PRINTER & RESPONSIVE PORTRAIT
- * UPDATE: Upgraded Thermal Layout (Bebas HTML Mentah, 2 Rangkap Lunas, Cetak Tagihan Open Bill, & Multi-Printer WiFi)
+ * MODUL 3: CHECKOUT, HISTORY, VOID, & SPLIT BILL
  */
 
 let currentTransactionTotal = 0; 
@@ -192,6 +191,70 @@ function editDraft(orderId) {
     }
 }
 
+// FUNGSI AKTIVASI & CETAK DARI RIWAYAT DRAFT KASIR
+async function activateAndPrintDraft(orderId) {
+    const bill = historyDataRaw.find(b => b.orderId === orderId);
+    if (!bill) {
+        alert("Gagal: Data pesanan tidak ditemukan di memori lokal tablet!");
+        return;
+    }
+
+    if (!bill.items || bill.items.length === 0) {
+        alert(`Gagal Aktifkan Meja ${bill.tableNo}!\n\nDraft ini kosong (tidak ada item pesanan di sheet 'OrderDetails'). Silakan buat draft pesanan baru.`);
+        return;
+    }
+
+    if (!confirm(`Cetak pesanan ke Dapur & Bar, lalu aktifkan Meja ${bill.tableNo}?`)) {
+        return;
+    }
+
+    const subtotal = bill.items.reduce((sum, item) => sum + item.subtotal, 0);
+    const totalDiscountAmount = (subtotal + bill.tax + bill.serviceCharge) - bill.totalAmount;
+
+    // Cetak ke Dapur/Bar
+    executeRoutingPrintDirect(bill, subtotal, totalDiscountAmount);
+
+    let userArea = cashierInfo ? cashierInfo.area : "";
+    const payload = {
+        action: "placeOrder",
+        data: {
+            orderId: bill.orderId,
+            tableNo: bill.tableNo,
+            kasirId: cashierInfo.userId,
+            area: userArea,
+            discount: bill.discountId || "DISC-00",
+            voucherCode: bill.voucherCode || "",
+            tax: bill.tax,
+            serviceCharge: bill.serviceCharge,
+            totalAmount: bill.totalAmount,
+            paymentMethod: "-",
+            orderStatus: "Open", // MEJA AKTIF
+            items: bill.items.map(i => ({
+                menuId: i.menuId,
+                qty: i.qty,
+                price: i.price,
+                subtotal: i.subtotal,
+                notes: i.notes || "",
+                route: i.route || "Kitchen"
+            }))
+        }
+    };
+
+    try {
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const json = await res.json();
+        if (json.success) {
+            alert(`Meja ${bill.tableNo} berhasil diaktifkan & dikirim ke printer Dapur/Bar!`);
+            switchTab('Open'); 
+            checkNewDraftNotifications(); 
+        } else {
+            alert("Gagal mengaktifkan meja: " + json.message);
+        }
+    } catch (e) {
+        alert("Gagal menghubungi server utama untuk sinkronisasi database.");
+    }
+}
+
 function reqVoid(orderId, type) {
     voidTargetId = orderId;
     const bill = historyDataRaw.find(b => b.orderId === orderId);
@@ -257,6 +320,149 @@ async function executeVoidVerified(reasonText) {
     } catch(e) { alert("Gagal koneksi server."); }
 }
 
+// --- LOGIKA SPLIT BILL ---
+function openSplitModal() {
+    if (!activeOrderId) return alert("Pilih meja aktif terlebih dahulu dari riwayat!");
+    splitOriginalItems = JSON.parse(JSON.stringify(cart));
+    splitTargetItems = [];
+    renderSplitUI();
+    openModal('modal-split-bill');
+}
+
+function renderSplitUI() {
+    const origContainer = document.getElementById('split-original-container');
+    const targetContainer = document.getElementById('split-target-container');
+    
+    origContainer.innerHTML = splitOriginalItems.map((item, idx) => `
+        <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl flex justify-between items-center">
+            <div class="pr-2">
+                <p class="text-xs font-bold text-white line-clamp-1">${item.name}</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">Rp ${item.price.toLocaleString('id-ID')} x ${item.qty}</p>
+            </div>
+            <button onclick="moveItemToSplit(${idx})" class="w-7 h-7 bg-slate-800 rounded-lg text-amber-500 hover:bg-amber-500 hover:text-slate-950 flex items-center justify-center font-bold text-sm smooth-transition">
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+        </div>
+    `).join('');
+
+    targetContainer.innerHTML = splitTargetItems.map((item, idx) => `
+        <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl flex justify-between items-center">
+            <button onclick="moveItemToOriginal(${idx})" class="w-7 h-7 bg-slate-800 rounded-lg text-slate-400 hover:bg-red-500 hover:text-white flex items-center justify-center font-bold text-sm smooth-transition">
+                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </button>
+            <div class="text-right pl-2">
+                <p class="text-xs font-bold text-white line-clamp-1">${item.name}</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">Rp ${item.price.toLocaleString('id-ID')} x ${item.qty}</p>
+            </div>
+        </div>
+    `).join('');
+
+    const splitTotal = splitTargetItems.reduce((sum, item) => sum + item.subtotal, 0);
+    document.getElementById('split-total-amount').innerText = "Rp " + splitTotal.toLocaleString('id-ID');
+    lucide.createIcons();
+}
+
+function moveItemToSplit(index) {
+    const item = splitOriginalItems[index];
+    if (item.qty <= 0) return;
+
+    item.qty--;
+    item.subtotal = item.qty * item.price;
+
+    const exist = splitTargetItems.find(i => i.menuId === item.menuId);
+    if (exist) {
+        exist.qty++;
+        exist.subtotal = exist.qty * exist.price;
+    } else {
+        splitTargetItems.push({ ...item, qty: 1, subtotal: item.price, notes: '' });
+    }
+
+    if (item.qty === 0) {
+        splitOriginalItems.splice(index, 1);
+    }
+    renderSplitUI();
+}
+
+function moveItemToOriginal(index) {
+    const item = splitTargetItems[index];
+    if (item.qty <= 0) return;
+
+    item.qty--;
+    item.subtotal = item.qty * item.price;
+
+    const exist = splitOriginalItems.find(i => i.menuId === item.menuId);
+    if (exist) {
+        exist.qty++;
+        exist.subtotal = exist.qty * exist.price;
+    } else {
+        splitOriginalItems.push({ ...item, qty: 1, subtotal: item.price, notes: '' });
+    }
+
+    if (item.qty === 0) {
+        splitTargetItems.splice(index, 1);
+    }
+    renderSplitUI();
+}
+
+async function confirmSplit() {
+    if (splitTargetItems.length === 0) return alert("Pindahkan minimal 1 item ke Bill Baru!");
+    const origTableNo = document.getElementById('order-table').value.trim();
+    
+    if (!confirm(`Sistem akan memperbarui tagihan meja asli ${origTableNo} dan memuat tagihan baru ke keranjang untuk dilunasi.`)) {
+        return;
+    }
+
+    const subtotalOrig = splitOriginalItems.reduce((sum, item) => sum + item.subtotal, 0);
+    const servicePerc = parseFloat(configData["SERVICE_CHARGE"] || 0);
+    const serviceChargeOrig = subtotalOrig * (servicePerc / 100);
+    const taxPerc = parseFloat(configData["PAJAK_PB1"] || 0); 
+    const taxOrig = (subtotalOrig + serviceChargeOrig) * (taxPerc / 100);
+    const grandTotalOrig = subtotalOrig + serviceChargeOrig + taxOrig;
+
+    let userArea = cashierInfo ? cashierInfo.area : "";
+
+    const payloadOrigUpdate = {
+        action: "placeOrder",
+        data: {
+            orderId: activeOrderId, 
+            tableNo: origTableNo,
+            kasirId: cashierInfo.userId,
+            area: userArea,
+            discount: "DISC-00", 
+            voucherCode: "",
+            tax: taxOrig,
+            serviceCharge: serviceChargeOrig,
+            totalAmount: grandTotalOrig,
+            paymentMethod: "-",
+            orderStatus: "Open", 
+            items: splitOriginalItems
+        }
+    };
+
+    try {
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payloadOrigUpdate) });
+        const json = await res.json();
+        
+        if (json.success) {
+            activeOrderId = null; 
+            document.getElementById('order-table').value = origTableNo + " (Split)"; 
+            cart = splitTargetItems; 
+            
+            const ind = document.getElementById('draft-indicator');
+            if (ind) ind.classList.add('hidden-screen'); 
+            
+            renderCart(); 
+            closeModal('modal-split-bill');
+            alert("Bill berhasil dipisah! Keranjang sekarang berisi Bill Baru yang siap dilunasi.");
+        } else {
+            alert("Gagal memperbarui bill asli: " + json.message);
+        }
+    } catch (e) {
+        alert("Gagal koneksi ke server untuk memproses split bill.");
+    }
+}
+
+// --- PEMROSESAN PEMBAYARAN (CHECKOUT) ---
 function saveDraft() {
     if(cart.length === 0) return alert("Keranjang kosong!");
     if(!document.getElementById('order-table').value.trim()) return alert("Isi Nomor Meja!");
@@ -504,149 +710,7 @@ async function syncOfflineQueue() {
     updateOfflineBadge();
 }
 
-// --- LOGIKA SPLIT BILL ---
-function openSplitModal() {
-    if (!activeOrderId) return alert("Pilih meja aktif terlebih dahulu dari riwayat!");
-    splitOriginalItems = JSON.parse(JSON.stringify(cart));
-    splitTargetItems = [];
-    renderSplitUI();
-    openModal('modal-split-bill');
-}
-
-function renderSplitUI() {
-    const origContainer = document.getElementById('split-original-container');
-    const targetContainer = document.getElementById('split-target-container');
-    
-    origContainer.innerHTML = splitOriginalItems.map((item, idx) => `
-        <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl flex justify-between items-center">
-            <div class="pr-2">
-                <p class="text-xs font-bold text-white line-clamp-1">${item.name}</p>
-                <p class="text-[10px] text-slate-400 mt-0.5">Rp ${item.price.toLocaleString('id-ID')} x ${item.qty}</p>
-            </div>
-            <button onclick="moveItemToSplit(${idx})" class="w-7 h-7 bg-slate-800 rounded-lg text-amber-500 hover:bg-amber-500 hover:text-slate-950 flex items-center justify-center font-bold text-sm smooth-transition">
-                <i data-lucide="chevron-right" class="w-4 h-4"></i>
-            </button>
-        </div>
-    `).join('');
-
-    targetContainer.innerHTML = splitTargetItems.map((item, idx) => `
-        <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl flex justify-between items-center">
-            <button onclick="moveItemToOriginal(${idx})" class="w-7 h-7 bg-slate-800 rounded-lg text-slate-400 hover:bg-red-500 hover:text-white flex items-center justify-center font-bold text-sm smooth-transition">
-                <i data-lucide="chevron-left" class="w-4 h-4"></i>
-            </button>
-            <div class="text-right pl-2">
-                <p class="text-xs font-bold text-white line-clamp-1">${item.name}</p>
-                <p class="text-[10px] text-slate-400 mt-0.5">Rp ${item.price.toLocaleString('id-ID')} x ${item.qty}</p>
-            </div>
-        </div>
-    `).join('');
-
-    const splitTotal = splitTargetItems.reduce((sum, item) => sum + item.subtotal, 0);
-    document.getElementById('split-total-amount').innerText = "Rp " + splitTotal.toLocaleString('id-ID');
-    lucide.createIcons();
-}
-
-function moveItemToSplit(index) {
-    const item = splitOriginalItems[index];
-    if (item.qty <= 0) return;
-
-    item.qty--;
-    item.subtotal = item.qty * item.price;
-
-    const exist = splitTargetItems.find(i => i.menuId === item.menuId);
-    if (exist) {
-        exist.qty++;
-        exist.subtotal = exist.qty * exist.price;
-    } else {
-        splitTargetItems.push({ ...item, qty: 1, subtotal: item.price, notes: '' });
-    }
-
-    if (item.qty === 0) {
-        splitOriginalItems.splice(index, 1);
-    }
-    renderSplitUI();
-}
-
-function moveItemToOriginal(index) {
-    const item = splitTargetItems[index];
-    if (item.qty <= 0) return;
-
-    item.qty--;
-    item.subtotal = item.qty * item.price;
-
-    const exist = splitOriginalItems.find(i => i.menuId === item.menuId);
-    if (exist) {
-        exist.qty++;
-        exist.subtotal = exist.qty * exist.price;
-    } else {
-        splitOriginalItems.push({ ...item, qty: 1, subtotal: item.price, notes: '' });
-    }
-
-    if (item.qty === 0) {
-        splitTargetItems.splice(index, 1);
-    }
-    renderSplitUI();
-}
-
-async function confirmSplit() {
-    if (splitTargetItems.length === 0) return alert("Pindahkan minimal 1 item ke Bill Baru!");
-    const origTableNo = document.getElementById('order-table').value.trim();
-    
-    if (!confirm(`Sistem akan memperbarui tagihan meja asli ${origTableNo} dan memuat tagihan baru ke keranjang untuk dilunasi.`)) {
-        return;
-    }
-
-    const subtotalOrig = splitOriginalItems.reduce((sum, item) => sum + item.subtotal, 0);
-    const servicePerc = parseFloat(configData["SERVICE_CHARGE"] || 0);
-    const serviceChargeOrig = subtotalOrig * (servicePerc / 100);
-    const taxPerc = parseFloat(configData["PAJAK_PB1"] || 0); 
-    const taxOrig = (subtotalOrig + serviceChargeOrig) * (taxPerc / 100);
-    const grandTotalOrig = subtotalOrig + serviceChargeOrig + taxOrig;
-
-    let userArea = cashierInfo ? cashierInfo.area : "";
-
-    const payloadOrigUpdate = {
-        action: "placeOrder",
-        data: {
-            orderId: activeOrderId, 
-            tableNo: origTableNo,
-            kasirId: cashierInfo.userId,
-            area: userArea,
-            discount: "DISC-00", 
-            voucherCode: "",
-            tax: taxOrig,
-            serviceCharge: serviceChargeOrig,
-            totalAmount: grandTotalOrig,
-            paymentMethod: "-",
-            orderStatus: "Open", 
-            items: splitOriginalItems
-        }
-    };
-
-    try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payloadOrigUpdate) });
-        const json = await res.json();
-        
-        if (json.success) {
-            activeOrderId = null; 
-            document.getElementById('order-table').value = origTableNo + " (Split)"; 
-            cart = splitTargetItems; 
-            
-            const ind = document.getElementById('draft-indicator');
-            if (ind) ind.classList.add('hidden-screen'); 
-            
-            renderCart(); 
-            closeModal('modal-split-bill');
-            alert("Bill berhasil dipisah! Keranjang sekarang berisi Bill Baru yang siap dilunasi.");
-        } else {
-            alert("Gagal memperbarui bill asli: " + json.message);
-        }
-    } catch (e) {
-        alert("Gagal koneksi ke server untuk memproses split bill.");
-    }
-}
-
-// --- ENGINE REPRINT INTEGRASI DETAIL ASLI ---
+// --- REPRINT HISTORY ---
 function reprintOrder(orderId) {
     const bill = historyDataRaw.find(b => b.orderId === orderId);
     if(!bill) return;
@@ -655,197 +719,4 @@ function reprintOrder(orderId) {
     const totalDiscountAmount = (subtotal + bill.tax + bill.serviceCharge) - bill.totalAmount; 
 
     executeRoutingPrint(bill.orderId, bill.tableNo, bill.status, bill.paymentMethod, subtotal, totalDiscountAmount, bill.serviceCharge, bill.tax, bill.totalAmount, "All", true, bill.items);
-}
-
-// --- HELPER: KIRIM INTENT PRINTER RAWBT SPESIFIK ---
-function sendIntentToRawBT(base64Data, printerProfileName) {
-    const intentUrl = `intent:base64,${base64Data}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.printer=${printerProfileName};end;`;
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-    iframe.src = intentUrl;
-    document.body.appendChild(iframe);
-    
-    setTimeout(() => {
-        document.body.removeChild(iframe);
-    }, 1000);
-}
-
-// --- PRINTER ENGINE 1: DRAFT TO OPEN (KITCHEN & BAR BYPASS) ---
-function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
-    const printerKitchenProfile = configData["PRINTER_KITCHEN"] || "Kitchen";
-    const printerBarProfile = configData["PRINTER_BAR"] || "Bar";
-    const currentTimeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    let finalReceipt = "";
-
-    // 1. KITCHEN PRINT
-    const kitchenItems = bill.items.filter(item => item.route === "Kitchen");
-    if (kitchenItems.length > 0) {
-        let kitchenReceipt = "";
-        kitchenReceipt += `[C]<b>KITCHEN ORDER (DAPUR)</b>\n`;
-        kitchenReceipt += `[C]--------------------------------\n`;
-        kitchenReceipt += `[L]Meja : <b>${bill.tableNo}</b>\n`;
-        kitchenReceipt += `[L]ID   : ${bill.orderId}\n`;
-        kitchenReceipt += `[L]Jam  : ${currentTimeStr} WITA\n`;
-        kitchenReceipt += `[C]--------------------------------\n`;
-        kitchenItems.forEach(item => {
-            kitchenReceipt += `[L]<b>[ ] ${item.qty}x  ${item.name}</b>\n`;
-            if(item.notes) kitchenReceipt += `[L]   *Catatan: ${item.notes}\n`;
-            kitchenReceipt += `[L]--------------------------------\n`;
-        });
-        kitchenReceipt += `\n\n\n[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
-        
-        sendIntentToRawBT(kitchenReceipt, printerKitchenProfile);
-    }
-
-    // 2. BAR PRINT (DELAYED SECONDS TO PREVENT JAM/COLLISION)
-    const barItems = bill.items.filter(item => item.route === "Bar");
-    if (barItems.length > 0) {
-        let barReceipt = "";
-        barReceipt += `[C]<b>BAR ORDER (MINUMAN)</b>\n`;
-        barReceipt += `[C]--------------------------------\n`;
-        barReceipt += `[L]Meja : <b>${bill.tableNo}</b>\n`;
-        barReceipt += `[L]ID   : ${bill.orderId}\n`;
-        barReceipt += `[L]Jam  : ${currentTimeStr} WITA\n`;
-        barReceipt += `[C]--------------------------------\n`;
-        barItems.forEach(item => {
-            barReceipt += `[L]<b>[ ] ${item.qty}x  ${item.name}</b>\n`;
-            if(item.notes) barReceipt += `[L]   *Catatan: ${item.notes}\n`;
-            barReceipt += `[L]--------------------------------\n`;
-        });
-        barReceipt += `\n\n\n`;
-        
-        setTimeout(() => {
-            sendIntentToRawBT(barReceipt, printerBarProfile);
-        }, 1200); 
-    }
-}
-
-// --- PRINTER ENGINE 2: CHASE OUT & INTERFACE ROUTING (Paid, Open, & Reprint) ---
-function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discountAmount, serviceCharge, tax, grandTotal, target, isReprint = false, itemsToPrint = null) {
-    const printerKasirProfile = configData["PRINTER_KASIR"] || "Bloetooth";
-    const printerKitchenProfile = configData["PRINTER_KITCHEN"] || "Kitchen";
-    const printerBarProfile = configData["PRINTER_BAR"] || "Bar";
-    
-    const namaResto = configData["NAMA_PERUSAAN"] || "LABARAC BAR";
-    const alamat = configData["ALAMAT"] || "Denpasar, Bali";
-    const footerStruk = configData["FOOTER_STRUK"] || "Terima Kasih Atas Kunjungannya!";
-    
-    const currentDateStr = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' });
-    const currentTimeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-    const items = itemsToPrint || cart; 
-    let delayMultiplier = 0; 
-
-    // 1. BILL UTAMA / STRUK LUNAS (KASIR PRINTER)
-    if (target === "All" && (status === "Paid" || status === "Open")) {
-        const generateInvoiceBody = (copyLabel) => {
-            let body = "";
-            if (isReprint) body += `[C]<b>*** REPRINT / SALINAN ***</b>\n`;
-            body += `[C]<b>${namaResto}</b>\n`;
-            body += `[C]${alamat}\n`;
-            body += `[C]--------------------------------\n`;
-            body += `[C]<b>${copyLabel}</b>\n`;
-            body += `[C]--------------------------------\n`;
-            body += `[L]ID   : ${orderId}\n`;
-            body += `[L]Meja : <b>${table}</b>\n`;
-            body += `[L]Kasir: ${cashierInfo.name}\n`;
-            body += `[L]Tgl  : ${currentDateStr} [R]${currentTimeStr}\n`;
-            body += `[C]--------------------------------\n`;
-            
-            items.forEach(item => {
-                body += `[L]<b>${item.name}</b>\n`;
-                if(item.notes) body += `[L]  *${item.notes}\n`;
-                body += `[L]${item.qty}x ${item.price.toLocaleString('id-ID')} [R]${item.subtotal.toLocaleString('id-ID')}\n`;
-            });
-            
-            body += `[C]--------------------------------\n`;
-            body += `[L]Subtotal [R]${subtotal.toLocaleString('id-ID')}\n`;
-            if(discountAmount > 0) body += `[L]Total Diskon [R]-${discountAmount.toLocaleString('id-ID')}\n`;
-            if(serviceCharge > 0) body += `[L]Service Charge [R]${serviceCharge.toLocaleString('id-ID')}\n`;
-            if(tax > 0) body += `[L]Pajak PB1 [R]${tax.toLocaleString('id-ID')}\n`;
-            body += `[C]--------------------------------\n`;
-            body += `[L]<b>GRAND TOTAL</b> [R]<b>${grandTotal.toLocaleString('id-ID')}</b>\n`;
-            
-            if (status === "Paid") {
-                const tunai = window.lastCashReceived || grandTotal;
-                const kembalian = window.lastCashChange || 0;
-                body += `[L]Bayar (${payMethod}) [R]${tunai.toLocaleString('id-ID')}\n`;
-                body += `[L]Kembalian [R]${kembalian.toLocaleString('id-ID')}\n`;
-                body += `[C]--------------------------------\n`;
-                body += `[C]<b>STATUS : LUNAS</b>\n`;
-                body += `[C]${footerStruk}\n`;
-            } else {
-                body += `[C]--------------------------------\n`;
-                body += `[C]<b>STATUS : TAGIHAN SEMENTARA</b>\n`;
-                body += `[C]Harap lakukan pembayaran di kasir\n`;
-            }
-            body += `\n\n\n`;
-            return body;
-        };
-
-        let cashierReceipt = "";
-        if (status === "Paid") {
-            cashierReceipt += generateInvoiceBody("STRUK PELANGGAN");
-            cashierReceipt += `[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
-            cashierReceipt += generateInvoiceBody("ARSIP TOKO / DAPUR");
-            cashierReceipt += `[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
-        } else {
-            cashierReceipt += generateInvoiceBody("BILL TAGIHAN MEJA");
-            cashierReceipt += `[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
-        }
-
-        sendIntentToRawBT(cashierReceipt, printerKasirProfile);
-        delayMultiplier++;
-    }
-
-    // 2. KITCHEN ORDER (DAPUR)
-    if (target === "All" || target === "Kitchen") {
-        const kitchenItems = items.filter(item => item.route === "Kitchen");
-        if (kitchenItems.length > 0) {
-            let kitchenReceipt = "";
-            if (isReprint) kitchenReceipt += `[C]<b>*** REPRINT / SALINAN ***</b>\n`;
-            kitchenReceipt += `[C]<b>KITCHEN ORDER (DAPUR)</b>\n`;
-            kitchenReceipt += `[C]--------------------------------\n`;
-            kitchenReceipt += `[L]Meja : <b>${table}</b>\n`;
-            kitchenReceipt += `[L]ID   : ${orderId}\n`;
-            kitchenReceipt += `[L]Jam  : ${currentTimeStr} WITA\n`;
-            kitchenReceipt += `[C]--------------------------------\n`;
-            kitchenItems.forEach(item => {
-                kitchenReceipt += `[L]<b>[ ] ${item.qty}x  ${item.name}</b>\n`;
-                if(item.notes) kitchenReceipt += `[L]   *Catatan: ${item.notes}\n`;
-                kitchenReceipt += `[L]--------------------------------\n`;
-            });
-            kitchenReceipt += `\n\n\n[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
-
-            setTimeout(() => {
-                sendIntentToRawBT(kitchenReceipt, printerKitchenProfile);
-            }, delayMultiplier * 1200);
-            delayMultiplier++;
-        }
-    }
-
-    // 3. BAR ORDER (MINUMAN)
-    if (target === "All" || target === "Bar") {
-        const barItems = items.filter(item => item.route === "Bar");
-        if (barItems.length > 0) {
-            let barReceipt = "";
-            if (isReprint) barReceipt += `[C]<b>*** REPRINT / SALINAN ***</b>\n`;
-            barReceipt += `[C]<b>BAR ORDER (MINUMAN)</b>\n`;
-            barReceipt += `[C]--------------------------------\n`;
-            barReceipt += `[L]Meja : <b>${table}</b>\n`;
-            barReceipt += `[L]ID   : ${orderId}\n`;
-            barReceipt += `[L]Jam  : ${currentTimeStr} WITA\n`;
-            barReceipt += `[C]--------------------------------\n`;
-            barItems.forEach(item => {
-                barReceipt += `[L]<b>[ ] ${item.qty}x  ${item.name}</b>\n`;
-                if(item.notes) barReceipt += `[L]   *Catatan: ${item.notes}\n`;
-                barReceipt += `[L]--------------------------------\n`;
-            });
-            barReceipt += `\n\n\n`;
-
-            setTimeout(() => {
-                sendIntentToRawBT(barReceipt, printerBarProfile);
-            }, delayMultiplier * 1200);
-        }
-    }
 }
