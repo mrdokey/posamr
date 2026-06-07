@@ -1,6 +1,6 @@
 {
   "name": "AMR by MRD Digital Solution",
-  "short_name": "AMR (Aplikasi Manajemen Restoran)",
+  "short_name": "AMR",
   "description": "Kiosk Absensi & SSO Router AMR POS",
   "start_url": "index.html",
   "display": "fullscreen",
