@@ -1,16 +1,23 @@
 /**
  * MODUL: KIOSK ABSENSI, SINGLE SIGN-ON (SSO), OTP GENERATOR, & PIN CHANGER
- * UPDATE: Fixed PWA Install Event & Fast SW Register
+ * UPDATE: Fixed PWA Install Event & Fast SW Register with Path Correction
  */
 
-// 1. REGISTRASI INSTAN SERVICE WORKER (Bypass Load Event untuk Kecepatan Install)
+// REGISTRASI SW DENGAN JALUR RELATIF YG AMAN UNTUK GITHUB PAGES
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js')
-        .then(reg => console.log('Service Worker Aktif (No-Cache Mode)'))
-        .catch(err => console.error('Gagal registrasi SW:', err));
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js') // Menggunakan './' agar aman di GitHub Pages
+            .then(reg => console.log('Service Worker Aktif (No-Cache Mode)'))
+            .catch(err => console.error('Gagal registrasi SW:', err));
+    });
 }
 
-lucide.createIcons();
+// Inisialisasi Lucide dibungkus aman agar tidak membuat crash jika DOM belum siap
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+});
 
 const STORAGE_API = "MRD_API_URL";
 let GAS_URL = localStorage.getItem(STORAGE_API);
@@ -485,28 +492,45 @@ function updateOtp() {
     document.getElementById('countdown-text').innerText = minutesRemaining + "m";
 }
 
-// --- 4. INTEGRASI INSTALASI PWA (KUNCINYA DI SINI!) ---
+// --- 4. INTEGRASI INSTALASI PWA (DIPERBAIKI SECARA DEFENSIP) ---
 window.addEventListener('beforeinstallprompt', (e) => {
+    // Cegah mini-infobar bawaan Chrome agar tidak bentrok
     e.preventDefault();
+    // Simpan event ke variabel global
     deferredPrompt = e;
-    showInstallBanner();
+    
+    // Tunggu hingga DOM benar-benar siap sebelum menampilkan banner
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        showInstallBanner();
+    } else {
+        window.addEventListener('DOMContentLoaded', showInstallBanner);
+    }
 });
 
 function showInstallBanner() {
-    // Kita lepas proteksi GAS_URL agar tombol install bisa muncul kapan saja bahkan saat aktivasi awal!
     const banner = document.getElementById('install-banner');
-    if (banner) banner.classList.remove('hidden');
+    if (banner) {
+        banner.classList.remove('hidden');
+    }
 }
 
 function dismissInstallBanner() {
     const banner = document.getElementById('install-banner');
-    if (banner) banner.classList.add('hidden');
+    if (banner) {
+        banner.classList.add('hidden');
+    }
 }
 
 async function triggerNativeInstall() {
     if (!deferredPrompt) return;
+    
+    // Tampilkan prompt instalasi asli OS / Browser
     deferredPrompt.prompt();
+    
+    // Tunggu keputusan user
     const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User response to install prompt: ${outcome}`);
+    
     deferredPrompt = null;
     dismissInstallBanner();
 }
