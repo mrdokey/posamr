@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="manifest" href="./manifest-pos.json">
     <style>
         /* KUNCI ANTI-ZOOM DI TABLET/HP */
         button, input, select { touch-action: manipulation; }
@@ -21,6 +22,14 @@
         @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
         #menu-container { transition: opacity 0.3s ease-in-out; }
     </style>
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .catch(err => console.error("SW Kasir failed: ", err));
+        });
+    }
+</script>
 </head>
 <body class="h-[100dvh] w-screen flex flex-col select-none text-slate-100">
 

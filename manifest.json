@@ -6,7 +6,7 @@
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
-  "orientation": "any",
+  "orientation": "potrait",
   "icons": [
     {
       "src": "https://i.ibb.co.com/gMmSSTgq/IMG-20260606-WA0000.jpg",
