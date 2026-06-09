@@ -64,10 +64,10 @@
         </div>
     </div>
 
-    <!-- 4. MAIN POS APPLICATION (RESPONSIVE FLEX-COL DI HP / FLEX-ROW DI TABLET LANDSCAPE) -->
+    <!-- 4. MAIN POS APPLICATION -->
     <div id="main-app" class="hidden-screen h-full w-full flex flex-col md:flex-row bg-[#0f172a] smooth-transition">
         
-        <!-- LEFT PANEL: MENU GRID (100% LEBAR DI HP, SISA RUANG DI LANDSCAPE) -->
+        <!-- LEFT PANEL: MENU GRID -->
         <div class="flex-1 flex flex-col h-full overflow-hidden bg-slate-900 md:border-r border-slate-800">
             <!-- Header Kiri -->
             <header class="bg-slate-950 px-6 py-4 flex justify-between items-center z-10 shrink-0">
@@ -79,7 +79,6 @@
                     </div>
                 </div>
                 
-                <!-- FILE: index.html (Seksi Header Kanan) -->
                 <div class="flex items-center gap-3">
                     <span id="offline-badge" class="hidden bg-rose-500 text-white px-3 py-2 rounded-xl text-xs font-black animate-pulse"><i data-lucide="wifi-off" class="w-4 h-4 inline"></i> Offline</span>
                     
@@ -88,13 +87,12 @@
                         <span id="draft-alert-dot" class="hidden absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full animate-ping border-2 border-slate-900"></span>
                     </button>
                     
-                    <!-- TOMBOL BARU: KEMBALI KE ABSENSI -->
+                    <!-- KEMBALI KE ABSENSI -->
                     <button onclick="window.location.href='index.html'" title="Kembali ke Kiosk Absensi" class="p-2.5 text-amber-400 bg-amber-950/30 rounded-xl hover:bg-amber-950/50 smooth-transition"><i data-lucide="clock" class="w-5 h-5"></i></button>
 
                     <button onclick="syncData()" id="btn-sync" class="p-2.5 text-blue-400 bg-blue-950/30 rounded-xl hover:bg-blue-950/50 smooth-transition"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
                     <button onclick="logoutKasir()" class="p-2.5 text-rose-500 bg-rose-950/30 rounded-xl hover:bg-rose-950/50 smooth-transition"><i data-lucide="log-out" class="w-5 h-5"></i></button>
                 </div>
-                
             </header>
 
             <!-- Search & Filter -->
@@ -113,24 +111,22 @@
 
             <!-- Menu Grid -->
             <div id="menu-container" class="flex-1 overflow-y-auto p-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 content-start smooth-transition pb-24 md:pb-6">
-                <!-- Menu Grid -->
+                <!-- Menu Item diisi dinamis -->
             </div>
         </div>
 
-        <!-- RIGHT PANEL: CART & CHECKOUT (LEBAR 600PX UNTUK MENGISI RUANG KOSONG SECARA MAKSIMAL) -->
+        <!-- RIGHT PANEL: CART & CHECKOUT -->
         <div id="cart-panel" class="hidden md:flex w-full md:w-[600px] bg-slate-900 flex-col h-full z-20 shadow-2xl relative border-l border-slate-800 smooth-transition">
             
             <!-- Header Panel -->
-            <!-- FILE: index.html (Bagian Header Keranjang Belanja) -->
             <div class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-950 shrink-0">
                 <h2 class="font-black text-amber-500 text-lg flex items-center gap-2">
                     <i data-lucide="shopping-basket" class="text-indigo-500"></i> Pesanan 
                     <span id="cart-count" class="bg-amber-500 text-slate-900 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
                 </h2>
                 <div class="flex gap-2 items-center">
-                    <!-- TOMBOL SPLIT BILL (Hanya muncul saat mengedit Meja Aktif/Draft) -->
+                    <!-- TOMBOL SPLIT BILL -->
                     <button id="btn-split-trigger" onclick="openSplitModal()" class="hidden text-xs text-amber-500 font-bold hover:bg-amber-950/40 px-3 py-1.5 rounded-lg border border-amber-500/20 smooth-transition">Split Bill</button>
-                    
                     <button onclick="toggleMobileCart()" class="md:hidden text-xs font-bold text-slate-400 bg-slate-800 px-3 py-1.5 rounded-xl">Kembali</button>
                     <button onclick="clearCart()" class="text-xs text-rose-500 font-bold hover:bg-rose-950/30 px-3 py-1.5 rounded-lg smooth-transition">Batal</button>
                 </div>
@@ -145,18 +141,17 @@
                 </p>
             </div>
 
-            <!-- List Item Belanja (Spasial & Luas) -->
+            <!-- List Item Belanja -->
             <div id="cart-container" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-900/50">
-                <!-- Diisi otomatis oleh js -->
+                <!-- List Belanja dinamis -->
             </div>
 
-            <!-- SEKSI PERHITUNGAN & PROMO DUA KOLOM BERDAMPINGAN (EKSKLUSIF KASIR) -->
+            <!-- SEKSI PERHITUNGAN & PROMO DUA KOLOM -->
             <div class="p-5 border-t border-slate-800 bg-slate-950 shrink-0">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     
-                    <!-- KOLOM KIRI: KHUSUS KONTROL PROMO & KLAIM VOUCHER -->
+                    <!-- KOLOM KIRI: PROMO & VOUCHER -->
                     <div class="space-y-4 flex flex-col justify-center">
-                        <!-- Pilihan Diskon -->
                         <div>
                             <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Diskon Level</label>
                             <select id="cart-discount-select" onchange="renderCart()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 outline-none text-xs font-bold text-white cursor-pointer focus:border-amber-500 transition">
@@ -164,7 +159,6 @@
                             </select>
                         </div>
 
-                        <!-- Input Klaim Voucher -->
                         <div id="voucher-input-container" class="space-y-1.5">
                             <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Kode Voucher</label>
                             <div class="flex items-center gap-1.5">
@@ -173,7 +167,6 @@
                             </div>
                         </div>
 
-                        <!-- Panel Info Voucher Aktif (Ditampilkan dinamis) -->
                         <div id="active-voucher-info" class="hidden justify-between items-center bg-emerald-950/30 border border-emerald-500/20 p-2.5 rounded-xl text-emerald-400 animate-pulse">
                             <p class="text-[10px] font-bold flex items-center gap-1">
                                 <i data-lucide="ticket" class="w-4 h-4"></i> 
@@ -188,7 +181,7 @@
                         </div>
                     </div>
 
-                    <!-- KOLOM KANAN: KONTROL NOMINAL & SUBMIT PEMBAYARAN -->
+                    <!-- KOLOM KANAN: NOMINAL & SUBMIT -->
                     <div class="space-y-3.5 border-l border-slate-800/55 pl-0 sm:pl-6">
                         <div class="space-y-1.5 text-xs text-slate-400">
                             <div class="flex justify-between">
@@ -201,13 +194,11 @@
                             </div>
                         </div>
 
-                        <!-- Kotak Grand Total -->
                         <div class="flex justify-between items-center bg-slate-900 p-3 rounded-xl border border-slate-800">
                             <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Grand Total</p>
                             <p id="cart-grandtotal" class="text-xl font-black text-amber-500 tracking-tight">Rp 0</p>
                         </div>
 
-                        <!-- Tombol Transaksi -->
                         <div class="flex flex-col gap-2">
                             <button id="btn-cashier-print" onclick="openPrintModal()" class="w-full py-3.5 bg-emerald-600 text-white rounded-xl font-black shadow-lg hover:bg-emerald-700 smooth-transition active:scale-95 flex items-center justify-center gap-2 text-xs">
                                 <i data-lucide="calculator" class="w-4 h-4"></i> <span>PROSES / BAYAR</span>
@@ -217,14 +208,12 @@
                             </button>
                         </div>
                     </div>
-
                 </div>
             </div>
-            
         </div>
     </div>
 
-    <!-- 5. FLOATING CART BUTTON (HANYA MUNCUL DI HP/TABLET PORTRAIT) -->
+    <!-- 5. FLOATING CART BUTTON (HP/PORTRAIT) -->
     <div id="mobile-cart-trigger" class="md:hidden fixed bottom-6 left-4 right-4 z-35 hidden-screen smooth-transition">
         <button onclick="toggleMobileCart()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 py-4 rounded-2xl font-black shadow-2xl flex justify-between items-center px-6 active:scale-95 smooth-transition">
             <div class="flex items-center gap-2">
@@ -235,19 +224,17 @@
         </button>
     </div>
 
-    <!-- MODAL 1: PROSES & BAYAR (CHECKOUT KASIR TERBARU) -->
+    <!-- MODAL 1: PROSES & BAYAR -->
     <div id="modal-print" class="hidden-screen fixed inset-0 bg-black/85 z-[110] flex items-center justify-center p-6 smooth-transition">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-sm p-6 shadow-2xl flex flex-col text-center">
             <h3 class="text-xl font-black text-white mb-1">Selesaikan Pembayaran</h3>
             <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-4">ID Order: <span id="modal-order-id">-</span></p>
             
-            <!-- DISPLAY TOTAL TAGIHAN RAKSASA -->
             <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 mb-4">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Tagihan</p>
                 <p id="modal-grand-total" class="text-2xl font-black text-amber-500 tracking-tight mt-1">Rp 0</p>
             </div>
 
-            <!-- FORM INPUT TUNAI (CASH) -->
             <div class="bg-slate-950/40 border border-slate-800/80 p-3.5 rounded-2xl mb-4 text-left">
                 <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Pembayaran Tunai (Cash)</p>
                 <div class="space-y-3">
@@ -255,14 +242,12 @@
                         <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">Rp</span>
                         <input type="number" id="cash-received-input" onkeyup="calculateChange()" placeholder="Masukkan Nominal Tunai" class="w-full pl-9 pr-4 py-3 bg-slate-950 border border-slate-800 text-white font-black text-lg rounded-xl outline-none focus:border-emerald-500 smooth-transition">
                     </div>
-                    <!-- Tombol Nominal Cepat -->
                     <div class="grid grid-cols-4 gap-1.5 text-[10px] font-bold">
                         <button onclick="setQuickCash('pas')" class="py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition">Uang Pas</button>
                         <button onclick="setQuickCash(50000)" class="py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition">50k</button>
                         <button onclick="setQuickCash(100000)" class="py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition">100k</button>
                         <button onclick="setQuickCash(200000)" class="py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition">200k</button>
                     </div>
-                    <!-- Real-time Kembalian -->
                     <div class="flex justify-between items-center text-xs border-t border-slate-850 pt-2.5">
                         <span class="text-slate-400 font-medium">Uang Kembalian:</span>
                         <span id="cash-change-display" class="font-black text-emerald-400 text-sm">Rp 0</span>
@@ -273,7 +258,6 @@
                 </div>
             </div>
 
-            <!-- METODE PEMBAYARAN NON-TUNAI -->
             <div class="space-y-2 text-left">
                 <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Metode Non-Tunai / Hold Bill</p>
                 <div class="grid grid-cols-3 gap-2">
@@ -329,40 +313,40 @@
         </div>
     </div>
     
-    <!-- FILE: index.html (Letakkan di bawah modal-success-change) -->
-<div id="modal-split-bill" class="hidden-screen fixed inset-0 bg-black/85 z-[100] flex items-center justify-center p-4 smooth-transition">
-    <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl p-6 shadow-2xl flex flex-col h-[85vh]">
-        <div class="flex justify-between items-center mb-4 shrink-0">
-            <h3 class="text-lg font-black text-amber-500 flex items-center gap-2"><i data-lucide="scissors" class="w-5 h-5"></i> Pisah Tagihan (Split Bill)</h3>
-            <button onclick="closeModal('modal-split-bill')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4 flex-1 overflow-hidden min-h-0">
-            <!-- KOLOM KIRI: TAGIHAN ASLI -->
-            <div class="flex flex-col border border-slate-800 rounded-2xl bg-slate-950/40 p-4 h-full min-h-0 overflow-hidden">
-                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Sisa Tagihan Asli</h4>
-                <div id="split-original-container" class="flex-1 overflow-y-auto space-y-2 pr-1"></div>
+    <!-- MODAL: SPLIT BILL -->
+    <div id="modal-split-bill" class="hidden-screen fixed inset-0 bg-black/85 z-[100] flex items-center justify-center p-4 smooth-transition">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl p-6 shadow-2xl flex flex-col h-[85vh]">
+            <div class="flex justify-between items-center mb-4 shrink-0">
+                <h3 class="text-lg font-black text-amber-500 flex items-center gap-2"><i data-lucide="scissors" class="w-5 h-5"></i> Pisah Tagihan (Split Bill)</h3>
+                <button onclick="closeModal('modal-split-bill')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
 
-            <!-- KOLOM KANAN: TAGIHAN BARU (SPLIT) -->
-            <div class="flex flex-col border border-slate-800 rounded-2xl bg-slate-950/40 p-4 h-full min-h-0 overflow-hidden">
-                <h4 class="text-xs font-bold text-amber-500 uppercase tracking-wider mb-3">Tagihan Baru (Split)</h4>
-                <div id="split-target-container" class="flex-1 overflow-y-auto space-y-2 pr-1"></div>
-            </div>
-        </div>
+            <div class="grid grid-cols-2 gap-4 flex-1 overflow-hidden min-h-0">
+                <!-- KOLOM KIRI: TAGIHAN ASLI -->
+                <div class="flex flex-col border border-slate-800 rounded-2xl bg-slate-950/40 p-4 h-full min-h-0 overflow-hidden">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Sisa Tagihan Asli</h4>
+                    <div id="split-original-container" class="flex-1 overflow-y-auto space-y-2 pr-1"></div>
+                </div>
 
-        <div class="mt-5 pt-4 border-t border-slate-800 flex justify-between items-center shrink-0">
-            <div class="text-left">
-                <p class="text-[10px] text-slate-500 uppercase font-bold">Total yang Dipisahkan</p>
-                <p id="split-total-amount" class="text-xl font-black text-amber-500">Rp 0</p>
+                <!-- KOLOM KANAN: TAGIHAN BARU -->
+                <div class="flex flex-col border border-slate-800 rounded-2xl bg-slate-950/40 p-4 h-full min-h-0 overflow-hidden">
+                    <h4 class="text-xs font-bold text-amber-500 uppercase tracking-wider mb-3">Tagihan Baru (Split)</h4>
+                    <div id="split-target-container" class="flex-1 overflow-y-auto space-y-2 pr-1"></div>
+                </div>
             </div>
-            <div class="flex gap-2">
-                <button onclick="closeModal('modal-split-bill')" class="px-5 py-2.5 text-xs font-bold text-slate-400 hover:text-white transition">Batal</button>
-                <button onclick="confirmSplit()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-lg shadow-emerald-600/10">PROSES PISAH BILL</button>
+
+            <div class="mt-5 pt-4 border-t border-slate-800 flex justify-between items-center shrink-0">
+                <div class="text-left">
+                    <p class="text-[10px] text-slate-500 uppercase font-bold">Total yang Dipisahkan</p>
+                    <p id="split-total-amount" class="text-xl font-black text-amber-500">Rp 0</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="closeModal('modal-split-bill')" class="px-5 py-2.5 text-xs font-bold text-slate-400 hover:text-white transition">Batal</button>
+                    <button onclick="confirmSplit()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-lg shadow-emerald-600/10">PROSES PISAH BILL</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
     <!-- MODAL: HISTORY & DRAFT MANAGEMENT -->
     <div id="modal-history" class="hidden-screen fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 sm:p-8 smooth-transition">
@@ -382,15 +366,17 @@
         </div>
     </div>
 
-    <!-- MODAL: PIN MANAGER VOID / BATAL -->
+    <!-- MODAL: PIN / OTP MANAGER VOID / BATAL -->
     <div id="modal-void" class="hidden-screen fixed inset-0 bg-black/90 z-[120] flex items-center justify-center p-6 smooth-transition">
         <div class="bg-slate-900 border border-red-500/30 rounded-3xl w-full max-w-sm p-8 shadow-2xl text-center">
             <div class="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500"><i data-lucide="shield-alert" class="w-8 h-8"></i></div>
             <h3 class="text-xl font-bold text-white mb-2">Otorisasi Pembatalan</h3>
-            <p class="text-xs text-slate-400 mb-6">Pembatalan pesanan yang sudah tercetak membutuhkan PIN Manager.</p>
+            <p class="text-xs text-slate-400 mb-6">Pembatalan pesanan yang sudah tercetak membutuhkan PIN / OTP Manager.</p>
             
             <input type="text" id="void-reason" placeholder="Alasan pembatalan..." class="w-full mb-4 px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl focus:border-red-500 outline-none text-sm smooth-transition">
-            <input type="password" id="void-pin" maxlength="6" pattern="[0-9]*" placeholder="PIN MANAGER" class="w-full mb-6 px-4 py-4 bg-slate-950 border border-slate-800 text-red-400 text-center text-xl tracking-[0.5em] rounded-xl outline-none focus:border-red-500 font-bold smooth-transition">
+            
+            <!-- FIX: Menyesuaikan panjang input maksimal ke 4-Digit sesuai standar PIN & OTP Kiosk AMR -->
+            <input type="password" id="void-pin" maxlength="4" pattern="[0-9]*" placeholder="PIN / OTP MANAGER" class="w-full mb-6 px-4 py-4 bg-slate-950 border border-slate-800 text-red-400 text-center text-xl tracking-[0.5em] rounded-xl outline-none focus:border-red-500 font-bold smooth-transition">
 
             <div class="flex gap-3">
                 <button onclick="closeModal('modal-void')" class="flex-1 py-3 text-slate-400 font-semibold text-sm hover:text-white">Kembali</button>
@@ -399,10 +385,43 @@
         </div>
     </div>
 
-    <!-- PANGGIL FILE LOGIKA JAVASCRIPT MODULAR (SaaS STANDARD) -->
-    <script src="config.js?v=2"></script>
-    <script src="pos-core.js?v=2"></script>
-    <script src="pos-printer.js?v=2"></script>
-    <script src="pos-checkout.js?v=2"></script>
+    <!-- MODAL BARU: PILIHAN TARGET REPRINT / CETAK ULANG (KASIR, DAPUR, BAR) -->
+    <div id="modal-reprint" class="hidden-screen fixed inset-0 bg-black/85 z-[115] flex items-center justify-center p-6 smooth-transition">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-sm p-6 shadow-2xl text-center">
+            <div class="w-14 h-14 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center justify-center mx-auto mb-4 text-amber-500">
+                <i data-lucide="printer" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-lg font-black text-white mb-1">Cetak Ulang (Reprint)</h3>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-6">Pilih Target Printer Pengiriman</p>
+            
+            <!-- Elemen tersembunyi untuk menyimpan ID order saat diklik dari riwayat -->
+            <input type="hidden" id="reprint-order-id">
+
+            <div class="space-y-2.5">
+                <button onclick="triggerReprintTarget('All')" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs transition flex items-center justify-center gap-2">
+                    <i data-lucide="printer" class="w-4 h-4"></i> CETAK SEMUA STRUK
+                </button>
+                <button onclick="triggerReprintTarget('Kasir')" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-lg text-xs transition flex items-center justify-center gap-2 border border-slate-700">
+                    <i data-lucide="receipt" class="w-4 h-4 text-emerald-400"></i> Struk Tagihan (Kasir)
+                </button>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="triggerReprintTarget('Kitchen')" class="py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-lg text-[10px] transition flex items-center justify-center gap-1.5 border border-slate-700">
+                        <i data-lucide="chef-hat" class="w-3.5 h-3.5 text-blue-400"></i> Order Dapur
+                    </button>
+                    <button onclick="triggerReprintTarget('Bar')" class="py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-lg text-[10px] transition flex items-center justify-center gap-1.5 border border-slate-700">
+                        <i data-lucide="glass-water" class="w-3.5 h-3.5 text-orange-400"></i> Order Bar
+                    </button>
+                </div>
+            </div>
+            
+            <button onclick="closeModal('modal-reprint')" class="mt-6 text-xs text-slate-500 font-bold hover:text-white transition">Tutup</button>
+        </div>
+    </div>
+
+    <!-- PANGGIL FILE LOGIKA JAVASCRIPT MODULAR DENGAN CACHE BUSTER TERBARU -->
+    <script src="config.js?v=99"></script>
+    <script src="pos-core.js?v=99"></script>
+    <script src="pos-printer.js?v=99"></script>
+    <script src="pos-checkout.js?v=99"></script>
 </body>
 </html>

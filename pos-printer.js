@@ -1,6 +1,6 @@
 /**
  * MODUL PRINTER: ENGINE RAWBT & TEMPLATE STRUK PREMIUM
- * Menangani Multi-Printer Routing Tanpa HTML (Pure Space Padding)
+ * Menangani Multi-Printer Routing Tanpa Karakter China (Safe ASCII)
  */
 
 const LINE_WIDTH = 32; // Standar lebar karakter kertas thermal 58mm
@@ -47,16 +47,16 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
     if (kitchenItems.length > 0) {
         let kitchenReceipt = "";
         kitchenReceipt += centerText("ORDERAN DAPUR") + "\n";
-        kitchenReceipt += "═".repeat(LINE_WIDTH) + "\n";
-        kitchenReceipt += `Meja : ${bill.tableNo}\n`;
+        kitchenReceipt += "=".repeat(LINE_WIDTH) + "\n"; // Menggunakan ASCII aman
+        kitchenReceipt += `Meja : Meja ${bill.tableNo}\n`;
         kitchenReceipt += `ID   : ${bill.orderId.substring(0, 15)}\n`;
         kitchenReceipt += `Jam  : ${currentTimeStr} WITA\n`;
-        kitchenReceipt += "─".repeat(LINE_WIDTH) + "\n";
+        kitchenReceipt += "-".repeat(LINE_WIDTH) + "\n"; // Menggunakan ASCII aman
         
         kitchenItems.forEach(item => {
             kitchenReceipt += `${item.qty}x ${item.name}\n`;
             if(item.notes) kitchenReceipt += `  *Catatan: ${item.notes}\n`;
-            kitchenReceipt += "─".repeat(LINE_WIDTH) + "\n";
+            kitchenReceipt += "-".repeat(LINE_WIDTH) + "\n";
         });
         kitchenReceipt += "\n\n\n\n";
         
@@ -68,16 +68,16 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
     if (barItems.length > 0) {
         let barReceipt = "";
         barReceipt += centerText("ORDERAN MINUMAN") + "\n";
-        barReceipt += "═".repeat(LINE_WIDTH) + "\n";
-        barReceipt += `Meja : ${bill.tableNo}\n`;
+        barReceipt += "=".repeat(LINE_WIDTH) + "\n";
+        barReceipt += `Meja : Meja ${bill.tableNo}\n`;
         barReceipt += `ID   : ${bill.orderId.substring(0, 15)}\n`;
         barReceipt += `Jam  : ${currentTimeStr} WITA\n`;
-        barReceipt += "─".repeat(LINE_WIDTH) + "\n";
+        barReceipt += "-".repeat(LINE_WIDTH) + "\n";
         
         barItems.forEach(item => {
             barReceipt += `${item.qty}x ${item.name}\n`;
             if(item.notes) barReceipt += `  *Catatan: ${item.notes}\n`;
-            barReceipt += "─".repeat(LINE_WIDTH) + "\n";
+            barReceipt += "-".repeat(LINE_WIDTH) + "\n";
         });
         barReceipt += "\n\n\n\n";
         
@@ -110,14 +110,14 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
             if (isReprint) body += centerText("*** REPRINT / SALINAN ***") + "\n";
             body += centerText(namaResto) + "\n";
             body += centerText(alamat) + "\n";
-            body += "═".repeat(LINE_WIDTH) + "\n";
+            body += "=".repeat(LINE_WIDTH) + "\n";
             body += centerText(copyLabel) + "\n";
-            body += "═".repeat(LINE_WIDTH) + "\n";
+            body += "=".repeat(LINE_WIDTH) + "\n";
             body += `ID   : ${orderId.substring(0, 18)}\n`;
             body += `Meja : Meja ${table}\n`;
             body += `Kasir: ${cashierInfo.name}\n`;
             body += `Waktu: ${currentDateStr}  ${currentTimeStr}\n`;
-            body += "─".repeat(LINE_WIDTH) + "\n";
+            body += "-".repeat(LINE_WIDTH) + "\n";
             
             items.forEach(item => {
                 body += `${item.name}\n`;
@@ -127,7 +127,7 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
                 if(item.notes) body += `  *${item.notes}\n`;
             });
             
-            body += "─".repeat(LINE_WIDTH) + "\n";
+            body += "-".repeat(LINE_WIDTH) + "\n";
             body += formatLeftRight("Subtotal", subtotal.toLocaleString('id-ID')) + "\n";
             if(discountAmount > 0) {
                 body += formatLeftRight("Total Diskon", `-${discountAmount.toLocaleString('id-ID')}`) + "\n";
@@ -138,7 +138,7 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
             if(tax > 0) {
                 body += formatLeftRight("Pajak PB1", tax.toLocaleString('id-ID')) + "\n";
             }
-            body += "─".repeat(LINE_WIDTH) + "\n";
+            body += "-".repeat(LINE_WIDTH) + "\n";
             body += formatLeftRight("GRAND TOTAL", grandTotal.toLocaleString('id-ID')) + "\n";
             
             if (status === "Paid") {
@@ -146,11 +146,11 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
                 const kembalian = window.lastCashChange || 0;
                 body += formatLeftRight(`Bayar (${payMethod})`, tunai.toLocaleString('id-ID')) + "\n";
                 body += formatLeftRight("Kembalian", kembalian.toLocaleString('id-ID')) + "\n";
-                body += "═".repeat(LINE_WIDTH) + "\n";
+                body += "=".repeat(LINE_WIDTH) + "\n";
                 body += centerText("STATUS : LUNAS") + "\n";
                 body += centerText(footerStruk) + "\n";
             } else {
-                body += "═".repeat(LINE_WIDTH) + "\n";
+                body += "=".repeat(LINE_WIDTH) + "\n";
                 body += centerText("STATUS : TAGIHAN SEMENTARA") + "\n";
                 body += centerText("Harap lakukan pembayaran di kasir") + "\n";
             }
@@ -161,7 +161,7 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
         let cashierReceipt = "";
         if (status === "Paid") {
             cashierReceipt += generateInvoiceBody("STRUK PELANGGAN");
-            cashierReceipt += "─ ".repeat(LINE_WIDTH/2) + "\n\n"; // Garis titik-titik potong kertas
+            cashierReceipt += "- ".repeat(LINE_WIDTH/2) + "\n\n"; // Pembatas potong kertas ASCII
             cashierReceipt += generateInvoiceBody("ARSIP TOKO");
         } else {
             cashierReceipt += generateInvoiceBody("BILL TAGIHAN MEJA");
@@ -178,16 +178,16 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
             let kitchenReceipt = "";
             if (isReprint) kitchenReceipt += centerText("*** REPRINT / SALINAN ***") + "\n";
             kitchenReceipt += centerText("ORDERAN DAPUR") + "\n";
-            kitchenReceipt += "═".repeat(LINE_WIDTH) + "\n";
+            kitchenReceipt += "=".repeat(LINE_WIDTH) + "\n";
             kitchenReceipt += `Meja : Meja ${table}\n`;
             kitchenReceipt += `ID   : ${orderId.substring(0, 15)}\n`;
             kitchenReceipt += `Jam  : ${currentTimeStr} WITA\n`;
-            kitchenReceipt += "─".repeat(LINE_WIDTH) + "\n";
+            kitchenReceipt += "-".repeat(LINE_WIDTH) + "\n";
             
             kitchenItems.forEach(item => {
                 kitchenReceipt += `${item.qty}x ${item.name}\n`;
                 if(item.notes) kitchenReceipt += `  *Catatan: ${item.notes}\n`;
-                kitchenReceipt += "─".repeat(LINE_WIDTH) + "\n";
+                kitchenReceipt += "-".repeat(LINE_WIDTH) + "\n";
             });
             kitchenReceipt += "\n\n\n\n";
 
@@ -205,16 +205,16 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
             let barReceipt = "";
             if (isReprint) barReceipt += centerText("*** REPRINT / SALINAN ***") + "\n";
             barReceipt += centerText("ORDERAN MINUMAN") + "\n";
-            barReceipt += "═".repeat(LINE_WIDTH) + "\n";
+            barReceipt += "=".repeat(LINE_WIDTH) + "\n";
             barReceipt += `Meja : Meja ${table}\n`;
             barReceipt += `ID   : ${orderId.substring(0, 15)}\n`;
             barReceipt += `Jam  : ${currentTimeStr} WITA\n`;
-            barReceipt += "─".repeat(LINE_WIDTH) + "\n";
+            barReceipt += "-".repeat(LINE_WIDTH) + "\n";
             
             barItems.forEach(item => {
                 barReceipt += `${item.qty}x ${item.name}\n`;
                 if(item.notes) barReceipt += `  *Catatan: ${item.notes}\n`;
-                barReceipt += "─".repeat(LINE_WIDTH) + "\n";
+                barReceipt += "-".repeat(LINE_WIDTH) + "\n";
             });
             barReceipt += "\n\n\n\n";
 
