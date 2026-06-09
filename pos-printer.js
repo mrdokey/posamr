@@ -15,19 +15,11 @@ function sendIntentToRawBT(plainTextReceipt, printerProfileName) {
     // 1. Konversi teks struk biasa ke Base64 secara otomatis
     const base64Data = safeStringToBase64(plainTextReceipt);
     
-    // 2. Masukkan base64Data ke jalur URI utama (intent:base64,...) agar tinta teks terbaca oleh RawBT
+    // 2. Masukkan base64Data ke jalur URI utama (intent:base64,...)
     const intentUrl = `intent:base64,${base64Data}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.printer=${printerProfileName};end;`;
     
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-    iframe.src = intentUrl;
-    document.body.appendChild(iframe);
-    
-    setTimeout(() => {
-        if (document.body.contains(iframe)) {
-            document.body.removeChild(iframe);
-        }
-    }, 1000);
+    // 3. Menggunakan window.location.href langsung (Jauh lebih stabil & anti-blokir dibanding iframe pada Chrome Android)
+    window.location.href = intentUrl;
 }
 
 // --- ENGINE 1: DRAFT TO OPEN (KITCHEN & BAR BYPASS) ---
@@ -81,7 +73,8 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
 
 // --- ENGINE 2: CHASE OUT & INTERFACE ROUTING (Paid, Open, & Reprint) ---
 function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discountAmount, serviceCharge, tax, grandTotal, target, isReprint = false, itemsToPrint = null) {
-    const printerKasirProfile = configData["PRINTER_KASIR"] || "Bloetooth";
+    // FIX: Fallback default diubah langsung ke "Kasir" agar cocok dengan settingan tablet Anda
+    const printerKasirProfile = configData["PRINTER_KASIR"] || "Kasir";
     const printerKitchenProfile = configData["PRINTER_KITCHEN"] || "Kitchen";
     const printerBarProfile = configData["PRINTER_BAR"] || "Bar";
     
