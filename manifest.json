@@ -6,7 +6,7 @@
   "display": "fullscreen",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
-  "orientation": "landscape,
+  "orientation": "any,
   "icons": [
     {
       "src": "https://i.ibb.co.com/gMmSSTgq/IMG-20260606-WA0000.jpg",
