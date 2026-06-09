@@ -1,7 +1,11 @@
 /**
- * MODUL 3: CHECKOUT, HISTORY, VOID, & SPLIT BILL
+ * MODUL 3: CHECKOUT, HISTORY, VOID, SPLIT BILL, & TWO-STAGE PRINT ENGINE
+ * STRUKTUR: Conceptual Modular Sections (Clean & High Performance)
  */
 
+// ==========================================
+// SEKSI 1: STATE & DRAFT NOTIFICATION POLLING
+// ==========================================
 let currentTransactionTotal = 0; 
 let splitOriginalItems = []; 
 let splitTargetItems = [];   
@@ -65,6 +69,9 @@ function updateMobileCartButtonVisibility() {
     }
 }
 
+// ==========================================
+// SEKSI 2: RIWAYAT & MANAJEMEN TAB DRAFT (HISTORY)
+// ==========================================
 async function openHistoryModal() {
     openModal('modal-history');
     switchTab('Draft'); 
@@ -191,7 +198,6 @@ function editDraft(orderId) {
     }
 }
 
-// FUNGSI AKTIVASI & CETAK DARI RIWAYAT DRAFT KASIR
 async function activateAndPrintDraft(orderId) {
     const bill = historyDataRaw.find(b => b.orderId === orderId);
     if (!bill) {
@@ -211,7 +217,7 @@ async function activateAndPrintDraft(orderId) {
     const subtotal = bill.items.reduce((sum, item) => sum + item.subtotal, 0);
     const totalDiscountAmount = (subtotal + bill.tax + bill.serviceCharge) - bill.totalAmount;
 
-    // Cetak ke Dapur/Bar
+    // Cetak dapur/bar langsung
     executeRoutingPrintDirect(bill, subtotal, totalDiscountAmount);
 
     let userArea = cashierInfo ? cashierInfo.area : "";
@@ -228,7 +234,7 @@ async function activateAndPrintDraft(orderId) {
             serviceCharge: bill.serviceCharge,
             totalAmount: bill.totalAmount,
             paymentMethod: "-",
-            orderStatus: "Open", // MEJA AKTIF
+            orderStatus: "Open", 
             items: bill.items.map(i => ({
                 menuId: i.menuId,
                 qty: i.qty,
@@ -255,6 +261,9 @@ async function activateAndPrintDraft(orderId) {
     }
 }
 
+// ==========================================
+// SEKSI 3: KONTROL PEMBATALAN (VOID ENGINE)
+// ==========================================
 function reqVoid(orderId, type) {
     voidTargetId = orderId;
     const bill = historyDataRaw.find(b => b.orderId === orderId);
@@ -273,7 +282,7 @@ function reqVoid(orderId, type) {
 async function executeVoid() {
     const reason = document.getElementById('void-reason').value.trim();
     const pin = document.getElementById('void-pin').value;
-    if(!reason || !pin) return alert("Isi Alasan dan PIN Atasan!");
+    if(!reason || !pin) return alert("Isi Alasan dan PIN/OTP Atasan!");
 
     const btn = document.getElementById('btn-exec-void');
     btn.innerText = "Mengecek...";
@@ -320,7 +329,9 @@ async function executeVoidVerified(reasonText) {
     } catch(e) { alert("Gagal koneksi server."); }
 }
 
-// --- LOGIKA SPLIT BILL ---
+// ==========================================
+// SEKSI 4: PEMISAHAN TAGIHAN (SPLIT BILL ENGINE)
+// ==========================================
 function openSplitModal() {
     if (!activeOrderId) return alert("Pilih meja aktif terlebih dahulu dari riwayat!");
     splitOriginalItems = JSON.parse(JSON.stringify(cart));
@@ -462,7 +473,9 @@ async function confirmSplit() {
     }
 }
 
-// --- PEMROSESAN PEMBAYARAN (CHECKOUT) ---
+// ==========================================
+// SEKSI 5: PEMBAYARAN (CHECKOUT) & DUA TAHAP PRINT ENGINE
+// ==========================================
 function saveDraft() {
     if(cart.length === 0) return alert("Keranjang kosong!");
     if(!document.getElementById('order-table').value.trim()) return alert("Isi Nomor Meja!");
@@ -622,7 +635,12 @@ async function submitOrderPayload(statusTarget, printTarget) {
         localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
 
         if (printTarget !== false && printTarget !== "None") {
-            executeRoutingPrint(payload.data.orderId || "OFFLINE-"+Date.now(), tableNo, orderStatus, paymentMethod, subtotal, totalDiscount, serviceCharge, tax, grandTotal, printTarget);
+            if (orderStatus === "Paid") {
+                // Offline Mode: Tetap gunakan split print agar kasir manual bisa merobek
+                executeRoutingPrint(payload.data.orderId || "OFF-ST-" + Date.now(), tableNo, orderStatus, paymentMethod, subtotal, totalDiscount, serviceCharge, tax, grandTotal, "CustomerCopy");
+            } else {
+                executeRoutingPrint(payload.data.orderId || "OFF-" + Date.now(), tableNo, orderStatus, paymentMethod, subtotal, totalDiscount, serviceCharge, tax, grandTotal, printTarget);
+            }
         }
 
         if (orderStatus === "Paid") {
@@ -643,13 +661,33 @@ async function submitOrderPayload(statusTarget, printTarget) {
         if(json.success) {
             let finalOrderId = activeOrderId || json.orderId;
 
-            if (printTarget !== false && printTarget !== "None") {
-                executeRoutingPrint(finalOrderId, tableNo, orderStatus, paymentMethod, subtotal, totalDiscount, serviceCharge, tax, grandTotal, printTarget);
-            }
-            
             if (orderStatus === "Paid") {
+                // TAHAP 1: SIMPAN TRANSAKSI SECARA GLOBAL UNTUK KEBUTUHAN CETAK ARSIP (TAHAP 2)
+                window.lastTransactionData = {
+                    orderId: finalOrderId,
+                    tableNo: tableNo,
+                    paymentMethod: paymentMethod,
+                    subtotal: subtotal,
+                    totalDiscount: totalDiscount,
+                    serviceCharge: serviceCharge,
+                    tax: tax,
+                    grandTotal: grandTotal,
+                    items: JSON.parse(JSON.stringify(cart))
+                };
+
+                // TAHAP 1: Hanya mencetak Struk Pelanggan, Order Dapur, dan Order Bar secara instan
+                if (printTarget !== false && printTarget !== "None") {
+                    executeRoutingPrint(finalOrderId, tableNo, orderStatus, paymentMethod, subtotal, totalDiscount, serviceCharge, tax, grandTotal, "CustomerCopy");
+                    executeRoutingPrint(finalOrderId, tableNo, orderStatus, paymentMethod, subtotal, totalDiscount, serviceCharge, tax, grandTotal, "Kitchen", false, window.lastTransactionData.items);
+                    executeRoutingPrint(finalOrderId, tableNo, orderStatus, paymentMethod, subtotal, totalDiscount, serviceCharge, tax, grandTotal, "Bar", false, window.lastTransactionData.items);
+                }
+                
                 showSuccessChangeModal(grandTotal, window.lastCashReceived, window.lastCashChange);
             } else {
+                // Pengecekan Cetak untuk Non-Lunas (Draft / Open Bill)
+                if (printTarget !== false && printTarget !== "None") {
+                    executeRoutingPrint(finalOrderId, tableNo, orderStatus, paymentMethod, subtotal, totalDiscount, serviceCharge, tax, grandTotal, printTarget);
+                }
                 alert(`Pesanan berhasil disimpan sebagai ${orderStatus}!`);
                 resetCartState();
                 checkNewDraftNotifications(); 
@@ -664,6 +702,21 @@ async function submitOrderPayload(statusTarget, printTarget) {
         navigator.onLine = false;
         submitOrderPayload(statusTarget, printTarget);
     }
+}
+
+// === ALUR KONTROL DUA TAHAP (ECO PAPER INTERAKTIF) ===
+function printArsipAndComplete() {
+    if (window.lastTransactionData) {
+        const t = window.lastTransactionData;
+        // TAHAP 2: Cetak khusus Arsip Toko saja ke printer Kasir
+        executeRoutingPrint(t.orderId, t.tableNo, "Paid", t.paymentMethod, t.subtotal, t.totalDiscount, t.serviceCharge, t.tax, t.grandTotal, "ArsipCopy", false, t.items);
+    }
+    skipArsipAndComplete(); // Selesaikan transaksi langsung
+}
+
+function skipArsipAndComplete() {
+    window.lastTransactionData = null;
+    closeSuccessChangeModal();
 }
 
 function showSuccessChangeModal(total, received, change) {
@@ -710,22 +763,52 @@ async function syncOfflineQueue() {
     updateOfflineBadge();
 }
 
-// --- REPRINT HISTORY ---
+// ==========================================
+// SEKSI 6: REPRINT ENGINE (SASARAN MODEL SPESIFIK)
+// ==========================================
 function reprintOrder(orderId) {
-    const bill = historyDataRaw.find(b => b.orderId === orderId);
-    if(!bill) return;
-
-    const subtotal = bill.items.reduce((sum, item) => sum + item.subtotal, 0);
-    const totalDiscountAmount = (subtotal + bill.tax + bill.serviceCharge) - bill.totalAmount; 
-
-    executeRoutingPrint(bill.orderId, bill.tableNo, bill.status, bill.paymentMethod, subtotal, totalDiscountAmount, bill.serviceCharge, bill.tax, bill.totalAmount, "All", true, bill.items);
+    // Membuka modal khusus reprint di pos.html
+    document.getElementById('reprint-order-id').value = orderId;
+    openModal('modal-reprint');
 }
 
-// FILE: pos-checkout.js (Tambahkan fungsi-fungsi Komplimen ini)
+function triggerReprintTarget(targetType) {
+    const orderId = document.getElementById('reprint-order-id').value;
+    if (!orderId) return;
 
-// --- SISTEM PEMBAYARAN KOMPLIMEN (FOC) DENGAN OTP ---
+    const bill = historyDataRaw.find(b => b.orderId === orderId);
+    if (!bill) {
+        alert("Gagal: Data transaksi tidak ditemukan!");
+        return;
+    }
+
+    const subtotal = bill.items.reduce((sum, item) => sum + item.subtotal, 0);
+    const totalDiscountAmount = (subtotal + bill.tax + bill.serviceCharge) - bill.totalAmount;
+
+    // Trigger cetak ulang spesifik sesuai sasaran yang diinginkan kasir
+    executeRoutingPrint(
+        bill.orderId, 
+        bill.tableNo, 
+        bill.status, 
+        bill.paymentMethod || "Cash", 
+        subtotal, 
+        totalDiscountAmount, 
+        bill.serviceCharge, 
+        bill.tax, 
+        bill.totalAmount, 
+        targetType, 
+        true, // isReprint = true
+        bill.items
+    );
+
+    closeModal('modal-reprint');
+}
+
+// ==========================================
+// SEKSI 7: SISTEM PEMBAYARAN KOMPLIMEN (FOC) DENGAN OTP
+// ==========================================
 function processComplimentPayment() {
-    const type = prompt("PILIH JENIS KOMPLIMEN:\nKetik 1 : VIP / Owner Treat (Butuh OTP Manager)\nKetik 2 : Kesalahan Staff / Potong Gaji (Butuh OTP Staff Bersangkutan)");
+    const type = prompt("PILIH JENIS KOMPLIMEN:\nKetik 1 : VIP / Owner Treat (Butuh OTP Manager)\nKetik 2 : Kesalahan Staff / Potong Gaji (Butuh OTP Staff)");
     if (!type) return;
 
     if (type === "1") {
@@ -733,7 +816,7 @@ function processComplimentPayment() {
         if (!otp) return;
         verifyComplimentCode(otp, "VIP");
     } else if (type === "2") {
-        const otp = prompt("PENGAKUAN SALAH:\nMasukkan 4-Digit OTP Staff yang melakukan kesalahan:");
+        const otp = prompt("PENGAKUAN SALAH:\nMasukkan 4-Digit OTP Staff yang bersangkutan:");
         if (!otp) return;
         verifyComplimentCode(otp, "Staff-Error");
     } else {
@@ -783,12 +866,12 @@ async function submitComplimentPayload(logAuditText, paymentMethodTarget, employ
             tableNo: tableNo,
             kasirId: cashierInfo.userId, 
             area: userArea, 
-            discount: "COMP-100", // Ditulis sebagai Compliment 100%
-            voucherCode: logAuditText, // LOG AUDIT TERCATAT DI KOLOM VOUCHER
+            discount: "COMP-100", 
+            voucherCode: logAuditText, 
             tax: 0,              
             serviceCharge: 0,    
-            totalAmount: 0,      // Rp 0
-            paymentMethod: paymentMethodTarget, // "Compliment" atau "Staff-Error"
+            totalAmount: 0,      
+            paymentMethod: paymentMethodTarget, 
             orderStatus: "Paid", 
             items: cart.map(item => ({
                 menuId: item.menuId,
@@ -804,8 +887,8 @@ async function submitComplimentPayload(logAuditText, paymentMethodTarget, employ
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
         const json = await res.json();
         if(json.success) {
-            // Cetak struk Lunas (0 Rupiah)
-            executeRoutingPrint(activeOrderId || json.orderId, tableNo, "Paid", paymentMethodTarget.toUpperCase(), subtotal, subtotal, 0, 0, 0, "All");
+            // Cetak satu struk pelanggan 0 rupiah untuk bukti (Eco-friendly)
+            executeRoutingPrint(activeOrderId || json.orderId, tableNo, "Paid", paymentMethodTarget.toUpperCase(), subtotal, subtotal, 0, 0, 0, "CustomerCopy");
             alert(`Transaksi Berhasil Dicatat! (${logAuditText})`);
             resetCartState();
             checkNewDraftNotifications();

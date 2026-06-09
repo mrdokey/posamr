@@ -146,7 +146,7 @@
                 <!-- List Belanja dinamis -->
             </div>
 
-            <!-- SEKSI PERHITUNGAN & PROMO DUA KOLOM -->
+            <!-- SEKSI PERHITUNGAN & PROMO -->
             <div class="p-5 border-t border-slate-800 bg-slate-950 shrink-0">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     
@@ -283,14 +283,14 @@
         </div>
     </div>
 
-    <!-- MODAL 2: POPUP SUKSES & KEMBALIAN -->
+    <!-- MODAL 2: POPUP SUKSES & KEMBALIAN (DUA TAHAP - INTERAKTIF ECO PAPER) -->
     <div id="modal-success-change" class="hidden-screen fixed inset-0 bg-black/90 z-[120] flex items-center justify-center p-6 smooth-transition animate-slide-up">
         <div class="bg-slate-900 border border-emerald-500/20 rounded-3xl w-full max-w-xs p-6 shadow-2xl text-center">
-            <div class="w-14 h-14 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-400">
+            <div class="w-14 h-14 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto mb-3 text-emerald-400">
                 <i data-lucide="check-circle" class="w-8 h-8"></i>
             </div>
             <h3 class="text-lg font-black text-white mb-1">Transaksi Berhasil!</h3>
-            <p class="text-[11px] text-slate-400 mb-5">Struk belanja dicetak otomatis.</p>
+            <p class="text-[11px] text-slate-400 mb-5">Struk pelanggan telah dicetak.</p>
             
             <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 mb-5 text-left space-y-2">
                 <div class="flex justify-between text-xs text-slate-400">
@@ -307,9 +307,15 @@
                 </div>
             </div>
 
-            <button onclick="closeSuccessChangeModal()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs transition active:scale-95 flex items-center justify-center gap-1.5 shadow-md">
-                OK, SELESAI
-            </button>
+            <!-- DUA TOMBOL PILIHAN: CETAK ARSIP / SELESAI LANGSUNG -->
+            <div class="space-y-2">
+                <button onclick="printArsipAndComplete()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs transition active:scale-95 flex items-center justify-center gap-1.5 shadow-md">
+                    <i data-lucide="printer" class="w-4 h-4"></i> CETAK ARSIP & SELESAI
+                </button>
+                <button onclick="skipArsipAndComplete()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg font-bold text-xs transition active:scale-95 flex items-center justify-center gap-1 border border-slate-700">
+                    <i data-lucide="x-circle" class="w-4 h-4"></i> LEWATI ARSIP (SELESAI)
+                </button>
+            </div>
         </div>
     </div>
     
@@ -385,7 +391,7 @@
         </div>
     </div>
 
-    <!-- MODAL BARU: PILIHAN TARGET REPRINT / CETAK ULANG (KASIR, DAPUR, BAR) -->
+    <!-- MODAL BARU: PILIHAN TARGET REPRINT / CETAK ULANG -->
     <div id="modal-reprint" class="hidden-screen fixed inset-0 bg-black/85 z-[115] flex items-center justify-center p-6 smooth-transition">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-sm p-6 shadow-2xl text-center">
             <div class="w-14 h-14 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center justify-center mx-auto mb-4 text-amber-500">
@@ -394,7 +400,6 @@
             <h3 class="text-lg font-black text-white mb-1">Cetak Ulang (Reprint)</h3>
             <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-6">Pilih Target Printer Pengiriman</p>
             
-            <!-- Elemen tersembunyi untuk menyimpan ID order saat diklik dari riwayat -->
             <input type="hidden" id="reprint-order-id">
 
             <div class="space-y-2.5">
@@ -418,10 +423,10 @@
         </div>
     </div>
 
-    <!-- PANGGIL FILE LOGIKA JAVASCRIPT MODULAR DENGAN CACHE BUSTER TERBARU -->
-    <script src="config.js?v=99"></script>
-    <script src="pos-core.js?v=99"></script>
-    <script src="pos-printer.js?v=99"></script>
-    <script src="pos-checkout.js?v=99"></script>
+    <!-- PANGGIL FILE LOGIKA JAVASCRIPT MODULAR DENGAN CACHE BUSTER TERBARU (v=11) -->
+    <script src="config.js?v=11"></script>
+    <script src="pos-core.js?v=11"></script>
+    <script src="pos-printer.js?v=11"></script>
+    <script src="pos-checkout.js?v=11"></script>
 </body>
 </html>

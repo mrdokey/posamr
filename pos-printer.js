@@ -1,6 +1,7 @@
 /**
  * MODUL PRINTER: ENGINE RAWBT & TEMPLATE STRUK PREMIUM
  * Menangani Multi-Printer Routing Tanpa Karakter China (Safe ASCII)
+ * UPDATE: Split Target Support (CustomerCopy & ArsipCopy)
  */
 
 const LINE_WIDTH = 32; // Standar lebar karakter kertas thermal 58mm
@@ -18,7 +19,6 @@ function formatLeftRight(leftText, rightText) {
     if (spacesNeeded > 0) {
         return leftText + " ".repeat(spacesNeeded) + rightText;
     }
-    // Jika teks kiri terlalu panjang, turunkan harga ke baris baru
     return leftText + "\n" + " ".repeat(LINE_WIDTH - rightText.length) + rightText;
 }
 
@@ -47,11 +47,11 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
     if (kitchenItems.length > 0) {
         let kitchenReceipt = "";
         kitchenReceipt += centerText("ORDERAN DAPUR") + "\n";
-        kitchenReceipt += "=".repeat(LINE_WIDTH) + "\n"; // Menggunakan ASCII aman
+        kitchenReceipt += "=".repeat(LINE_WIDTH) + "\n";
         kitchenReceipt += `Meja : Meja ${bill.tableNo}\n`;
         kitchenReceipt += `ID   : ${bill.orderId.substring(0, 15)}\n`;
         kitchenReceipt += `Jam  : ${currentTimeStr} WITA\n`;
-        kitchenReceipt += "-".repeat(LINE_WIDTH) + "\n"; // Menggunakan ASCII aman
+        kitchenReceipt += "-".repeat(LINE_WIDTH) + "\n";
         
         kitchenItems.forEach(item => {
             kitchenReceipt += `${item.qty}x ${item.name}\n`;
@@ -63,7 +63,7 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
         sendIntentToRawBT(kitchenReceipt, printerKitchenProfile);
     }
 
-    // 2. BAR PRINT (DELAYED TO PREVENT COLLISION)
+    // 2. BAR PRINT (DELAYED)
     const barItems = bill.items.filter(item => item.route === "Bar");
     if (barItems.length > 0) {
         let barReceipt = "";
@@ -104,7 +104,7 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
     let delayMultiplier = 0; 
 
     // 1. BILL UTAMA / STRUK LUNAS (KASIR PRINTER)
-    if (target === "All" && (status === "Paid" || status === "Open")) {
+    if (target === "All" || target === "CustomerCopy" || target === "ArsipCopy" || target === "Kasir") {
         const generateInvoiceBody = (copyLabel) => {
             let body = "";
             if (isReprint) body += centerText("*** REPRINT / SALINAN ***") + "\n";
@@ -159,12 +159,22 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
         };
 
         let cashierReceipt = "";
-        if (status === "Paid") {
+        if (target === "CustomerCopy") {
             cashierReceipt += generateInvoiceBody("STRUK PELANGGAN");
-            cashierReceipt += "- ".repeat(LINE_WIDTH/2) + "\n\n"; // Pembatas potong kertas ASCII
+        } else if (target === "ArsipCopy") {
             cashierReceipt += generateInvoiceBody("ARSIP TOKO");
+        } else if (target === "Kasir") {
+            // Dipakai oleh Reprint khusus Kasir saja
+            cashierReceipt += generateInvoiceBody(status === "Paid" ? "STRUK PELANGGAN" : "BILL TAGIHAN MEJA");
         } else {
-            cashierReceipt += generateInvoiceBody("BILL TAGIHAN MEJA");
+            // Target === "All" (Bypass gabung tradisional)
+            if (status === "Paid") {
+                cashierReceipt += generateInvoiceBody("STRUK PELANGGAN");
+                cashierReceipt += "- ".repeat(LINE_WIDTH/2) + "\n\n"; 
+                cashierReceipt += generateInvoiceBody("ARSIP TOKO");
+            } else {
+                cashierReceipt += generateInvoiceBody("BILL TAGIHAN MEJA");
+            }
         }
 
         sendIntentToRawBT(cashierReceipt, printerKasirProfile);
