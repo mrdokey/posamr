@@ -1,61 +1,61 @@
 /**
  * MODUL: KIOSK ABSENSI, SINGLE SIGN-ON (SSO), OTP GENERATOR, & PIN CHANGER
- * UPDATE: Fixed PWA Install Event & Fast SW Register with Path Correction
+ * UPDATE: Fix Auto-Routing SOP, Manual Bypass Entry, & Syntax Validation
  */
 
-// REGISTRASI SW DENGAN JALUR RELATIF YG AMAN UNTUK GITHUB PAGES
+// 1. REGISTRASI SERVICE WORKER (Jalur Relatif Aman untuk PWA & GitHub Pages)
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js') // Menggunakan './' agar aman di GitHub Pages
-            .then(reg => console.log('Service Worker Aktif (No-Cache Mode)'))
-            .catch(err => console.error('Gagal registrasi SW:', err));
+        navigator.serviceWorker.register('./sw.js')
+            .catch(err => console.error("SW Registration failed: ", err));
     });
 }
 
-// Inisialisasi Lucide dibungkus aman agar tidak membuat crash jika DOM belum siap
+// Inisialisasi Lucide secara aman setelah DOM siap sepenuhnya
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
 });
 
-const STORAGE_API = "MRD_API_URL";
+const STORAGE_API = "MRD_API_URL"; 
 let GAS_URL = localStorage.getItem(STORAGE_API);
 
-let currentPin = "";
-let verifiedUser = {};
+let currentPin = ""; 
+let verifiedUser = {}; 
 let currentActionType = ""; 
-let currentLatLong = "";
-let streamObject = null;
-let countdownInterval = null;
+let currentLatLong = ""; 
+let streamObject = null; 
+let countdownInterval = null; 
 let otpInterval = null;
 
-let isBypassRequest = false;
+let isBypassRequest = false; 
 let bypassReason = "";
-let deferredPrompt = null; // Menampung prompt instalasi browser
 
-window.onload = () => {
-    setTimeout(() => {
-        const splash = document.getElementById('splash-screen');
+window.onload = () => { 
+    setTimeout(() => { 
+        const splash = document.getElementById('splash-screen'); 
         if (splash) {
-            splash.classList.add('fade-out');
+            splash.classList.add('fade-out'); 
             setTimeout(() => {
-                splash.classList.add('hidden-screen');
-                checkState();
-            }, 500);
-        }
+                splash.classList.add('hidden-screen'); 
+                checkState(); 
+            }, 500); 
+        } 
     }, 1000); 
 };
 
-function checkState() {
-    if (!GAS_URL) {
-        showScreen('activation-screen');
-    } else {
-        const hasCashierSession = localStorage.getItem("MRD_CASHIER");
+function checkState() { 
+    if (!GAS_URL) { 
+        showScreen('activation-screen'); 
+    } else { 
+        // Cek apakah ada session aktif Kasir atau Pelayan di perangkat ini
+        const hasCashierSession = localStorage.getItem("MRD_CASHIER"); 
         const hasWaiterSession = localStorage.getItem("MRD_WAITER_SESSION");
-        
+
         showScreen('pin-screen');
         
+        // Ikon shortcut kembali ke aplikasi hanya muncul jika karyawan sedang di tengah Shift
         const appShortcutBtn = document.getElementById('btn-manual-app-shortcut');
         if (appShortcutBtn) {
             if (hasCashierSession || hasWaiterSession) {
@@ -69,8 +69,9 @@ function checkState() {
     }
 }
 
-function openManualLogin() {
-    const isCashier = localStorage.getItem("MRD_CASHIER");
+// Pintasan manual kembali ke aplikasi kerja tanpa ambil foto absen ulang
+function openManualLogin() { 
+    const isCashier = localStorage.getItem("MRD_CASHIER"); 
     const isWaiter = localStorage.getItem("MRD_WAITER_SESSION");
 
     if (isCashier) {
@@ -82,23 +83,26 @@ function openManualLogin() {
     }
 }
 
-function showScreen(id) {
-    const screens = ['activation-screen', 'pin-screen', 'dashboard-screen', 'sub-absen-screen', 'sub-otp-screen', 'sub-pin-screen', 'capture-screen', 'success-screen'];
-    screens.forEach(el => {
-        const screen = document.getElementById(el);
+function showScreen(id) { 
+    const screens = ['activation-screen', 'pin-screen', 'dashboard-screen', 'sub-absen-screen', 'sub-otp-screen', 'sub-pin-screen', 'capture-screen', 'success-screen']; 
+    screens.forEach(el => { 
+        const screen = document.getElementById(el); 
         if (screen) screen.classList.add('hidden-screen');
-    });
-    const target = document.getElementById(id);
-    if (target) target.classList.remove('hidden-screen');
-    lucide.createIcons();
+    }); 
+    const target = document.getElementById(id); 
+    if (target) target.classList.remove('hidden-screen'); 
+    
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons(); 
+    }
 }
 
-async function activateSystem() {
-    const input = document.getElementById('api-input').value.trim();
-    if(!input) return alert("Masukkan URL!");
+async function activateSystem() { 
+    const input = document.getElementById('api-input').value.trim(); 
+    if(!input) return alert("Masukkan URL!"); 
     const btn = document.getElementById('btn-activate');
-    btn.innerHTML = `Loading...`;
-    
+    btn.innerHTML = "Loading..."; // FIX: Penulisan string dibungkus tanda kutip
+
     try {
         const res = await fetch(input, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) });
         const json = await res.json();
@@ -113,61 +117,63 @@ async function activateSystem() {
     }
 }
 
-async function fetchConfigBg() {
-    try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) });
-        const json = await res.json();
-        if(json.success) document.getElementById('absen-resto-name').innerText = json.data["NAMA_PERUSAAN"] || "LABARAC BAR";
-    } catch(e) {}
+async function fetchConfigBg() { 
+    try { 
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) }); 
+        const json = await res.json(); 
+        if(json.success) {
+            document.getElementById('absen-resto-name').innerText = json.data["NAMA_PERUSAAN"] || "LABARAC BAR"; 
+        }
+    } catch(e) {} 
 }
 
-function resetLicense() {
-    if(confirm("Yakin ingin menghapus Lisensi API dari perangkat ini?")) {
+function resetLicense() { 
+    if(confirm("Yakin ingin menghapus Lisensi API dari perangkat ini?")) { 
         localStorage.removeItem(STORAGE_API);
-        window.location.reload();
-    }
+        window.location.reload(); 
+    } 
 }
 
-// --- FUNGSI NUMPAD PIN ---
-function updatePinDots() {
-    const dots = document.querySelectorAll('.pin-dot');
-    dots.forEach((dot, idx) => {
-        if (idx < currentPin.length) {
+// --- FUNGSI NUMPAD PIN (LAYAR AWAL) --- 
+function updatePinDots() { 
+    const dots = document.querySelectorAll('.pin-dot'); 
+    dots.forEach((dot, idx) => { 
+        if (idx < currentPin.length) { 
             dot.classList.remove('border-slate-600', 'bg-transparent');
-            dot.classList.add('border-amber-500', 'bg-amber-500');
+            dot.classList.add('border-amber-500', 'bg-amber-500'); 
         } else {
             dot.classList.remove('border-amber-500', 'bg-amber-500');
-            dot.classList.add('border-slate-600', 'bg-transparent');
-        }
-    });
+            dot.classList.add('border-slate-600', 'bg-transparent'); 
+        } 
+    }); 
 }
 
-function pressNum(num) {
-    if (currentPin.length < 4) {
+function pressNum(num) { 
+    if (currentPin.length < 4) { 
         currentPin += num;
-        updatePinDots();
-        if (currentPin.length === 4) {
-            setTimeout(verifyPin, 300);
-        }
-    }
+        updatePinDots(); 
+        if (currentPin.length === 4) { 
+            setTimeout(verifyPin, 300); 
+        } 
+    } 
 }
 
-function backspacePin() {
-    if (currentPin.length > 0) {
-        currentPin = currentPin.slice(0, -1);
-        updatePinDots();
-    }
+function backspacePin() { 
+    if (currentPin.length > 0) { 
+        currentPin = currentPin.slice(0, -1); 
+        updatePinDots(); 
+    } 
 }
 
-function clearPin() {
-    currentPin = "";
-    updatePinDots();
+function clearPin() { 
+    currentPin = ""; 
+    updatePinDots(); 
 }
 
-// --- VERIFIKASI PIN & MASUK DASHBOARD ---
+// --- VERIFIKASI PIN & MASUK DASHBOARD --- 
 async function verifyPin() {
     if(currentPin.length < 4) return;
-    
+
     const dots = document.querySelectorAll('.pin-dot');
     dots.forEach(dot => dot.classList.add('animate-pulse'));
 
@@ -193,58 +199,67 @@ async function verifyPin() {
     }
 }
 
+// --- PUSAT NAVIGASI (DASHBOARD HUB) --- 
 function openDashboard() {
-    showScreen('dashboard-screen');
-    document.getElementById('emp-name').innerText = verifiedUser.name;
-    document.getElementById('emp-area').innerText = verifiedUser.area || "PUSAT";
+    showScreen('dashboard-screen'); 
+    document.getElementById('emp-name').innerText = verifiedUser.name; 
+    document.getElementById('emp-area').innerText = verifiedUser.area || "PUSAT"; 
 }
 
-function logoutDashboard() {
+function logoutDashboard() { 
     clearInterval(countdownInterval);
-    clearInterval(otpInterval);
-    currentPin = "";
-    verifiedUser = {};
+    clearInterval(otpInterval); 
+    currentPin = ""; 
+    verifiedUser = {}; 
     clearPin();
     checkState(); 
 }
 
-function backToDashboard() {
+function backToDashboard() { 
     clearInterval(otpInterval);
-    showScreen('dashboard-screen');
+    showScreen('dashboard-screen'); 
 }
 
-function openSubScreen(menu) {
-    if (menu === 'absen') {
-        setupAbsensiMenu();
-    } else if (menu === 'otp') {
-        if (verifiedUser.status === "OUT") {
-            alert("Akses Ditolak!\n\nAnda harus melakukan Absen Masuk terlebih dahulu sebelum bisa membuahkan OTP Komplimen.");
-            return;
+// --- ROUTER MENU DASHBOARD --- 
+function openSubScreen(menu) { 
+    if (menu === 'absen') { 
+        setupAbsensiMenu(); 
+    } else if (menu === 'otp') { 
+        if (verifiedUser.status === "OUT") { 
+            alert("Akses Ditolak!\n\nAnda harus melakukan Absen Masuk terlebih dahulu sebelum bisa membuahkan OTP Komplimen."); 
+            return; 
         }
-        showScreen('sub-otp-screen');
-        startOtpGenerator();
+        showScreen('sub-otp-screen'); 
+        startOtpGenerator(); 
     } else if (menu === 'pin') {
-        showScreen('sub-pin-screen');
+        showScreen('sub-pin-screen'); 
         document.getElementById('pin-old').value = "";
-        document.getElementById('pin-new').value = "";
-    }
+        document.getElementById('pin-new').value = ""; 
+    } 
 }
 
-// --- 1. MENU ABSENSI ---
+// --- 1. LOGIKA MENU ABSENSI --- 
 function setupAbsensiMenu() {
     showScreen('sub-absen-screen');
-    
+
     const msg = document.getElementById('status-msg');
     const sub = document.getElementById('status-sub');
     const timerContainer = document.getElementById('timer-container');
-    
+
     clearInterval(countdownInterval);
     timerContainer.classList.add('hidden-screen');
     sub.innerHTML = "";
 
+    // Reset visibilitas seluruh tombol menu absen
     document.getElementById('btn-clock-in').classList.add('hidden-screen');
     document.getElementById('btn-clock-out').classList.add('hidden-screen');
     document.getElementById('btn-bypass').classList.add('hidden-screen');
+    
+    // Reset tombol goto-app jika ada di HTML
+    const gotoAppBtn = document.getElementById('btn-goto-app');
+    if (gotoAppBtn) {
+        gotoAppBtn.classList.add('hidden-screen');
+    }
 
     if (verifiedUser.status === "OUT") {
         msg.innerText = "Status Anda: BELUM ABSEN (OUT)";
@@ -252,7 +267,11 @@ function setupAbsensiMenu() {
         document.getElementById('btn-clock-in').classList.remove('hidden-screen');
     } else {
         msg.innerText = verifiedUser.message; 
-        document.getElementById('btn-goto-app').classList.remove('hidden-screen');
+
+        // FIX: Jika status sudah IN, tampilkan tombol manual untuk langsung redirect ke aplikasi kerja
+        if (gotoAppBtn) {
+            gotoAppBtn.classList.remove('hidden-screen');
+        }
 
         if (verifiedUser.canClockOut) {
             sub.innerText = "Shift Selesai. Anda diizinkan Absen Pulang.";
@@ -268,9 +287,9 @@ function setupAbsensiMenu() {
     }
 }
 
-function startLiveTimer(durationMs) {
+function startLiveTimer(durationMs) { 
     clearInterval(countdownInterval); 
-    let msRemaining = durationMs;
+    let msRemaining = durationMs; 
     const timerText = document.getElementById('status-timer');
     document.getElementById('timer-container').classList.remove('hidden-screen');
 
@@ -290,38 +309,38 @@ function startLiveTimer(durationMs) {
     countdownInterval = setInterval(updateTimerVisual, 1000);
 }
 
-function triggerIzinCepat() {
-    clearInterval(countdownInterval);
-    let reason = prompt("Masukkan alasan izin pulang cepat (misal: Sakit):");
-    if (!reason || reason.trim() === "") {
-        if(verifiedUser.remainingMs) startLiveTimer(verifiedUser.remainingMs);
+function triggerIzinCepat() { 
+    clearInterval(countdownInterval); 
+    let reason = prompt("Masukkan alasan izin pulang cepat (misal: Sakit):"); 
+    if (!reason || reason.trim() === "") { 
+        if(verifiedUser.remainingMs) startLiveTimer(verifiedUser.remainingMs); 
         return; 
-    }
+    } 
     isBypassRequest = true;
-    bypassReason = reason;
-    startCapture('OUT');
+    bypassReason = reason; 
+    startCapture('OUT'); 
 }
 
-// --- FUNGSI KAMERA & GPS ---
+// --- FUNGSI KAMERA & GPS (ABSEN) --- 
 function startCapture(type) {
-    currentActionType = type;
-    showScreen('capture-screen');
-    initCamera();
+    currentActionType = type; 
+    showScreen('capture-screen'); 
+    initCamera(); 
     initGPS();
 }
 
-async function initCamera() {
-    try {
+async function initCamera() { 
+    try { 
         streamObject = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
-        document.getElementById('webcam').srcObject = streamObject;
+        document.getElementById('webcam').srcObject = streamObject; 
     } catch (e) {
-        alert("Gagal mengakses kamera! Izinkan kamera di browser.");
-    }
+        alert("Gagal mengakses kamera! Izinkan kamera di browser."); 
+    } 
 }
 
-function initGPS() {
+function initGPS() { 
     const gpsText = document.getElementById('gps-status');
-    const snapBtn = document.getElementById('btn-snap');
+    const snapBtn = document.getElementById('btn-snap'); 
     snapBtn.disabled = true;
 
     if (!navigator.geolocation) {
@@ -338,20 +357,20 @@ function initGPS() {
     }, { enableHighAccuracy: true });
 }
 
-function capture() {
-    const video = document.getElementById('webcam');
-    const canvas = document.getElementById('canvas');
+function capture() { 
+    const video = document.getElementById('webcam'); 
+    const canvas = document.getElementById('canvas'); 
     const ctx = canvas.getContext('2d');
-    
+
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const base64Photo = canvas.toDataURL('image/jpeg', 0.8);
-    
+
     if (streamObject) streamObject.getTracks().forEach(track => track.stop());
     submitAttendanceData(base64Photo);
 }
 
-async function submitAttendanceData(photoBase64) {
-    const snapBtn = document.getElementById('btn-snap');
+async function submitAttendanceData(photoBase64) { 
+    const snapBtn = document.getElementById('btn-snap'); 
     snapBtn.innerText = "Mengirim...";
     snapBtn.disabled = true;
 
@@ -376,10 +395,12 @@ async function submitAttendanceData(photoBase64) {
             document.getElementById('success-msg').innerText = json.message;
             showScreen('success-screen');
             
+            // JIKA MASUK (IN) -> LEMPAR KE APLIKASI KASIR/PELAYAN (SSO) SECARA OTOMATIS SESUAI SOP
             if (currentActionType === "IN") {
                 document.getElementById('success-routing-msg').innerText = "Otentikasi Berhasil. Menyiapkan Aplikasi Kerja...";
                 setTimeout(() => { autoLoginApp(); }, 2000); 
             } else {
+                // JIKA PULANG (OUT) -> HAPUS SESSION LALU KEMBALI KE LAYAR PIN AWAL
                 localStorage.removeItem("MRD_CASHIER");
                 localStorage.removeItem("MRD_WAITER_SESSION");
                 document.getElementById('success-routing-msg').innerText = "Sampai Jumpa Besok...";
@@ -399,12 +420,15 @@ async function submitAttendanceData(photoBase64) {
     }
 }
 
-// --- SINGLE SIGN-ON (SSO ROUTING) ---
-async function autoLoginApp() {
-    try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: currentPin } }) });
+// --- SINGLE SIGN-ON (SSO ROUTING STRICT SECURITY) --- 
+async function autoLoginApp() { 
+    try { 
+        const res = await fetch(GAS_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: 'loginPOS', data: { pin: currentPin } }) 
+        }); 
         const json = await res.json();
-        
+
         if (json.success) {
             const allowedRoles = ["admin", "hrd", "manager", "owner"];
             const jobdeskClean = json.jobdesk ? json.jobdesk.toLowerCase().trim() : "";
@@ -430,9 +454,9 @@ async function autoLoginApp() {
     }
 }
 
-// --- 2. LOGIKA UBAH PIN ---
-async function submitNewPin() {
-    const oldPin = document.getElementById('pin-old').value.trim();
+// --- 2. LOGIKA UBAH PIN --- 
+async function submitNewPin() { 
+    const oldPin = document.getElementById('pin-old').value.trim(); 
     const newPin = document.getElementById('pin-new').value.trim();
 
     if (!oldPin || !newPin) return alert("Lengkapi PIN lama dan PIN baru!");
@@ -468,16 +492,16 @@ async function submitNewPin() {
     }
 }
 
-// --- 3. LOGIKA OTP GENERATOR (1 JAM) ---
+// --- 3. LOGIKA OTP GENERATOR (1 JAM) --- 
 function startOtpGenerator() {
-    updateOtp();
-    otpInterval = setInterval(updateOtp, 1000);
+    updateOtp(); 
+    otpInterval = setInterval(updateOtp, 1000); 
 }
 
-function updateOtp() {
-    const nowMs = Date.now();
+function updateOtp() { 
+    const nowMs = Date.now(); 
     const interval = Math.floor(nowMs / 3600000); 
-    const minutesRemaining = 60 - new Date(nowMs).getMinutes();
+    const minutesRemaining = 60 - new Date(nowMs).getMinutes(); 
     const secondsRemaining = 60 - new Date(nowMs).getSeconds();
 
     const hash = (interval * 31 + parseInt(currentPin) * 17) % 10000;
@@ -487,50 +511,7 @@ function updateOtp() {
 
     const totalSecondsLeft = (minutesRemaining * 60) + secondsRemaining;
     const progress = (totalSecondsLeft / 3600) * 264; // Dasharray 264
-    
+
     document.getElementById('progress-bar').style.strokeDashoffset = 264 - progress;
     document.getElementById('countdown-text').innerText = minutesRemaining + "m";
-}
-
-// --- 4. INTEGRASI INSTALASI PWA (DIPERBAIKI SECARA DEFENSIP) ---
-window.addEventListener('beforeinstallprompt', (e) => {
-    // Cegah mini-infobar bawaan Chrome agar tidak bentrok
-    e.preventDefault();
-    // Simpan event ke variabel global
-    deferredPrompt = e;
-    
-    // Tunggu hingga DOM benar-benar siap sebelum menampilkan banner
-    if (document.readyState === 'complete' || document.readyState === 'interactive') {
-        showInstallBanner();
-    } else {
-        window.addEventListener('DOMContentLoaded', showInstallBanner);
-    }
-});
-
-function showInstallBanner() {
-    const banner = document.getElementById('install-banner');
-    if (banner) {
-        banner.classList.remove('hidden');
-    }
-}
-
-function dismissInstallBanner() {
-    const banner = document.getElementById('install-banner');
-    if (banner) {
-        banner.classList.add('hidden');
-    }
-}
-
-async function triggerNativeInstall() {
-    if (!deferredPrompt) return;
-    
-    // Tampilkan prompt instalasi asli OS / Browser
-    deferredPrompt.prompt();
-    
-    // Tunggu keputusan user
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`User response to install prompt: ${outcome}`);
-    
-    deferredPrompt = null;
-    dismissInstallBanner();
 }

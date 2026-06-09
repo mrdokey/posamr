@@ -12,7 +12,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="AMR System">
-    <link rel="apple-touch-icon" href="https://i.ibb.co.com/934bwtWJ/1780277980692.png">
+    <link class="apple-touch-icon" rel="apple-touch-icon" href="https://i.ibb.co.com/934bwtWJ/1780277980692.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -129,6 +129,13 @@
 
             <div class="flex flex-col gap-3">
                 <button id="btn-clock-in" onclick="startCapture('IN')" class="hidden-screen py-4 bg-emerald-500 text-slate-950 text-base font-black rounded-xl active:scale-95 shadow-lg">AMBIL ABSEN MASUK</button>
+                
+                <!-- TOMBOL MANUAL UNTUK KE APLIKASI (SOP ROUTING BACK) -->
+                <button id="btn-goto-app" onclick="autoLoginApp()" class="hidden-screen py-4 bg-amber-500 hover:bg-amber-600 text-slate-950 text-base font-black rounded-xl active:scale-95 shadow-lg flex items-center justify-center gap-2">
+                    <i data-lucide="external-link" class="w-5 h-5"></i>
+                    <span>BUKA APLIKASI KERJA</span>
+                </button>
+
                 <button id="btn-clock-out" onclick="startCapture('OUT')" class="hidden-screen py-4 bg-rose-500 text-white text-base font-black rounded-xl active:scale-95 shadow-lg">AMBIL ABSEN PULANG</button>
                 <button id="btn-bypass" onclick="triggerIzinCepat()" class="hidden-screen py-3 bg-amber-500/10 text-amber-500 border border-amber-500/30 text-xs font-bold rounded-xl active:scale-95 mt-2">IZIN PULANG CEPAT</button>
                 
@@ -213,7 +220,7 @@
         </div>
     </div>
 
-    <!-- BANNER INSTALASI PWA (UI ELEMEN YANG SEBELUMNYA HILANG) -->
+    <!-- BANNER INSTALASI PWA -->
     <div id="install-banner" class="hidden fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:w-96 bg-slate-900 border-2 border-amber-500/50 p-4 rounded-2xl shadow-2xl z-[99] flex flex-col gap-3">
         <div class="flex items-start gap-3">
             <img src="https://i.ibb.co.com/934bwtWJ/1780277980692.png" class="w-12 h-12 rounded-xl object-cover">
