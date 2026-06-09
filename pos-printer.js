@@ -3,16 +3,30 @@
  * Menangani Multi-Printer Routing (Kasir, Dapur, Bar)
  */
 
-// --- HELPER: KIRIM INTENT PRINTER RAWBT SPESIFIK ---
-function sendIntentToRawBT(base64Data, printerProfileName) {
-    const intentUrl = `intent:base64,${base64Data}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.printer=${printerProfileName};end;`;
+// --- HELPER 1: ENKODE TEKS KE BASE64 SECARA AMAN (Mencegah Crash UTF-8 / Simbol Rupiah) ---
+function safeStringToBase64(str) {
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+        return String.fromCharCode('0x' + p1);
+    }));
+}
+
+// --- HELPER 2: KIRIM INTENT PRINTER RAWBT SPESIFIK ---
+function sendIntentToRawBT(plainTextReceipt, printerProfileName) {
+    // 1. Konversi teks struk biasa ke Base64 secara otomatis di dalam engine
+    const base64Data = safeStringToBase64(plainTextReceipt);
+    
+    // 2. Kirim menggunakan format parameter S.base64 resmi dari RawBT Android App
+    const intentUrl = `intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.base64=${base64Data};S.printer=${printerProfileName};end;`;
+    
     const iframe = document.createElement('iframe');
     iframe.style.display = 'none';
     iframe.src = intentUrl;
     document.body.appendChild(iframe);
     
     setTimeout(() => {
-        document.body.removeChild(iframe);
+        if (document.body.contains(iframe)) {
+            document.body.removeChild(iframe);
+        }
     }, 1000);
 }
 
