@@ -1,12 +1,12 @@
 {
-  "name": "AMR by MRD Digital Solution",
+  "name": "AMR System",
   "short_name": "AMR",
   "description": "Kiosk Absensi & SSO Router AMR POS",
   "start_url": "index.html",
   "display": "fullscreen",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
-  "orientation": "portrait-primary",
+  "orientation": "landscape,
   "icons": [
     {
       "src": "https://i.ibb.co.com/gMmSSTgq/IMG-20260606-WA0000.jpg",
