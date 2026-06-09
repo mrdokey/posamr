@@ -279,6 +279,8 @@ function reqVoid(orderId, type) {
     openModal('modal-void');
 }
 
+// --- UPDATE SUNTIKAN PADA pos-checkout.js (Seksi Void Engine) ---
+
 async function executeVoid() {
     const reason = document.getElementById('void-reason').value.trim();
     const pin = document.getElementById('void-pin').value;
@@ -293,14 +295,29 @@ async function executeVoid() {
         const json = await res.json();
         
         if(json.success) {
+            // FIX: Validasi Proteksi Ketat. Void (Batal ke 0) dilarang keras menggunakan OTP Staff biasa!
+            const allowedVoidRoles = ["admin", "hrd", "manager", "owner"];
+            const managerRole = json.role ? json.role.toLowerCase().trim() : "";
+            const managerType = json.type ? json.type.toLowerCase().trim() : "";
+
+            // Jika yang dimasukkan adalah OTP Staff (bukan role atasan/owner/VIP)
+            if (!allowedVoidRoles.includes(managerRole) && managerType !== "vip" && managerType !== "manager") {
+                alert("Otorisasi Ditolak!\n\nPembatalan transaksi (Void) wajib disetujui oleh PIN/OTP level Manager atau Owner.");
+                return;
+            }
+
             const finalReason = `[VOID oleh ${json.managerName}] ${reason}`;
             executeVoidVerified(finalReason);
             closeModal('modal-void');
         } else {
             alert(json.message);
         }
-    } catch (e) { alert("Gagal verifikasi."); } 
-    finally { btn.innerText = "BATALKAN"; btn.disabled = false; }
+    } catch (e) { 
+        alert("Gagal verifikasi."); 
+    } finally { 
+        btn.innerText = "BATALKAN"; 
+        btn.disabled = false; 
+    }
 }
 
 async function executeVoidVerified(reasonText) {

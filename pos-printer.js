@@ -1,7 +1,7 @@
 /**
  * MODUL PRINTER: ENGINE RAWBT & TEMPLATE STRUK PREMIUM
  * Menangani Multi-Printer Routing Tanpa Karakter China (Safe ASCII)
- * UPDATE: Split Target Support (CustomerCopy & ArsipCopy)
+ * UPDATE: Split Target Support & Label Struk "ARSIP"
  */
 
 const LINE_WIDTH = 32; // Standar lebar karakter kertas thermal 58mm
@@ -87,7 +87,7 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
     }
 }
 
-// --- ENGINE 2: CHASE OUT & INTERFACE ROUTING (Paid, Open, & Reprint) ---
+// --- ENGINE 2: CHASE OUT & INTERFACE ROUTING ---
 function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discountAmount, serviceCharge, tax, grandTotal, target, isReprint = false, itemsToPrint = null) {
     const printerKasirProfile = configData["PRINTER_KASIR"] || "Kasir";
     const printerKitchenProfile = configData["PRINTER_KITCHEN"] || "Kitchen";
@@ -162,16 +162,14 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
         if (target === "CustomerCopy") {
             cashierReceipt += generateInvoiceBody("STRUK PELANGGAN");
         } else if (target === "ArsipCopy") {
-            cashierReceipt += generateInvoiceBody("ARSIP TOKO");
+            cashierReceipt += generateInvoiceBody("ARSIP"); // FIX: Mengubah ARSIP TOKO menjadi ARSIP
         } else if (target === "Kasir") {
-            // Dipakai oleh Reprint khusus Kasir saja
             cashierReceipt += generateInvoiceBody(status === "Paid" ? "STRUK PELANGGAN" : "BILL TAGIHAN MEJA");
         } else {
-            // Target === "All" (Bypass gabung tradisional)
             if (status === "Paid") {
                 cashierReceipt += generateInvoiceBody("STRUK PELANGGAN");
-                cashierReceipt += "- ".repeat(LINE_WIDTH/2) + "\n\n"; 
-                cashierReceipt += generateInvoiceBody("ARSIP TOKO");
+                cashierReceipt += "- ".repeat(LINE_WIDTH/2) + "\n\n";
+                cashierReceipt += generateInvoiceBody("ARSIP"); // FIX: Mengubah ARSIP TOKO menjadi ARSIP
             } else {
                 cashierReceipt += generateInvoiceBody("BILL TAGIHAN MEJA");
             }

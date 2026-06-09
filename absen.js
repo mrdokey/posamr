@@ -1,6 +1,6 @@
 /**
  * MODUL: KIOSK ABSENSI, SINGLE SIGN-ON (SSO), OTP GENERATOR, & PIN CHANGER
- * UPDATE: Fix Auto-Routing SOP, Manual Bypass Entry, & Syntax Validation
+ * UPDATE: No Auto-Login, Strict Waiter App Redirection, & OTP Accessibility
  */
 
 // 1. REGISTRASI SERVICE WORKER (Jalur Relatif Aman untuk PWA & GitHub Pages)
@@ -69,7 +69,7 @@ function checkState() {
     }
 }
 
-// Pintasan manual kembali ke aplikasi kerja tanpa ambil foto absen ulang
+// Pintasan manual kembali ke aplikasi kerja tanpa ambil foto absen ulang (Khusus Waiter)
 function openManualLogin() { 
     const isCashier = localStorage.getItem("MRD_CASHIER"); 
     const isWaiter = localStorage.getItem("MRD_WAITER_SESSION");
@@ -101,7 +101,7 @@ async function activateSystem() {
     const input = document.getElementById('api-input').value.trim(); 
     if(!input) return alert("Masukkan URL!"); 
     const btn = document.getElementById('btn-activate');
-    btn.innerHTML = "Loading..."; // FIX: Penulisan string dibungkus tanda kutip
+    btn.innerHTML = "Loading..."; 
 
     try {
         const res = await fetch(input, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) });
@@ -268,9 +268,16 @@ function setupAbsensiMenu() {
     } else {
         msg.innerText = verifiedUser.message; 
 
-        // FIX: Jika status sudah IN, tampilkan tombol manual untuk langsung redirect ke aplikasi kerja
-        if (gotoAppBtn) {
-            gotoAppBtn.classList.remove('hidden-screen');
+        // FIX: Hanya menampilkan tombol aplikasi kerja jika Jobdesk murni adalah "Pelayan"
+        const jobdeskClean = verifiedUser.jobdesk ? verifiedUser.jobdesk.toLowerCase().trim() : "";
+        if (jobdeskClean === "pelayan") {
+            if (gotoAppBtn) {
+                gotoAppBtn.classList.remove('hidden-screen');
+            }
+        } else {
+            if (gotoAppBtn) {
+                gotoAppBtn.classList.add('hidden-screen');
+            }
         }
 
         if (verifiedUser.canClockOut) {
@@ -395,10 +402,12 @@ async function submitAttendanceData(photoBase64) {
             document.getElementById('success-msg').innerText = json.message;
             showScreen('success-screen');
             
-            // JIKA MASUK (IN) -> LEMPAR KE APLIKASI KASIR/PELAYAN (SSO) SECARA OTOMATIS SESUAI SOP
+            // JIKA MASUK (IN) -> LEMPAR KE DASHBOARD KIOSK (HAPUS AUTO SSO)
             if (currentActionType === "IN") {
-                document.getElementById('success-routing-msg').innerText = "Otentikasi Berhasil. Menyiapkan Aplikasi Kerja...";
-                setTimeout(() => { autoLoginApp(); }, 2000); 
+                document.getElementById('success-routing-msg').innerText = "Absen Masuk Berhasil! Memuat Dashboard Kiosk...";
+                setTimeout(() => { 
+                    verifyPin(); // Memanggil verifyPin ulang untuk memuat ulang status terbaru di Dashboard
+                }, 3000); 
             } else {
                 // JIKA PULANG (OUT) -> HAPUS SESSION LALU KEMBALI KE LAYAR PIN AWAL
                 localStorage.removeItem("MRD_CASHIER");
@@ -420,7 +429,7 @@ async function submitAttendanceData(photoBase64) {
     }
 }
 
-// --- SINGLE SIGN-ON (SSO ROUTING STRICT SECURITY) --- 
+// --- SINGLE SIGN-ON (SSO ROUTING KHUSUS WAITER) --- 
 async function autoLoginApp() { 
     try { 
         const res = await fetch(GAS_URL, { 
@@ -430,18 +439,14 @@ async function autoLoginApp() {
         const json = await res.json();
 
         if (json.success) {
-            const allowedRoles = ["admin", "hrd", "manager", "owner"];
             const jobdeskClean = json.jobdesk ? json.jobdesk.toLowerCase().trim() : "";
-            const roleClean = json.role ? json.role.toLowerCase().trim() : "";
 
-            if (jobdeskClean === "kasir" || allowedRoles.includes(roleClean)) {
-                localStorage.setItem("MRD_CASHIER", JSON.stringify(json));
-                window.location.href = "pos.html"; 
-            } else if (jobdeskClean === "pelayan") {
+            // Hanya mengizinkan pelayan beranjak ke order.html (Aplikasi Waiter HP) dari Kiosk
+            if (jobdeskClean === "pelayan") {
                 localStorage.setItem("MRD_WAITER_SESSION", JSON.stringify(json));
                 window.location.href = "order.html"; 
             } else {
-                alert("Akses Aplikasi Ditolak. Hubungi Admin.");
+                alert("Akses Kiosk Terkunci. Kasir & Manager wajib menggunakan aplikasi terinstal!");
                 logoutDashboard();
             }
         } else {
