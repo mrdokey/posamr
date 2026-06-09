@@ -1,12 +1,13 @@
 /**
  * MODUL: KIOSK ABSENSI, SINGLE SIGN-ON (SSO), OTP GENERATOR, & PIN CHANGER
- * UPDATE: Architecture Finalization (No Bypass & Dynamic UI Router)
+ * UPDATE: Instant SW Register, Smart-Session Detection, & Global OTP Enabled
  */
 
+// REGISTRASI INSTAN SERVICE WORKER UNTUK TOMBOL INSTALL PWA (ANTI-DELAY/RACE CONDITION)
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(err => console.error(err));
-    });
+    navigator.serviceWorker.register('sw.js')
+        .then(reg => console.log('Service Worker Aktif (No-Cache Mode)'))
+        .catch(err => console.error('Gagal registrasi SW:', err));
 }
 
 lucide.createIcons();
@@ -42,13 +43,13 @@ function checkState() {
     if (!GAS_URL) {
         showScreen('activation-screen');
     } else {
-        // Cek apakah ada session aktif Kasir atau Pelayan di perangkat ini
+        // DETEKSI AKURAT: Cek memori session aktif di perangkat ini
         const hasCashierSession = localStorage.getItem("MRD_CASHIER");
         const hasWaiterSession = localStorage.getItem("MRD_WAITER_SESSION");
         
         showScreen('pin-screen');
         
-        // Ikon shortcut kembali ke aplikasi hanya muncul jika karyawan sedang di tengah Shift
+        // Ikon shortcut kembali ke aplikasi hanya muncul jika tablet mengenali session aktif
         const appShortcutBtn = document.getElementById('btn-manual-app-shortcut');
         if (appShortcutBtn) {
             if (hasCashierSession || hasWaiterSession) {
@@ -62,7 +63,7 @@ function checkState() {
     }
 }
 
-// Pintasan cerdas untuk kembali ke aplikasi kerja tanpa login ulang
+// Pintasan cerdas untuk kembali ke aplikasi kerja tanpa klik konfirmasi/prompt menyulitkan
 function openManualLogin() {
     const isCashier = localStorage.getItem("MRD_CASHIER");
     const isWaiter = localStorage.getItem("MRD_WAITER_SESSION");
@@ -200,7 +201,7 @@ function logoutDashboard() {
     currentPin = "";
     verifiedUser = {};
     clearPin();
-    checkState(); // Validasi tombol shortcut lagi
+    checkState(); 
 }
 
 function backToDashboard() {
@@ -213,7 +214,6 @@ function openSubScreen(menu) {
     if (menu === 'absen') {
         setupAbsensiMenu();
     } else if (menu === 'otp') {
-        // PERBAIKAN: OTP Tidak boleh digenerate jika karyawan belum absen masuk
         if (verifiedUser.status === "OUT") {
             alert("Akses Ditolak!\n\nAnda harus melakukan Absen Masuk terlebih dahulu sebelum bisa membuahkan OTP Komplimen.");
             return;
@@ -249,6 +249,9 @@ function setupAbsensiMenu() {
         document.getElementById('btn-clock-in').classList.remove('hidden-screen');
     } else {
         msg.innerText = verifiedUser.message; 
+        
+        // Selalu tampilkan tombol "Buka Aplikasi Kerja" asalkan statusnya sudah IN
+        document.getElementById('btn-goto-app').classList.remove('hidden-screen');
 
         if (verifiedUser.canClockOut) {
             sub.innerText = "Shift Selesai. Anda diizinkan Absen Pulang.";
@@ -372,12 +375,10 @@ async function submitAttendanceData(photoBase64) {
             document.getElementById('success-msg').innerText = json.message;
             showScreen('success-screen');
             
-            // JIKA MASUK (IN) -> LEMPAR KE APLIKASI KASIR/PELAYAN (SSO) SECARA OTOMATIS
             if (currentActionType === "IN") {
                 document.getElementById('success-routing-msg').innerText = "Otentikasi Berhasil. Menyiapkan Aplikasi Kerja...";
                 setTimeout(() => { autoLoginApp(); }, 2000); 
             } else {
-                // JIKA PULANG (OUT) -> HAPUS SESSION LALU KEMBALI KE LAYAR PIN AWAL
                 localStorage.removeItem("MRD_CASHIER");
                 localStorage.removeItem("MRD_WAITER_SESSION");
                 document.getElementById('success-routing-msg').innerText = "Sampai Jumpa Besok...";
@@ -466,7 +467,7 @@ async function submitNewPin() {
     }
 }
 
-// --- 3. LOGIKA OTP GENERATOR (1 JAM) ---
+// --- 3. LOGIKA OTP GENERATOR (1 JAM - UNTUK SELURUH KARYAWAN) ---
 function startOtpGenerator() {
     updateOtp();
     otpInterval = setInterval(updateOtp, 1000);
