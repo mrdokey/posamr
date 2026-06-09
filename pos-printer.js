@@ -1,69 +1,85 @@
 /**
- * MODUL PRINTER: ENGINE RAWBT & TEMPLATE STRUK
- * Menangani Multi-Printer Routing (Kasir, Dapur, Bar)
+ * MODUL PRINTER: ENGINE RAWBT & TEMPLATE STRUK PREMIUM
+ * Menangani Multi-Printer Routing Tanpa HTML (Pure Space Padding)
  */
 
-// --- HELPER 1: ENKODE TEKS KE BASE64 SECARA AMAN (Mencegah Crash UTF-8 / Simbol Rupiah) ---
+const LINE_WIDTH = 32; // Standar lebar karakter kertas thermal 58mm
+
+// --- HELPER 1: PERATA TENGAH (CENTER ALIGN) ---
+function centerText(text) {
+    if (text.length >= LINE_WIDTH) return text.substring(0, LINE_WIDTH);
+    const padding = Math.floor((LINE_WIDTH - text.length) / 2);
+    return " ".repeat(padding) + text;
+}
+
+// --- HELPER 2: PERATA KANAN-KIRI (LEFT-RIGHT FLUSH) ---
+function formatLeftRight(leftText, rightText) {
+    const spacesNeeded = LINE_WIDTH - leftText.length - rightText.length;
+    if (spacesNeeded > 0) {
+        return leftText + " ".repeat(spacesNeeded) + rightText;
+    }
+    // Jika teks kiri terlalu panjang, turunkan harga ke baris baru
+    return leftText + "\n" + " ".repeat(LINE_WIDTH - rightText.length) + rightText;
+}
+
+// --- HELPER 3: ENKODE TEKS KE BASE64 SECARA AMAN ---
 function safeStringToBase64(str) {
     return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
         return String.fromCharCode('0x' + p1);
     }));
 }
 
-// --- HELPER 2: KIRIM INTENT PRINTER RAWBT SPESIFIK ---
+// --- HELPER 4: KIRIM INTENT PRINTER RAWBT SPESIFIK ---
 function sendIntentToRawBT(plainTextReceipt, printerProfileName) {
-    // 1. Konversi teks struk biasa ke Base64 secara otomatis
     const base64Data = safeStringToBase64(plainTextReceipt);
-    
-    // 2. Masukkan base64Data ke jalur URI utama (intent:base64,...)
     const intentUrl = `intent:base64,${base64Data}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.printer=${printerProfileName};end;`;
-    
-    // 3. Menggunakan window.location.href langsung (Jauh lebih stabil & anti-blokir dibanding iframe pada Chrome Android)
     window.location.href = intentUrl;
 }
 
-// --- ENGINE 1: DRAFT TO OPEN (KITCHEN & BAR BYPASS) ---
+// --- ENGINE 1: DRAFT TO OPEN (KITCHEN & BAR ORDER) ---
 function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
     const printerKitchenProfile = configData["PRINTER_KITCHEN"] || "Kitchen";
     const printerBarProfile = configData["PRINTER_BAR"] || "Bar";
-    const currentTimeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const currentTimeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
     // 1. KITCHEN PRINT
     const kitchenItems = bill.items.filter(item => item.route === "Kitchen");
     if (kitchenItems.length > 0) {
         let kitchenReceipt = "";
-        kitchenReceipt += `[C]<b>KITCHEN ORDER (DAPUR)</b>\n`;
-        kitchenReceipt += `[C]--------------------------------\n`;
-        kitchenReceipt += `[L]Meja : <b>${bill.tableNo}</b>\n`;
-        kitchenReceipt += `[L]ID   : ${bill.orderId}\n`;
-        kitchenReceipt += `[L]Jam  : ${currentTimeStr} WITA\n`;
-        kitchenReceipt += `[C]--------------------------------\n`;
+        kitchenReceipt += centerText("ORDERAN DAPUR") + "\n";
+        kitchenReceipt += "═".repeat(LINE_WIDTH) + "\n";
+        kitchenReceipt += `Meja : ${bill.tableNo}\n`;
+        kitchenReceipt += `ID   : ${bill.orderId.substring(0, 15)}\n`;
+        kitchenReceipt += `Jam  : ${currentTimeStr} WITA\n`;
+        kitchenReceipt += "─".repeat(LINE_WIDTH) + "\n";
+        
         kitchenItems.forEach(item => {
-            kitchenReceipt += `[L]<b>[ ] ${item.qty}x  ${item.name}</b>\n`;
-            if(item.notes) kitchenReceipt += `[L]   *Catatan: ${item.notes}\n`;
-            kitchenReceipt += `[L]--------------------------------\n`;
+            kitchenReceipt += `${item.qty}x ${item.name}\n`;
+            if(item.notes) kitchenReceipt += `  *Catatan: ${item.notes}\n`;
+            kitchenReceipt += "─".repeat(LINE_WIDTH) + "\n";
         });
-        kitchenReceipt += `\n\n\n[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
+        kitchenReceipt += "\n\n\n\n";
         
         sendIntentToRawBT(kitchenReceipt, printerKitchenProfile);
     }
 
-    // 2. BAR PRINT (DELAYED SECONDS TO PREVENT COLLISION)
+    // 2. BAR PRINT (DELAYED TO PREVENT COLLISION)
     const barItems = bill.items.filter(item => item.route === "Bar");
     if (barItems.length > 0) {
         let barReceipt = "";
-        barReceipt += `[C]<b>BAR ORDER (MINUMAN)</b>\n`;
-        barReceipt += `[C]--------------------------------\n`;
-        barReceipt += `[L]Meja : <b>${bill.tableNo}</b>\n`;
-        barReceipt += `[L]ID   : ${bill.orderId}\n`;
-        barReceipt += `[L]Jam  : ${currentTimeStr} WITA\n`;
-        barReceipt += `[C]--------------------------------\n`;
+        barReceipt += centerText("ORDERAN MINUMAN") + "\n";
+        barReceipt += "═".repeat(LINE_WIDTH) + "\n";
+        barReceipt += `Meja : ${bill.tableNo}\n`;
+        barReceipt += `ID   : ${bill.orderId.substring(0, 15)}\n`;
+        barReceipt += `Jam  : ${currentTimeStr} WITA\n`;
+        barReceipt += "─".repeat(LINE_WIDTH) + "\n";
+        
         barItems.forEach(item => {
-            barReceipt += `[L]<b>[ ] ${item.qty}x  ${item.name}</b>\n`;
-            if(item.notes) barReceipt += `[L]   *Catatan: ${item.notes}\n`;
-            barReceipt += `[L]--------------------------------\n`;
+            barReceipt += `${item.qty}x ${item.name}\n`;
+            if(item.notes) barReceipt += `  *Catatan: ${item.notes}\n`;
+            barReceipt += "─".repeat(LINE_WIDTH) + "\n";
         });
-        barReceipt += `\n\n\n`;
+        barReceipt += "\n\n\n\n";
         
         setTimeout(() => {
             sendIntentToRawBT(barReceipt, printerBarProfile);
@@ -73,7 +89,6 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
 
 // --- ENGINE 2: CHASE OUT & INTERFACE ROUTING (Paid, Open, & Reprint) ---
 function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discountAmount, serviceCharge, tax, grandTotal, target, isReprint = false, itemsToPrint = null) {
-    // FIX: Fallback default diubah langsung ke "Kasir" agar cocok dengan settingan tablet Anda
     const printerKasirProfile = configData["PRINTER_KASIR"] || "Kasir";
     const printerKitchenProfile = configData["PRINTER_KITCHEN"] || "Kitchen";
     const printerBarProfile = configData["PRINTER_BAR"] || "Bar";
@@ -83,7 +98,7 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
     const footerStruk = configData["FOOTER_STRUK"] || "Terima Kasih Atas Kunjungannya!";
     
     const currentDateStr = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' });
-    const currentTimeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const currentTimeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
     const items = itemsToPrint || cart; 
     let delayMultiplier = 0; 
@@ -92,58 +107,64 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
     if (target === "All" && (status === "Paid" || status === "Open")) {
         const generateInvoiceBody = (copyLabel) => {
             let body = "";
-            if (isReprint) body += `[C]<b>*** REPRINT / SALINAN ***</b>\n`;
-            body += `[C]<b>${namaResto}</b>\n`;
-            body += `[C]${alamat}\n`;
-            body += `[C]--------------------------------\n`;
-            body += `[C]<b>${copyLabel}</b>\n`;
-            body += `[C]--------------------------------\n`;
-            body += `[L]ID   : ${orderId}\n`;
-            body += `[L]Meja : <b>${table}</b>\n`;
-            body += `[L]Kasir: ${cashierInfo.name}\n`;
-            body += `[L]Tgl  : ${currentDateStr} [R]${currentTimeStr}\n`;
-            body += `[C]--------------------------------\n`;
+            if (isReprint) body += centerText("*** REPRINT / SALINAN ***") + "\n";
+            body += centerText(namaResto) + "\n";
+            body += centerText(alamat) + "\n";
+            body += "═".repeat(LINE_WIDTH) + "\n";
+            body += centerText(copyLabel) + "\n";
+            body += "═".repeat(LINE_WIDTH) + "\n";
+            body += `ID   : ${orderId.substring(0, 18)}\n`;
+            body += `Meja : Meja ${table}\n`;
+            body += `Kasir: ${cashierInfo.name}\n`;
+            body += `Waktu: ${currentDateStr}  ${currentTimeStr}\n`;
+            body += "─".repeat(LINE_WIDTH) + "\n";
             
             items.forEach(item => {
-                body += `[L]<b>${item.name}</b>\n`;
-                if(item.notes) body += `[L]  *${item.notes}\n`;
-                body += `[L]${item.qty}x ${item.price.toLocaleString('id-ID')} [R]${item.subtotal.toLocaleString('id-ID')}\n`;
+                body += `${item.name}\n`;
+                const qtyPrice = `  ${item.qty}x ${item.price.toLocaleString('id-ID')}`;
+                const totalHarga = item.subtotal.toLocaleString('id-ID');
+                body += formatLeftRight(qtyPrice, totalHarga) + "\n";
+                if(item.notes) body += `  *${item.notes}\n`;
             });
             
-            body += `[C]--------------------------------\n`;
-            body += `[L]Subtotal [R]${subtotal.toLocaleString('id-ID')}\n`;
-            if(discountAmount > 0) body += `[L]Total Diskon [R]-${discountAmount.toLocaleString('id-ID')}\n`;
-            if(serviceCharge > 0) body += `[L]Service Charge [R]${serviceCharge.toLocaleString('id-ID')}\n`;
-            if(tax > 0) body += `[L]Pajak PB1 [R]${tax.toLocaleString('id-ID')}\n`;
-            body += `[C]--------------------------------\n`;
-            body += `[L]<b>GRAND TOTAL</b> [R]<b>${grandTotal.toLocaleString('id-ID')}</b>\n`;
+            body += "─".repeat(LINE_WIDTH) + "\n";
+            body += formatLeftRight("Subtotal", subtotal.toLocaleString('id-ID')) + "\n";
+            if(discountAmount > 0) {
+                body += formatLeftRight("Total Diskon", `-${discountAmount.toLocaleString('id-ID')}`) + "\n";
+            }
+            if(serviceCharge > 0) {
+                body += formatLeftRight("Service Charge", serviceCharge.toLocaleString('id-ID')) + "\n";
+            }
+            if(tax > 0) {
+                body += formatLeftRight("Pajak PB1", tax.toLocaleString('id-ID')) + "\n";
+            }
+            body += "─".repeat(LINE_WIDTH) + "\n";
+            body += formatLeftRight("GRAND TOTAL", grandTotal.toLocaleString('id-ID')) + "\n";
             
             if (status === "Paid") {
                 const tunai = window.lastCashReceived || grandTotal;
                 const kembalian = window.lastCashChange || 0;
-                body += `[L]Bayar (${payMethod}) [R]${tunai.toLocaleString('id-ID')}\n`;
-                body += `[L]Kembalian [R]${kembalian.toLocaleString('id-ID')}\n`;
-                body += `[C]--------------------------------\n`;
-                body += `[C]<b>STATUS : LUNAS</b>\n`;
-                body += `[C]${footerStruk}\n`;
+                body += formatLeftRight(`Bayar (${payMethod})`, tunai.toLocaleString('id-ID')) + "\n";
+                body += formatLeftRight("Kembalian", kembalian.toLocaleString('id-ID')) + "\n";
+                body += "═".repeat(LINE_WIDTH) + "\n";
+                body += centerText("STATUS : LUNAS") + "\n";
+                body += centerText(footerStruk) + "\n";
             } else {
-                body += `[C]--------------------------------\n`;
-                body += `[C]<b>STATUS : TAGIHAN SEMENTARA</b>\n`;
-                body += `[C]Harap lakukan pembayaran di kasir\n`;
+                body += "═".repeat(LINE_WIDTH) + "\n";
+                body += centerText("STATUS : TAGIHAN SEMENTARA") + "\n";
+                body += centerText("Harap lakukan pembayaran di kasir") + "\n";
             }
-            body += `\n\n\n`;
+            body += "\n\n\n\n";
             return body;
         };
 
         let cashierReceipt = "";
         if (status === "Paid") {
             cashierReceipt += generateInvoiceBody("STRUK PELANGGAN");
-            cashierReceipt += `[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
-            cashierReceipt += generateInvoiceBody("ARSIP TOKO / DAPUR");
-            cashierReceipt += `[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
+            cashierReceipt += "─ ".repeat(LINE_WIDTH/2) + "\n\n"; // Garis titik-titik potong kertas
+            cashierReceipt += generateInvoiceBody("ARSIP TOKO");
         } else {
             cashierReceipt += generateInvoiceBody("BILL TAGIHAN MEJA");
-            cashierReceipt += `[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
         }
 
         sendIntentToRawBT(cashierReceipt, printerKasirProfile);
@@ -155,19 +176,20 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
         const kitchenItems = items.filter(item => item.route === "Kitchen");
         if (kitchenItems.length > 0) {
             let kitchenReceipt = "";
-            if (isReprint) kitchenReceipt += `[C]<b>*** REPRINT / SALINAN ***</b>\n`;
-            kitchenReceipt += `[C]<b>KITCHEN ORDER (DAPUR)</b>\n`;
-            kitchenReceipt += `[C]--------------------------------\n`;
-            kitchenReceipt += `[L]Meja : <b>${table}</b>\n`;
-            kitchenReceipt += `[L]ID   : ${orderId}\n`;
-            kitchenReceipt += `[L]Jam  : ${currentTimeStr} WITA\n`;
-            kitchenReceipt += `[C]--------------------------------\n`;
+            if (isReprint) kitchenReceipt += centerText("*** REPRINT / SALINAN ***") + "\n";
+            kitchenReceipt += centerText("ORDERAN DAPUR") + "\n";
+            kitchenReceipt += "═".repeat(LINE_WIDTH) + "\n";
+            kitchenReceipt += `Meja : Meja ${table}\n`;
+            kitchenReceipt += `ID   : ${orderId.substring(0, 15)}\n`;
+            kitchenReceipt += `Jam  : ${currentTimeStr} WITA\n`;
+            kitchenReceipt += "─".repeat(LINE_WIDTH) + "\n";
+            
             kitchenItems.forEach(item => {
-                kitchenReceipt += `[L]<b>[ ] ${item.qty}x  ${item.name}</b>\n`;
-                if(item.notes) kitchenReceipt += `[L]   *Catatan: ${item.notes}\n`;
-                kitchenReceipt += `[L]--------------------------------\n`;
+                kitchenReceipt += `${item.qty}x ${item.name}\n`;
+                if(item.notes) kitchenReceipt += `  *Catatan: ${item.notes}\n`;
+                kitchenReceipt += "─".repeat(LINE_WIDTH) + "\n";
             });
-            kitchenReceipt += `\n\n\n[C]- - - - - POTONG DI SINI - - - - -\n\n\n`;
+            kitchenReceipt += "\n\n\n\n";
 
             setTimeout(() => {
                 sendIntentToRawBT(kitchenReceipt, printerKitchenProfile);
@@ -181,19 +203,20 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
         const barItems = items.filter(item => item.route === "Bar");
         if (barItems.length > 0) {
             let barReceipt = "";
-            if (isReprint) barReceipt += `[C]<b>*** REPRINT / SALINAN ***</b>\n`;
-            barReceipt += `[C]<b>BAR ORDER (MINUMAN)</b>\n`;
-            barReceipt += `[C]--------------------------------\n`;
-            barReceipt += `[L]Meja : <b>${table}</b>\n`;
-            barReceipt += `[L]ID   : ${orderId}\n`;
-            barReceipt += `[L]Jam  : ${currentTimeStr} WITA\n`;
-            barReceipt += `[C]--------------------------------\n`;
+            if (isReprint) barReceipt += centerText("*** REPRINT / SALINAN ***") + "\n";
+            barReceipt += centerText("ORDERAN MINUMAN") + "\n";
+            barReceipt += "═".repeat(LINE_WIDTH) + "\n";
+            barReceipt += `Meja : Meja ${table}\n`;
+            barReceipt += `ID   : ${orderId.substring(0, 15)}\n`;
+            barReceipt += `Jam  : ${currentTimeStr} WITA\n`;
+            barReceipt += "─".repeat(LINE_WIDTH) + "\n";
+            
             barItems.forEach(item => {
-                barReceipt += `[L]<b>[ ] ${item.qty}x  ${item.name}</b>\n`;
-                if(item.notes) barReceipt += `[L]   *Catatan: ${item.notes}\n`;
-                barReceipt += `[L]--------------------------------\n`;
+                barReceipt += `${item.qty}x ${item.name}\n`;
+                if(item.notes) barReceipt += `  *Catatan: ${item.notes}\n`;
+                barReceipt += "─".repeat(LINE_WIDTH) + "\n";
             });
-            barReceipt += `\n\n\n`;
+            barReceipt += "\n\n\n\n";
 
             setTimeout(() => {
                 sendIntentToRawBT(barReceipt, printerBarProfile);
