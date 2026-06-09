@@ -12,11 +12,11 @@ function safeStringToBase64(str) {
 
 // --- HELPER 2: KIRIM INTENT PRINTER RAWBT SPESIFIK ---
 function sendIntentToRawBT(plainTextReceipt, printerProfileName) {
-    // 1. Konversi teks struk biasa ke Base64 secara otomatis di dalam engine
+    // 1. Konversi teks struk biasa ke Base64 secara otomatis
     const base64Data = safeStringToBase64(plainTextReceipt);
     
-    // 2. Kirim menggunakan format parameter S.base64 resmi dari RawBT Android App
-    const intentUrl = `intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.base64=${base64Data};S.printer=${printerProfileName};end;`;
+    // 2. Masukkan base64Data ke jalur URI utama (intent:base64,...) agar tinta teks terbaca oleh RawBT
+    const intentUrl = `intent:base64,${base64Data}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.printer=${printerProfileName};end;`;
     
     const iframe = document.createElement('iframe');
     iframe.style.display = 'none';
