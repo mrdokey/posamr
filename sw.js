@@ -1,17 +1,23 @@
 /**
  * DUMMY SERVICE WORKER - DEVELOPMENT MODE
- * (Syarat PWA agar tombol install aktif, tetapi tidak mengunci cache file)
+ * (Syarat Mutlak PWA agar tombol install aktif, tanpa mengunci cache file)
  */
 
 self.addEventListener('install', (e) => {
-    self.skipWaiting(); // Langsung aktifkan versi baru
+    self.skipWaiting(); // Langsung aktifkan versi baru tanpa antre
 });
 
 self.addEventListener('activate', (e) => {
-    e.waitUntil(self.clients.claim()); // Klaim semua tab aktif
+    e.waitUntil(self.clients.claim()); // Klaim kendali seluruh halaman aktif
 });
 
 self.addEventListener('fetch', (e) => {
-    // PASS-THROUGH: Tidak menyimpan cache apa pun. 
-    // Browser akan selalu mendownload file asli/terbaru dari server.
+    // SINKRONISASI MURNI: Wajib berikan respon agar Chrome memverifikasi ini sebagai PWA sah,
+    // tetapi tetap mengambil data asli 100% dari server tanpa cache.
+    e.respondWith(
+        fetch(e.request).catch(() => {
+            // Fallback jika benar-benar offline (mencegah error merah di konsol)
+            return new Response("Sedang offline...");
+        })
+    );
 });

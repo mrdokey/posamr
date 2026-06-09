@@ -1,9 +1,9 @@
 /**
  * MODUL: KIOSK ABSENSI, SINGLE SIGN-ON (SSO), OTP GENERATOR, & PIN CHANGER
- * UPDATE: Instant SW Register, Smart-Session Detection, & Global OTP Enabled
+ * UPDATE: Fixed PWA Install Event & Fast SW Register
  */
 
-// REGISTRASI INSTAN SERVICE WORKER UNTUK TOMBOL INSTALL PWA (ANTI-DELAY/RACE CONDITION)
+// 1. REGISTRASI INSTAN SERVICE WORKER (Bypass Load Event untuk Kecepatan Install)
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js')
         .then(reg => console.log('Service Worker Aktif (No-Cache Mode)'))
@@ -25,6 +25,7 @@ let otpInterval = null;
 
 let isBypassRequest = false;
 let bypassReason = "";
+let deferredPrompt = null; // Menampung prompt instalasi browser
 
 window.onload = () => {
     setTimeout(() => {
@@ -43,13 +44,11 @@ function checkState() {
     if (!GAS_URL) {
         showScreen('activation-screen');
     } else {
-        // DETEKSI AKURAT: Cek memori session aktif di perangkat ini
         const hasCashierSession = localStorage.getItem("MRD_CASHIER");
         const hasWaiterSession = localStorage.getItem("MRD_WAITER_SESSION");
         
         showScreen('pin-screen');
         
-        // Ikon shortcut kembali ke aplikasi hanya muncul jika tablet mengenali session aktif
         const appShortcutBtn = document.getElementById('btn-manual-app-shortcut');
         if (appShortcutBtn) {
             if (hasCashierSession || hasWaiterSession) {
@@ -63,7 +62,6 @@ function checkState() {
     }
 }
 
-// Pintasan cerdas untuk kembali ke aplikasi kerja tanpa klik konfirmasi/prompt menyulitkan
 function openManualLogin() {
     const isCashier = localStorage.getItem("MRD_CASHIER");
     const isWaiter = localStorage.getItem("MRD_WAITER_SESSION");
@@ -123,7 +121,7 @@ function resetLicense() {
     }
 }
 
-// --- FUNGSI NUMPAD PIN (LAYAR AWAL) ---
+// --- FUNGSI NUMPAD PIN ---
 function updatePinDots() {
     const dots = document.querySelectorAll('.pin-dot');
     dots.forEach((dot, idx) => {
@@ -188,7 +186,6 @@ async function verifyPin() {
     }
 }
 
-// --- PUSAT NAVIGASI (DASHBOARD HUB) ---
 function openDashboard() {
     showScreen('dashboard-screen');
     document.getElementById('emp-name').innerText = verifiedUser.name;
@@ -209,7 +206,6 @@ function backToDashboard() {
     showScreen('dashboard-screen');
 }
 
-// --- ROUTER MENU DASHBOARD ---
 function openSubScreen(menu) {
     if (menu === 'absen') {
         setupAbsensiMenu();
@@ -227,7 +223,7 @@ function openSubScreen(menu) {
     }
 }
 
-// --- 1. LOGIKA MENU ABSENSI ---
+// --- 1. MENU ABSENSI ---
 function setupAbsensiMenu() {
     showScreen('sub-absen-screen');
     
@@ -249,8 +245,6 @@ function setupAbsensiMenu() {
         document.getElementById('btn-clock-in').classList.remove('hidden-screen');
     } else {
         msg.innerText = verifiedUser.message; 
-        
-        // Selalu tampilkan tombol "Buka Aplikasi Kerja" asalkan statusnya sudah IN
         document.getElementById('btn-goto-app').classList.remove('hidden-screen');
 
         if (verifiedUser.canClockOut) {
@@ -301,7 +295,7 @@ function triggerIzinCepat() {
     startCapture('OUT');
 }
 
-// --- FUNGSI KAMERA & GPS (ABSEN) ---
+// --- FUNGSI KAMERA & GPS ---
 function startCapture(type) {
     currentActionType = type;
     showScreen('capture-screen');
@@ -398,7 +392,7 @@ async function submitAttendanceData(photoBase64) {
     }
 }
 
-// --- SINGLE SIGN-ON (SSO ROUTING STRICT SECURITY) ---
+// --- SINGLE SIGN-ON (SSO ROUTING) ---
 async function autoLoginApp() {
     try {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: currentPin } }) });
@@ -467,7 +461,7 @@ async function submitNewPin() {
     }
 }
 
-// --- 3. LOGIKA OTP GENERATOR (1 JAM - UNTUK SELURUH KARYAWAN) ---
+// --- 3. LOGIKA OTP GENERATOR (1 JAM) ---
 function startOtpGenerator() {
     updateOtp();
     otpInterval = setInterval(updateOtp, 1000);
@@ -489,4 +483,30 @@ function updateOtp() {
     
     document.getElementById('progress-bar').style.strokeDashoffset = 264 - progress;
     document.getElementById('countdown-text').innerText = minutesRemaining + "m";
+}
+
+// --- 4. INTEGRASI INSTALASI PWA (KUNCINYA DI SINI!) ---
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    showInstallBanner();
+});
+
+function showInstallBanner() {
+    // Kita lepas proteksi GAS_URL agar tombol install bisa muncul kapan saja bahkan saat aktivasi awal!
+    const banner = document.getElementById('install-banner');
+    if (banner) banner.classList.remove('hidden');
+}
+
+function dismissInstallBanner() {
+    const banner = document.getElementById('install-banner');
+    if (banner) banner.classList.add('hidden');
+}
+
+async function triggerNativeInstall() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    dismissInstallBanner();
 }
