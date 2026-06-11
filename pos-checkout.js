@@ -1,14 +1,17 @@
 /**
  * MODUL 3: CHECKOUT, HISTORY, VOID, SPLIT BILL, TWO-STAGE PRINT, & JOINT/DEBT PAYMENT ENGINE
- * UPDATE: Cash Rounding, Mixed Payments, Voucher Dropdown Integration, & City Ledger (Debt) Tab
+ * UPDATE: New Waiter Order Audio-Visual Notification (Ding Sound), Cash Rounding, & City Ledger
  */
 
 // ==========================================
-// SEKSI 1: STATE & DRAFT NOTIFICATION POLLING
+// SEKSI 1: STATE, DRAFT NOTIFICATION POLLING, & ALARM WAITER ORDER
 // ==========================================
 let currentTransactionTotal = 0; 
 let splitOriginalItems = []; 
 let splitTargetItems = [];   
+
+// Menyimpan memori daftar ID draf lama agar alarm tidak bising saat startup kasir
+window.knownDraftIds = null;
 
 async function checkNewDraftNotifications() {
     if (!navigator.onLine) return;
@@ -21,7 +24,29 @@ async function checkNewDraftNotifications() {
         const json = await res.json();
         if (json.success) {
             historyDataRaw = json.data;
-            const draftCount = historyDataRaw.filter(d => d.status === "Draft").length;
+            
+            const currentDrafts = historyDataRaw.filter(d => d.status === "Draft");
+            const draftCount = currentDrafts.length;
+
+            // DETEKSI LOGIKA PWA ALARM ORDERAN WAITER MASUK
+            if (window.knownDraftIds === null) {
+                // Inisialisasi awal saat kasir pertama kali membuka browser
+                window.knownDraftIds = currentDrafts.map(d => d.orderId);
+            } else {
+                // Bandingkan daftar draft baru dengan memori lokal
+                currentDrafts.forEach(draft => {
+                    if (!window.knownDraftIds.includes(draft.orderId)) {
+                        // KUNCI UTAMA: ORDER BARU TERDETEKSI! Pemicu alarm audio-visual
+                        triggerIncomingOrderNotification(draft);
+                        window.knownDraftIds.push(draft.orderId);
+                    }
+                });
+
+                // Bersihkan ID draft yang sudah lunas/dihapus agar hemat memori RAM
+                const currentIds = currentDrafts.map(d => d.orderId);
+                window.knownDraftIds = window.knownDraftIds.filter(id => currentIds.includes(id));
+            }
+
             const alertDot = document.getElementById('draft-alert-dot');
             if (alertDot) {
                 if (draftCount > 0) alertDot.classList.remove('hidden'); 
@@ -34,6 +59,75 @@ async function checkNewDraftNotifications() {
 if (pollInterval === null) {
     checkNewDraftNotifications(); 
     pollInterval = setInterval(checkNewDraftNotifications, 10000);
+}
+
+// Fungsi memicu notifikasi suara, getaran, dan pop-up visual di kasir
+function triggerIncomingOrderNotification(draft) {
+    playNotificationSound();
+    showToastNotification(draft.tableNo, draft.orderId);
+}
+
+// Menyintesis suara "Ding!" secara murni dan offline (HTML5 Web Audio API)
+function playNotificationSound() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(880, ctx.currentTime); // Frekuensi awal tinggi (A5)
+        osc.frequency.setValueAtTime(1200, ctx.currentTime + 0.15); // Nada meluncur naik (Ding)
+        
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6); // Fade-out dalam 0.6 detik
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.start();
+        osc.stop(ctx.currentTime + 0.6);
+    } catch (e) {
+        console.log("Audio Context diblokir browser sebelum interaksi pertama.");
+    }
+}
+
+// Memunculkan kotak pemberitahuan melayang (Toast Notification)
+function showToastNotification(tableNo, orderId) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = "pointer-events-auto bg-slate-900 border-2 border-emerald-500/50 p-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-slide-up smooth-transition max-w-sm w-80";
+    
+    toast.innerHTML = `
+        <div class="w-10 h-10 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-center text-emerald-400 shrink-0 animate-pulse">
+            <i data-lucide="bell-ring" class="w-5 h-5"></i>
+        </div>
+        <div class="flex-1 text-left min-w-0">
+            <h4 class="text-xs font-black text-white uppercase tracking-wider">Orderan Waiter Masuk!</h4>
+            <p class="text-[10px] text-slate-400 mt-0.5 line-clamp-1">Meja: <span class="text-emerald-400 font-bold">${tableNo}</span></p>
+            <p class="text-[9px] text-slate-500">ID: ${orderId.substring(0, 10)}...</p>
+        </div>
+        <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-white shrink-0">
+            <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+    `;
+
+    container.appendChild(toast);
+    lucide.createIcons();
+
+    // Getarkan tablet kasir jika didukung perangkat hardware Android
+    if (navigator.vibrate) {
+        navigator.vibrate([150, 100, 150]);
+    }
+
+    // Auto hapus toast dalam waktu 7 detik
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => toast.remove(), 400);
+        }
+    }, 7000);
 }
 
 function toggleMobileCart() {
@@ -130,7 +224,6 @@ async function switchTab(tabName) {
                             <button onclick="reqVoid('${bill.orderId}', 'Batal Meja Open')" class="bg-red-500/10 text-red-500 px-3 py-2 rounded-xl text-xs font-bold hover:bg-red-500/20 transition"><i data-lucide="ban" class="w-4 h-4"></i></button>
                         `;
                     } else if (tabName === "Debt") {
-                        // KONTROL KHUSUS TAB PIUTANG/CITY LEDGER
                         actionButtons = `
                             <button onclick="openSettleDebtModal('${bill.orderId}')" class="bg-amber-500 hover:bg-amber-600 text-slate-950 px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5"><i data-lucide="banknote" class="w-3.5 h-3.5"></i> LUNASI PIUTANG</button>
                             <button onclick="reprintOrder('${bill.orderId}')" class="bg-slate-700 text-white px-3 py-2 rounded-xl text-xs hover:bg-slate-600 transition" title="Reprint"><i data-lucide="printer" class="w-4 h-4"></i></button>
@@ -186,7 +279,6 @@ function editDraft(orderId) {
         }
     }
 
-    // Render ulang Dropdown Voucher terpilih
     const selectVoucher = document.getElementById('cart-voucher-select');
     if (selectVoucher && bill.voucherCode) {
         selectVoucher.value = bill.voucherCode;

@@ -31,7 +31,10 @@
         }
     </script>
 </head>
-<body class="h-[100dvh] w-screen flex flex-col select-none text-slate-100">
+<body class="h-[100dvh] w-screen flex flex-col select-none text-slate-100 relative">
+
+    <!-- TOAST CONTAINER: NOTIFIKASI ORDERAN MASUK MELAYANG (FIX: Ditambahkan untuk wadah popup kasir) -->
+    <div id="toast-container" class="fixed top-6 right-6 z-[140] flex flex-col gap-3 max-w-sm pointer-events-none"></div>
 
     <!-- 1. SPLASH SCREEN -->
     <div id="splash-screen" class="fixed inset-0 bg-[#0f172a] z-[100] flex flex-col items-center justify-center smooth-transition">
@@ -168,7 +171,6 @@
                             </select>
                         </div>
 
-                        <!-- FIX: Mengubah Input Kode Voucher menjadi Dropdown Dinamis dari Sheets -->
                         <div id="voucher-input-container" class="space-y-1">
                             <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Voucher Promo</label>
                             <select id="cart-voucher-select" onchange="applyVoucherSelect(this.value)" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 outline-none text-xs font-bold text-white cursor-pointer focus:border-amber-500 transition">
@@ -233,7 +235,7 @@
         </button>
     </div>
 
-    <!-- MODAL 1: PROSES & BAYAR (TERINTEGRASI GABUNG BAYAR & CITY LEDGER) -->
+    <!-- MODAL 1: PROSES & BAYAR -->
     <div id="modal-print" class="hidden-screen fixed inset-0 bg-black/85 z-[110] flex items-center justify-center p-6 smooth-transition">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-sm p-6 shadow-2xl flex flex-col text-center">
             <h3 class="text-xl font-black text-white mb-1">Selesaikan Pembayaran</h3>
@@ -292,7 +294,6 @@
                     <button onclick="processNonCashPayment('Card')" class="py-2.5 bg-orange-600 hover:bg-orange-700 rounded-xl font-bold text-[10px] transition active:scale-95 text-center text-white flex flex-col items-center gap-1">
                         <i data-lucide="credit-card" class="w-4 h-4"></i> CARD
                     </button>
-                    <!-- TOMBOL CITY LEDGER KHUSUS OWNER DENGAN OTP -->
                     <button onclick="processCityLedger()" class="py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold text-[10px] transition active:scale-95 text-center text-amber-500 border border-slate-700 flex flex-col items-center gap-1">
                         <i data-lucide="book-open" class="w-4 h-4"></i> LEDGER
                     </button>
@@ -382,7 +383,7 @@
         </div>
     </div>
 
-    <!-- MODAL: HISTORY & DRAFT MANAGEMENT (INTEGRASI TAB PIUTANG DEBT) -->
+    <!-- MODAL: HISTORY & DRAFT MANAGEMENT -->
     <div id="modal-history" class="hidden-screen fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 sm:p-8 smooth-transition">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl p-6 shadow-2xl flex flex-col h-full max-h-[90vh]">
             <div class="flex justify-between items-center mb-6">
@@ -394,7 +395,6 @@
                 <button onclick="switchTab('Draft')" id="tab-Draft" class="hist-tab px-5 py-3 rounded-xl font-bold text-sm bg-slate-800 text-white transition">DRAFT</button>
                 <button onclick="switchTab('Open')" id="tab-Open" class="hist-tab px-5 py-3 rounded-xl font-bold text-sm bg-slate-950 text-slate-500 hover:text-white transition">OPEN</button>
                 <button onclick="switchTab('Paid')" id="tab-Paid" class="hist-tab px-5 py-3 rounded-xl font-bold text-sm bg-slate-950 text-slate-500 hover:text-white transition">PAID</button>
-                <!-- TAB BARU: KASIR DEBT TRACKER -->
                 <button onclick="switchTab('Debt')" id="tab-Debt" class="hist-tab px-5 py-3 rounded-xl font-bold text-sm bg-slate-950 text-slate-500 hover:text-white transition">PIUTANG (DEBT)</button>
             </div>
 
@@ -508,9 +508,9 @@
     </div>
 
     <!-- PANGGIL FILE LOGIKA JAVASCRIPT MODULAR DENGAN CACHE BUSTER TERBARU (v=99) -->
-    <script src="config.js?v=23"></script>
-    <script src="pos-core.js?v=23"></script>
-    <script src="pos-printer.js?v=23"></script>
-    <script src="pos-checkout.js?v=23"></script>
+    <script src="config.js?v=99"></script>
+    <script src="pos-core.js?v=99"></script>
+    <script src="pos-printer.js?v=99"></script>
+    <script src="pos-checkout.js?v=99"></script>
 </body>
 </html>
