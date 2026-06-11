@@ -105,7 +105,8 @@
                 </button>
 
                 <!-- NAVIGASI 2: OTP GENERATOR -->
-                <button onclick="openSubScreen('otp')" class="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-sm flex items-center justify-between px-6 shadow-lg active:scale-95 transition">
+                <!-- FIX: Ditambahkan id="btn-otp-nav" untuk filter visibilitas hak akses Manager secara defensif -->
+                <button id="btn-otp-nav" onclick="openSubScreen('otp')" class="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-sm flex items-center justify-between px-6 shadow-lg active:scale-95 transition">
                     <div class="flex items-center gap-3"><i data-lucide="shield-check" class="w-5 h-5"></i> <span>KODE OTP (OTORISASI)</span></div>
                     <i data-lucide="chevron-right" class="w-5 h-5 opacity-50"></i>
                 </button>
@@ -249,7 +250,7 @@
         </div>
     </div>
 
-    <!-- SCRIPT -->
-    <script src="absen.js?v=99"></script>
+    <!-- SCRIPT DENGAN CACHE BUSTER TERBARU -->
+    <script src="absen.js?v=23"></script>
 </body>
 </html>

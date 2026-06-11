@@ -1,6 +1,6 @@
 /**
  * MODUL: KIOSK ABSENSI, SINGLE SIGN-ON (SSO), OTP GENERATOR, & PIN CHANGER
- * UPDATE: No Auto-Login, Strict Waiter App Redirection, & OTP Accessibility
+ * UPDATE: Case-Insensitive Property Extraction & Strict Waiter Role Filter
  */
 
 // 1. REGISTRASI SERVICE WORKER (Jalur Relatif Aman untuk PWA & GitHub Pages)
@@ -202,8 +202,19 @@ async function verifyPin() {
 // --- PUSAT NAVIGASI (DASHBOARD HUB) --- 
 function openDashboard() {
     showScreen('dashboard-screen'); 
-    document.getElementById('emp-name').innerText = verifiedUser.name; 
-    document.getElementById('emp-area').innerText = verifiedUser.area || "PUSAT"; 
+    document.getElementById('emp-name').innerText = verifiedUser.name || verifiedUser.Name || ""; 
+    document.getElementById('emp-area').innerText = verifiedUser.area || verifiedUser.Area || "PUSAT"; 
+    
+    // DEFENSIP CHECK: Mengatasi sensitivitas huruf kapital 'Role' vs 'role' dari database
+    const userRole = (verifiedUser.role || verifiedUser.Role || "").toString().toLowerCase().trim();
+    const otpNavBtn = document.getElementById('btn-otp-nav');
+    if (otpNavBtn) {
+        if (userRole === "manager") {
+            otpNavBtn.classList.remove('hidden-screen');
+        } else {
+            otpNavBtn.classList.add('hidden-screen');
+        }
+    }
 }
 
 function logoutDashboard() { 
@@ -225,7 +236,15 @@ function openSubScreen(menu) {
     if (menu === 'absen') { 
         setupAbsensiMenu(); 
     } else if (menu === 'otp') { 
-        if (verifiedUser.status === "OUT") { 
+        const userRole = (verifiedUser.role || verifiedUser.Role || "").toString().toLowerCase().trim();
+        const userStatus = (verifiedUser.status || verifiedUser.Status || "").toString().toUpperCase().trim();
+        
+        // DEFENSIP CHECK: Validasi strict untuk atasan
+        if (userRole !== "manager") {
+            alert("Akses Ditolak!\n\nMenu OTP Otorisasi hanya boleh diakses oleh akun tingkat Manager.");
+            return;
+        }
+        if (userStatus === "OUT") { 
             alert("Akses Ditolak!\n\nAnda harus melakukan Absen Masuk terlebih dahulu sebelum bisa membuahkan OTP Komplimen."); 
             return; 
         }
@@ -261,16 +280,19 @@ function setupAbsensiMenu() {
         gotoAppBtn.classList.add('hidden-screen');
     }
 
-    if (verifiedUser.status === "OUT") {
+    const userStatus = (verifiedUser.status || verifiedUser.Status || "").toString().toUpperCase().trim();
+    const userRole = (verifiedUser.role || verifiedUser.Role || "").toString().toLowerCase().trim();
+    const userJobdesk = (verifiedUser.jobdesk || verifiedUser.Jobdesk || "").toString().toLowerCase().trim();
+
+    if (userStatus === "OUT") {
         msg.innerText = "Status Anda: BELUM ABSEN (OUT)";
         sub.innerText = "Silakan tekan Absen Masuk untuk mulai bekerja.";
         document.getElementById('btn-clock-in').classList.remove('hidden-screen');
     } else {
-        msg.innerText = verifiedUser.message; 
+        msg.innerText = verifiedUser.message || verifiedUser.Message || "Status Kerja Aktif"; 
 
-        // FIX: Hanya menampilkan tombol aplikasi kerja jika Jobdesk murni adalah "Pelayan"
-        const jobdeskClean = verifiedUser.jobdesk ? verifiedUser.jobdesk.toLowerCase().trim() : "";
-        if (jobdeskClean === "pelayan") {
+        // FIX SINKRONISASI: Menampilkan tombol hanya jika Role === Staff DAN Jobdesk === Pelayan
+        if (userRole === "staff" && userJobdesk === "pelayan") {
             if (gotoAppBtn) {
                 gotoAppBtn.classList.remove('hidden-screen');
             }
@@ -280,14 +302,15 @@ function setupAbsensiMenu() {
             }
         }
 
-        if (verifiedUser.canClockOut) {
+        if (verifiedUser.canClockOut || verifiedUser.CanClockOut) {
             sub.innerText = "Shift Selesai. Anda diizinkan Absen Pulang.";
             document.getElementById('btn-clock-out').classList.remove('hidden-screen');
         } else {
-            if (verifiedUser.remainingMs) {
-                startLiveTimer(verifiedUser.remainingMs);
+            const remainingMs = verifiedUser.remainingMs || verifiedUser.RemainingMs;
+            if (remainingMs) {
+                startLiveTimer(remainingMs);
             } else {
-                sub.innerText = verifiedUser.remaining;
+                sub.innerText = verifiedUser.remaining || verifiedUser.Remaining || "";
             }
             document.getElementById('btn-bypass').classList.remove('hidden-screen'); 
         }
@@ -439,10 +462,10 @@ async function autoLoginApp() {
         const json = await res.json();
 
         if (json.success) {
-            const jobdeskClean = json.jobdesk ? json.jobdesk.toLowerCase().trim() : "";
+            const userJobdesk = (json.jobdesk || json.Jobdesk || "").toString().toLowerCase().trim();
 
             // Hanya mengizinkan pelayan beranjak ke order.html (Aplikasi Waiter HP) dari Kiosk
-            if (jobdeskClean === "pelayan") {
+            if (userJobdesk === "pelayan") {
                 localStorage.setItem("MRD_WAITER_SESSION", JSON.stringify(json));
                 window.location.href = "order.html"; 
             } else {
@@ -473,12 +496,14 @@ async function submitNewPin() {
     btn.innerText = "Memproses...";
     btn.disabled = true;
 
+    const userId = verifiedUser.userId || verifiedUser.UserId || "";
+
     try {
         const res = await fetch(GAS_URL, { 
             method: 'POST', 
             body: JSON.stringify({ 
                 action: "changeUserPin", 
-                data: { userId: verifiedUser.userId, oldPin: oldPin, newPin: newPin } 
+                data: { userId: userId, oldPin: oldPin, newPin: newPin } 
             }) 
         });
         const json = await res.json();
