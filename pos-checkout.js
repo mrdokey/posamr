@@ -1,6 +1,6 @@
 /**
- * MODUL 3: CHECKOUT, HISTORY, VOID, SPLIT BILL, & TWO-STAGE PRINT ENGINE
- * STRUKTUR: Conceptual Modular Sections (Clean & High Performance)
+ * MODUL 3: CHECKOUT, HISTORY, VOID, SPLIT BILL, TWO-STAGE PRINT, & JOINT/DEBT PAYMENT ENGINE
+ * UPDATE: Cash Rounding, Mixed Payments, Voucher Dropdown Integration, & City Ledger (Debt) Tab
  */
 
 // ==========================================
@@ -70,7 +70,7 @@ function updateMobileCartButtonVisibility() {
 }
 
 // ==========================================
-// SEKSI 2: RIWAYAT & MANAJEMEN TAB DRAFT (HISTORY)
+// SEKSI 2: RIWAYAT & MANAJEMEN TAB DRAFT (HISTORY DENGAN TAB PIUTANG DEBT)
 // ==========================================
 async function openHistoryModal() {
     openModal('modal-history');
@@ -78,7 +78,7 @@ async function openHistoryModal() {
 }
 
 async function switchTab(tabName) {
-    ['Draft', 'Open', 'Paid'].forEach(t => {
+    ['Draft', 'Open', 'Paid', 'Debt'].forEach(t => {
         const btn = document.getElementById(`tab-${t}`);
         if(btn) {
             if(t === tabName) {
@@ -128,6 +128,12 @@ async function switchTab(tabName) {
                             <button onclick="editDraft('${bill.orderId}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition">Pelunasan</button>
                             <button onclick="reprintOrder('${bill.orderId}')" class="bg-slate-700 text-white px-3 py-2 rounded-xl text-xs hover:bg-slate-600 transition" title="Reprint"><i data-lucide="printer" class="w-4 h-4"></i></button>
                             <button onclick="reqVoid('${bill.orderId}', 'Batal Meja Open')" class="bg-red-500/10 text-red-500 px-3 py-2 rounded-xl text-xs font-bold hover:bg-red-500/20 transition"><i data-lucide="ban" class="w-4 h-4"></i></button>
+                        `;
+                    } else if (tabName === "Debt") {
+                        // KONTROL KHUSUS TAB PIUTANG/CITY LEDGER
+                        actionButtons = `
+                            <button onclick="openSettleDebtModal('${bill.orderId}')" class="bg-amber-500 hover:bg-amber-600 text-slate-950 px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5"><i data-lucide="banknote" class="w-3.5 h-3.5"></i> LUNASI PIUTANG</button>
+                            <button onclick="reprintOrder('${bill.orderId}')" class="bg-slate-700 text-white px-3 py-2 rounded-xl text-xs hover:bg-slate-600 transition" title="Reprint"><i data-lucide="printer" class="w-4 h-4"></i></button>
                         `;
                     } else {
                         actionButtons = `
@@ -180,11 +186,14 @@ function editDraft(orderId) {
         }
     }
 
-    if (bill.voucherCode) {
+    // Render ulang Dropdown Voucher terpilih
+    const selectVoucher = document.getElementById('cart-voucher-select');
+    if (selectVoucher && bill.voucherCode) {
+        selectVoucher.value = bill.voucherCode;
         const v = voucherData.find(vx => vx.code === bill.voucherCode);
-        if (v) appliedVoucher = v;
-        else appliedVoucher = null;
+        appliedVoucher = v || null;
     } else {
+        if (selectVoucher) selectVoucher.value = "NONE";
         appliedVoucher = null;
     }
 
@@ -217,7 +226,6 @@ async function activateAndPrintDraft(orderId) {
     const subtotal = bill.items.reduce((sum, item) => sum + item.subtotal, 0);
     const totalDiscountAmount = (subtotal + bill.tax + bill.serviceCharge) - bill.totalAmount;
 
-    // Cetak dapur/bar langsung
     executeRoutingPrintDirect(bill, subtotal, totalDiscountAmount);
 
     let userArea = cashierInfo ? cashierInfo.area : "";
@@ -279,8 +287,6 @@ function reqVoid(orderId, type) {
     openModal('modal-void');
 }
 
-// --- UPDATE SUNTIKAN PADA pos-checkout.js (Seksi Void Engine) ---
-
 async function executeVoid() {
     const reason = document.getElementById('void-reason').value.trim();
     const pin = document.getElementById('void-pin').value;
@@ -295,12 +301,10 @@ async function executeVoid() {
         const json = await res.json();
         
         if(json.success) {
-            // FIX: Validasi Proteksi Ketat. Void (Batal ke 0) dilarang keras menggunakan OTP Staff biasa!
             const allowedVoidRoles = ["admin", "hrd", "manager", "owner"];
             const managerRole = json.role ? json.role.toLowerCase().trim() : "";
             const managerType = json.type ? json.type.toLowerCase().trim() : "";
 
-            // Jika yang dimasukkan adalah OTP Staff (bukan role atasan/owner/VIP)
             if (!allowedVoidRoles.includes(managerRole) && managerType !== "vip" && managerType !== "manager") {
                 alert("Otorisasi Ditolak!\n\nPembatalan transaksi (Void) wajib disetujui oleh PIN/OTP level Manager atau Owner.");
                 return;
@@ -491,12 +495,27 @@ async function confirmSplit() {
 }
 
 // ==========================================
-// SEKSI 5: PEMBAYARAN (CHECKOUT) & DUA TAHAP PRINT ENGINE
+// SEKSI 5: PEMBAYARAN (CHECKOUT), PEMBULATAN, & GABUNGAN (MIXED PAYMENTS)
 // ==========================================
 function saveDraft() {
     if(cart.length === 0) return alert("Keranjang kosong!");
     if(!document.getElementById('order-table').value.trim()) return alert("Isi Nomor Meja!");
     submitOrderPayload("Draft", false);
+}
+
+// HELPER: Kalkulator Pembulatan Kasir Dinamis dari Database Config Sheets
+function getRoundedAmount(amount) {
+    const arah = (configData["PEMBULATAN_ARAH"] || "NONE").toUpperCase().trim(); 
+    const nominal = parseInt(configData["PEMBULATAN_NOMINAL"] || "1000") || 1000;
+    
+    if (arah === "UP") {
+        return Math.ceil(amount / nominal) * nominal;
+    } else if (arah === "DOWN") {
+        return Math.floor(amount / nominal) * nominal;
+    } else if (arah === "NEAREST") {
+        return Math.round(amount / nominal) * nominal;
+    }
+    return amount; 
 }
 
 function openPrintModal() {
@@ -524,7 +543,11 @@ function openPrintModal() {
     const taxPerc = parseFloat(configData["PAJAK_PB1"] || 0); 
     const tax = (netSubtotal + serviceCharge) * (taxPerc / 100);
     
-    currentTransactionTotal = netSubtotal + serviceCharge + tax;
+    const rawTotal = netSubtotal + serviceCharge + tax;
+
+    // Kalkulasi pembulatan dan selisihnya
+    currentTransactionTotal = getRoundedAmount(rawTotal);
+    window.lastRoundingAdjustment = currentTransactionTotal - rawTotal;
 
     document.getElementById('modal-order-id').innerText = activeOrderId || "BARU";
     document.getElementById('modal-grand-total').innerText = "Rp " + currentTransactionTotal.toLocaleString('id-ID');
@@ -532,6 +555,10 @@ function openPrintModal() {
     document.getElementById('cash-received-input').value = "";
     document.getElementById('cash-change-display').innerText = "Rp 0";
     document.getElementById('cash-change-display').className = "font-black text-emerald-400 text-sm";
+    
+    // Reset visual pembayaran gabungan
+    const mixedContainer = document.getElementById('mixed-payment-container');
+    if (mixedContainer) mixedContainer.classList.add('hidden-screen');
 
     openModal('modal-print');
 }
@@ -540,13 +567,16 @@ function calculateChange() {
     const inputVal = parseFloat(document.getElementById('cash-received-input').value) || 0;
     const change = inputVal - currentTransactionTotal;
     const display = document.getElementById('cash-change-display');
+    const mixedContainer = document.getElementById('mixed-payment-container');
 
     if (change >= 0) {
         display.innerText = "Rp " + change.toLocaleString('id-ID');
         display.className = "font-black text-emerald-400 text-sm";
+        if (mixedContainer) mixedContainer.classList.add('hidden-screen'); // Sembunyikan jika uang pas/lebih
     } else {
         display.innerText = "Kurang Rp " + Math.abs(change).toLocaleString('id-ID');
         display.className = "font-black text-rose-500 text-sm";
+        if (mixedContainer) mixedContainer.classList.remove('hidden-screen'); // Munculkan tombol gabungan jika kurang
     }
 }
 
@@ -563,12 +593,14 @@ function setQuickCash(val) {
 function processCashPayment() {
     const inputVal = parseFloat(document.getElementById('cash-received-input').value) || 0;
     if (inputVal < currentTransactionTotal) {
-        alert("Pembayaran Gagal! Uang tunai yang diterima kurang.");
+        alert("Pembayaran Gagal! Uang tunai kurang. Gunakan fitur Gabung Sisa Bayar (Mixed Payment) di bawah.");
         return;
     }
     
     window.lastCashReceived = inputVal;
     window.lastCashChange = inputVal - currentTransactionTotal;
+    window.lastNonCashReceived = 0;
+    window.lastNonCashMethod = "";
     
     closeModal('modal-print');
     submitOrderPayload("Cash", "All"); 
@@ -579,6 +611,8 @@ function processNonCashPayment(method) {
     
     window.lastCashReceived = currentTransactionTotal;
     window.lastCashChange = 0;
+    window.lastNonCashReceived = 0;
+    window.lastNonCashMethod = "";
 
     if (method === 'Open') {
         submitOrderPayload("Open", "All"); 
@@ -587,7 +621,62 @@ function processNonCashPayment(method) {
     }
 }
 
-async function submitOrderPayload(statusTarget, printTarget) {
+// Pemrosesan Pembayaran Gabungan (Mixed Cash + Non-Cash)
+function processMixedPayment(nonCashMethod) {
+    const inputVal = parseFloat(document.getElementById('cash-received-input').value) || 0;
+    if (inputVal <= 0) return alert("Masukkan jumlah uang tunai yang diterima terlebih dahulu!");
+    
+    const sisaTagihan = currentTransactionTotal - inputVal;
+    if (sisaTagihan <= 0) return alert("Uang tunai sudah mencukupi! Silakan klik tombol BAYAR TUNAI.");
+
+    window.lastCashReceived = inputVal;
+    window.lastCashChange = 0;
+    window.lastNonCashReceived = sisaTagihan;
+    window.lastNonCashMethod = nonCashMethod;
+
+    closeModal('modal-print');
+    submitOrderPayload(`Mixed (Cash+${nonCashMethod})`, "All");
+}
+
+// Pemrosesan Otorisasi City Ledger / Piutang Owner
+function processCityLedger() {
+    closeModal('modal-print');
+    const ownerName = prompt("Masukkan Nama Owner / VIP:");
+    if (!ownerName) return;
+    const otp = prompt("Masukkan 4-Digit OTP Manager:");
+    if (!otp) return;
+
+    fetch(GAS_URL, { 
+        method: 'POST', 
+        body: JSON.stringify({ action: "verifyVoidManager", data: { managerPin: otp } }) 
+    })
+    .then(res => res.json())
+    .then(json => {
+        if (json.success) {
+            const allowedCompRoles = ["admin", "hrd", "manager", "owner"];
+            const managerRole = json.role ? json.role.toLowerCase().trim() : "";
+            const managerType = json.type ? json.type.toLowerCase().trim() : "";
+
+            if (!allowedCompRoles.includes(managerRole) && managerType !== "vip" && managerType !== "manager") {
+                alert("Otorisasi Ditolak! Otorisasi Piutang Owner wajib menggunakan OTP tingkat Manager.");
+                return;
+            }
+
+            window.lastCashReceived = currentTransactionTotal;
+            window.lastCashChange = 0;
+            window.lastNonCashReceived = 0;
+            window.lastNonCashMethod = "";
+
+            // Simpan transaksi di Google Sheet sebagai status Debt (Piutang)
+            submitOrderPayload("City-Ledger", "All", "Debt", `PIUTANG: ${ownerName.toUpperCase()} (ACC: ${json.managerName})`);
+        } else {
+            alert(json.message || "OTP Manager Salah atau Kedaluwarsa!");
+        }
+    })
+    .catch(() => alert("Gagal koneksi server."));
+}
+
+async function submitOrderPayload(statusTarget, printTarget, forceStatus = null, customVoucher = null) {
     const tableNo = document.getElementById('order-table').value.trim();
     const selectDisc = document.getElementById('cart-discount-select');
     const discountId = selectDisc ? selectDisc.options[selectDisc.selectedIndex].getAttribute('data-id') : "";
@@ -612,7 +701,7 @@ async function submitOrderPayload(statusTarget, printTarget) {
     const taxPerc = parseFloat(configData["PAJAK_PB1"] || 0); 
     const tax = (netSubtotal + serviceCharge) * (taxPerc / 100);
     
-    const grandTotal = netSubtotal + serviceCharge + tax;
+    const grandTotal = currentTransactionTotal; // Menggunakan nominal grand total yang sudah dibulatkan
 
     let paymentMethod = "-";
     let orderStatus = "Open";
@@ -623,7 +712,7 @@ async function submitOrderPayload(statusTarget, printTarget) {
         orderStatus = "Open";
     } else {
         paymentMethod = statusTarget; 
-        orderStatus = "Paid";
+        orderStatus = forceStatus || "Paid"; // Mendukung status "Debt" untuk Piutang Owner
     }
 
     let userArea = cashierInfo ? cashierInfo.area : "";
@@ -636,7 +725,7 @@ async function submitOrderPayload(statusTarget, printTarget) {
             kasirId: cashierInfo.userId, 
             area: userArea, 
             discount: discountId,
-            voucherCode: appliedVoucher ? appliedVoucher.code : "", 
+            voucherCode: customVoucher || (appliedVoucher ? appliedVoucher.code : ""), 
             tax: tax, 
             serviceCharge: serviceCharge, 
             totalAmount: grandTotal, 
@@ -652,16 +741,15 @@ async function submitOrderPayload(statusTarget, printTarget) {
         localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
 
         if (printTarget !== false && printTarget !== "None") {
-            if (orderStatus === "Paid") {
-                // Offline Mode: Tetap gunakan split print agar kasir manual bisa merobek
+            if (orderStatus === "Paid" || orderStatus === "Debt") {
                 executeRoutingPrint(payload.data.orderId || "OFF-ST-" + Date.now(), tableNo, orderStatus, paymentMethod, subtotal, totalDiscount, serviceCharge, tax, grandTotal, "CustomerCopy");
             } else {
                 executeRoutingPrint(payload.data.orderId || "OFF-" + Date.now(), tableNo, orderStatus, paymentMethod, subtotal, totalDiscount, serviceCharge, tax, grandTotal, printTarget);
             }
         }
 
-        if (orderStatus === "Paid") {
-            showSuccessChangeModal(grandTotal, window.lastCashReceived, window.lastCashChange);
+        if (orderStatus === "Paid" || orderStatus === "Debt") {
+            showSuccessChangeModal(grandTotal, window.lastCashReceived + window.lastNonCashReceived, window.lastCashChange);
         } else {
             alert(`⚠️ Offline! Transaksi ${orderStatus} disimpan di antrean lokal.`);
             resetCartState();
@@ -678,8 +766,7 @@ async function submitOrderPayload(statusTarget, printTarget) {
         if(json.success) {
             let finalOrderId = activeOrderId || json.orderId;
 
-            if (orderStatus === "Paid") {
-                // TAHAP 1: SIMPAN TRANSAKSI SECARA GLOBAL UNTUK KEBUTUHAN CETAK ARSIP (TAHAP 2)
+            if (orderStatus === "Paid" || orderStatus === "Debt") {
                 window.lastTransactionData = {
                     orderId: finalOrderId,
                     tableNo: tableNo,
@@ -692,16 +779,14 @@ async function submitOrderPayload(statusTarget, printTarget) {
                     items: JSON.parse(JSON.stringify(cart))
                 };
 
-                // TAHAP 1: Hanya mencetak Struk Pelanggan, Order Dapur, dan Order Bar secara instan
                 if (printTarget !== false && printTarget !== "None") {
                     executeRoutingPrint(finalOrderId, tableNo, orderStatus, paymentMethod, subtotal, totalDiscount, serviceCharge, tax, grandTotal, "CustomerCopy");
                     executeRoutingPrint(finalOrderId, tableNo, orderStatus, paymentMethod, subtotal, totalDiscount, serviceCharge, tax, grandTotal, "Kitchen", false, window.lastTransactionData.items);
                     executeRoutingPrint(finalOrderId, tableNo, orderStatus, paymentMethod, subtotal, totalDiscount, serviceCharge, tax, grandTotal, "Bar", false, window.lastTransactionData.items);
                 }
                 
-                showSuccessChangeModal(grandTotal, window.lastCashReceived, window.lastCashChange);
+                showSuccessChangeModal(grandTotal, window.lastCashReceived + window.lastNonCashReceived, window.lastCashChange);
             } else {
-                // Pengecekan Cetak untuk Non-Lunas (Draft / Open Bill)
                 if (printTarget !== false && printTarget !== "None") {
                     executeRoutingPrint(finalOrderId, tableNo, orderStatus, paymentMethod, subtotal, totalDiscount, serviceCharge, tax, grandTotal, printTarget);
                 }
@@ -717,22 +802,22 @@ async function submitOrderPayload(statusTarget, printTarget) {
     } catch (e) {
         alert("Server bermasalah. Transaksi dialihkan ke offline queue.");
         navigator.onLine = false;
-        submitOrderPayload(statusTarget, printTarget);
+        submitOrderPayload(statusTarget, printTarget, forceStatus, customVoucher);
     }
 }
 
-// === ALUR KONTROL DUA TAHAP (ECO PAPER INTERAKTIF) ===
+// === ALUR KONTROL DUA TAHAP ===
 function printArsipAndComplete() {
     if (window.lastTransactionData) {
         const t = window.lastTransactionData;
-        // TAHAP 2: Cetak khusus Arsip Toko saja ke printer Kasir
         executeRoutingPrint(t.orderId, t.tableNo, "Paid", t.paymentMethod, t.subtotal, t.totalDiscount, t.serviceCharge, t.tax, t.grandTotal, "ArsipCopy", false, t.items);
     }
-    skipArsipAndComplete(); // Selesaikan transaksi langsung
+    skipArsipAndComplete(); 
 }
 
 function skipArsipAndComplete() {
     window.lastTransactionData = null;
+    window.lastRoundingAdjustment = 0;
     closeSuccessChangeModal();
 }
 
@@ -761,6 +846,9 @@ function resetCartState() {
     
     const selectDisc = document.getElementById('cart-discount-select');
     if (selectDisc) selectDisc.selectedIndex = 0;
+
+    const selectVoucher = document.getElementById('cart-voucher-select');
+    if (selectVoucher) selectVoucher.value = "NONE";
     
     renderCart();
     updateMobileCartButtonVisibility();
@@ -784,7 +872,6 @@ async function syncOfflineQueue() {
 // SEKSI 6: REPRINT ENGINE (SASARAN MODEL SPESIFIK)
 // ==========================================
 function reprintOrder(orderId) {
-    // Membuka modal khusus reprint di pos.html
     document.getElementById('reprint-order-id').value = orderId;
     openModal('modal-reprint');
 }
@@ -802,7 +889,6 @@ function triggerReprintTarget(targetType) {
     const subtotal = bill.items.reduce((sum, item) => sum + item.subtotal, 0);
     const totalDiscountAmount = (subtotal + bill.tax + bill.serviceCharge) - bill.totalAmount;
 
-    // Trigger cetak ulang spesifik sesuai sasaran yang diinginkan kasir
     executeRoutingPrint(
         bill.orderId, 
         bill.tableNo, 
@@ -814,7 +900,7 @@ function triggerReprintTarget(targetType) {
         bill.tax, 
         bill.totalAmount, 
         targetType, 
-        true, // isReprint = true
+        true, 
         bill.items
     );
 
@@ -822,53 +908,176 @@ function triggerReprintTarget(targetType) {
 }
 
 // ==========================================
-// SEKSI 7: SISTEM PEMBAYARAN KOMPLIMEN (FOC) DENGAN OTP
+// SEKSI 7: SISTEM PELUNASAN PIUTANG OWNER (DEBT SETTLEMENT)
 // ==========================================
-function processComplimentPayment() {
-    const type = prompt("PILIH JENIS KOMPLIMEN:\nKetik 1 : VIP / Owner Treat (Butuh OTP Manager)\nKetik 2 : Kesalahan Staff / Potong Gaji (Butuh OTP Staff)");
-    if (!type) return;
+let pendingSettleOrderId = null;
 
-    if (type === "1") {
-        const otp = prompt("Masukkan 4-Digit OTP Manager:");
-        if (!otp) return;
-        verifyComplimentCode(otp, "VIP");
-    } else if (type === "2") {
-        const otp = prompt("PENGAKUAN SALAH:\nMasukkan 4-Digit OTP Staff yang bersangkutan:");
-        if (!otp) return;
-        verifyComplimentCode(otp, "Staff-Error");
-    } else {
-        alert("Pilihan tidak valid!");
+function openSettleDebtModal(orderId) {
+    pendingSettleOrderId = orderId;
+    const bill = historyDataRaw.find(b => b.orderId === orderId);
+    if (!bill) return;
+
+    // Menampilkan prompt pemilihan cara pembayaran asli dari Owner
+    const method = prompt(`PELUNASAN PIUTANG OWNER (Meja: ${bill.tableNo})\nNota: Rp ${bill.totalAmount.toLocaleString('id-ID')}\n\nPilih Cara Pembayaran Asli:\nKetik 1 : CASH\nKetik 2 : QRIS\nKetik 3 : TRANSFER\nKetik 4 : CARD`);
+    if (!method) return;
+
+    let selectedMethod = "";
+    if (method === "1") selectedMethod = "Cash";
+    else if (method === "2") selectedMethod = "QRIS";
+    else if (method === "3") selectedMethod = "Transfer";
+    else if (method === "4") selectedMethod = "Card";
+    else {
+        alert("Pilihan metode tidak valid!");
+        return;
+    }
+
+    if (!confirm(`Selesaikan pembayaran piutang Owner ini sebesar Rp ${bill.totalAmount.toLocaleString('id-ID')} via ${selectedMethod.toUpperCase()}?`)) {
+        return;
+    }
+
+    settleDebtInDatabase(orderId, selectedMethod, bill.totalAmount, bill.tableNo);
+}
+
+async function settleDebtInDatabase(orderId, paymentMethod, amount, tableNo) {
+    let userArea = cashierInfo ? cashierInfo.area : "";
+    
+    const payload = {
+        action: "placeOrder",
+        data: {
+            orderId: orderId,
+            tableNo: tableNo,
+            kasirId: cashierInfo.userId,
+            area: userArea,
+            discount: "DISC-00", 
+            voucherCode: `LUNAS PIUTANG (ACC KASIR: ${cashierInfo.name})`, // Log pelunasan
+            tax: 0,
+            serviceCharge: 0,
+            totalAmount: amount,
+            paymentMethod: paymentMethod, // Mengubah ke metode bayar asli
+            orderStatus: "Paid", // Mengubah status Debt ke Paid (Lunas)
+            items: [] // Biarkan kosong agar Google Sheet merujuk baris yang sudah ada
+        }
+    };
+
+    try {
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const json = await res.json();
+        if (json.success) {
+            alert(`Piutang Owner Meja ${tableNo} berhasil dilunasi via ${paymentMethod.toUpperCase()}!`);
+            switchTab('Debt'); // Refresh tab piutang
+        } else {
+            alert("Gagal melunasi piutang: " + json.message);
+        }
+    } catch (e) {
+        alert("Gagal koneksi ke server.");
     }
 }
 
-function verifyComplimentCode(inputCode, mode) {
+// ==========================================
+// SEKSI 8: SISTEM PEMBAYARAN KOMPLIMEN (FOC) INTERAKTIF MODAL (OTP ATASAN ONLY)
+// ==========================================
+function processComplimentPayment() {
+    closeModal('modal-print');
+    
+    document.getElementById('comp-desc-input').value = "";
+    document.getElementById('comp-name-input').value = "";
+    document.getElementById('comp-otp-input').value = "";
+    
+    switchComplimentType('VIP'); 
+    openModal('modal-compliment');
+}
+
+let currentComplimentType = "VIP";
+
+function switchComplimentType(type) {
+    currentComplimentType = type;
+    const tabVip = document.getElementById('tab-comp-vip');
+    const tabKaryawan = document.getElementById('tab-comp-karyawan');
+    const fieldDesc = document.getElementById('comp-field-desc');
+    const fieldName = document.getElementById('comp-field-name');
+
+    if (type === "VIP") {
+        tabVip.className = "py-2 text-xs font-black rounded-lg transition-all bg-amber-500 text-slate-950";
+        tabKaryawan.className = "py-2 text-xs font-bold rounded-lg transition-all text-slate-400 hover:text-white";
+        fieldDesc.classList.remove('hidden-screen');
+        fieldName.classList.add('hidden-screen');
+    } else {
+        tabKaryawan.className = "py-2 text-xs font-black rounded-lg transition-all bg-amber-500 text-slate-950";
+        tabVip.className = "py-2 text-xs font-bold rounded-lg transition-all text-slate-400 hover:text-white";
+        fieldName.classList.remove('hidden-screen');
+        fieldDesc.classList.add('hidden-screen');
+    }
+    lucide.createIcons();
+}
+
+function submitComplimentAuth() {
+    const otp = document.getElementById('comp-otp-input').value;
+    if (!otp || otp.length < 4) {
+        alert("Masukkan 4-Digit OTP Manager!");
+        return;
+    }
+
+    let logAuditText = "";
+    let paymentMethodTarget = "";
+
+    if (currentComplimentType === "VIP") {
+        const desc = document.getElementById('comp-desc-input').value.trim();
+        if (!desc) {
+            alert("Isi Keterangan Jamuan VIP!");
+            return;
+        }
+        logAuditText = `VIP: ${desc}`;
+        paymentMethodTarget = "Compliment";
+    } else {
+        const name = document.getElementById('comp-name-input').value.trim();
+        if (!name) {
+            alert("Isi Nama Lengkap Karyawan!");
+            return;
+        }
+        logAuditText = `KARYAWAN: ${name}`;
+        paymentMethodTarget = "Staff-Error";
+    }
+
+    const btn = document.getElementById('btn-exec-compliment');
+    btn.innerText = "Memverifikasi...";
+    btn.disabled = true;
+
     fetch(GAS_URL, { 
         method: 'POST', 
-        body: JSON.stringify({ action: "verifyVoidManager", data: { managerPin: inputCode } }) 
+        body: JSON.stringify({ action: "verifyVoidManager", data: { managerPin: otp } }) 
     })
     .then(res => res.json())
     .then(json => {
         if (json.success) {
+            const allowedCompRoles = ["admin", "hrd", "manager", "owner"];
+            const managerRole = json.role ? json.role.toLowerCase().trim() : "";
+            const managerType = json.type ? json.type.toLowerCase().trim() : "";
+
+            if (!allowedCompRoles.includes(managerRole) && managerType !== "vip" && managerType !== "manager") {
+                alert("Verifikasi Ditolak!\n\nOtorisasi FOC wajib menggunakan OTP tingkat Manager.");
+                return;
+            }
+
+            const auditWithManager = `${logAuditText} (ACC: ${json.managerName})`;
+            
             window.lastCashReceived = 0;
             window.lastCashChange = 0;
-            closeModal('modal-print');
+            window.lastNonCashReceived = 0;
+            window.lastNonCashMethod = "";
+            closeModal('modal-compliment');
 
-            if (mode === "VIP") {
-                if (json.type !== "VIP") {
-                    alert("Akses Ditolak! Harus menggunakan OTP Manager/Owner.");
-                    return;
-                }
-                alert(`Komplimen VIP Disetujui oleh: ${json.managerName}`);
-                submitComplimentPayload(`ACC: ${json.managerName}`, "Compliment", json.managerName);
-            } else {
-                alert(`Kesalahan dicatat atas nama: ${json.managerName} (Beban Potong Gaji)`);
-                submitComplimentPayload(`POTONG GAJI: ${json.managerName}`, "Staff-Error", json.managerName);
-            }
+            submitComplimentPayload(auditWithManager, paymentMethodTarget, json.managerName);
         } else {
-            alert(json.message || "Verifikasi Gagal!");
+            alert(json.message || "OTP Manager Salah atau Kedaluwarsa!");
         }
     })
-    .catch(err => alert("Gagal verifikasi keamanan. Periksa koneksi internet."));
+    .catch(err => {
+        alert("Gagal menghubungi server utama!");
+    })
+    .finally(() => {
+        btn.innerText = "PROSES FOC";
+        btn.disabled = false;
+    });
 }
 
 async function submitComplimentPayload(logAuditText, paymentMethodTarget, employeeName) {
@@ -904,7 +1113,6 @@ async function submitComplimentPayload(logAuditText, paymentMethodTarget, employ
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
         const json = await res.json();
         if(json.success) {
-            // Cetak satu struk pelanggan 0 rupiah untuk bukti (Eco-friendly)
             executeRoutingPrint(activeOrderId || json.orderId, tableNo, "Paid", paymentMethodTarget.toUpperCase(), subtotal, subtotal, 0, 0, 0, "CustomerCopy");
             alert(`Transaksi Berhasil Dicatat! (${logAuditText})`);
             resetCartState();

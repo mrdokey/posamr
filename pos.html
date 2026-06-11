@@ -141,7 +141,7 @@
                 </div>
             </div>
 
-            <!-- Input Meja (COMPACTED: p-4 diubah ke py-2 px-4 untuk memperluas area keranjang) -->
+            <!-- Input Meja -->
             <div class="py-2 px-4 border-b border-slate-800 shrink-0 bg-slate-900">
                 <label class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Meja / Nama Tamu</label>
                 <input type="text" id="order-table" placeholder="M-01 / Takeaway" class="w-full mt-1 px-4 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none focus:border-amber-500 font-black text-base smooth-transition">
@@ -155,11 +155,11 @@
                 <!-- List Belanja dinamis -->
             </div>
 
-            <!-- SEKSI PERHITUNGAN & PROMO (COMPACTED: p-5 diubah ke py-3 px-4, dan gap-6 menjadi gap-4 untuk memperluas area list keranjang) -->
+            <!-- SEKSI PERHITUNGAN & PROMO -->
             <div class="py-3 px-4 border-t border-slate-800 bg-slate-950 shrink-0">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     
-                    <!-- KOLOM KIRI: PROMO & VOUCHER -->
+                    <!-- KOLOM KIRI: PROMO & DROPDOWN VOUCHER DINAMIS -->
                     <div class="space-y-3 flex flex-col justify-center">
                         <div>
                             <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Diskon Level</label>
@@ -168,12 +168,12 @@
                             </select>
                         </div>
 
+                        <!-- FIX: Mengubah Input Kode Voucher menjadi Dropdown Dinamis dari Sheets -->
                         <div id="voucher-input-container" class="space-y-1">
-                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Kode Voucher</label>
-                            <div class="flex items-center gap-1.5">
-                                <input type="text" id="voucher-input" placeholder="INPUT KODE" class="bg-slate-800 text-white px-3 py-2 rounded-lg text-xs outline-none focus:border-amber-500 border border-slate-700 w-full uppercase">
-                                <button onclick="applyVoucher()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 px-4 py-2 rounded-lg text-xs font-black transition shrink-0">Klaim</button>
-                            </div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Voucher Promo</label>
+                            <select id="cart-voucher-select" onchange="applyVoucherSelect(this.value)" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 outline-none text-xs font-bold text-white cursor-pointer focus:border-amber-500 transition">
+                                <option value="NONE">Tanpa Voucher</option>
+                            </select>
                         </div>
 
                         <div id="active-voucher-info" class="hidden justify-between items-center bg-emerald-950/30 border border-emerald-500/20 p-2 rounded-xl text-emerald-400 animate-pulse">
@@ -222,7 +222,7 @@
         </div>
     </div>
 
-    <!-- 5. FLOATING CART BUTTON (HP/PORTRAIT) -->
+    <!-- 5. FLOATING CART BUTTON -->
     <div id="mobile-cart-trigger" class="md:hidden fixed bottom-6 left-4 right-4 z-35 hidden-screen smooth-transition">
         <button onclick="toggleMobileCart()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 py-4 rounded-2xl font-black shadow-2xl flex justify-between items-center px-6 active:scale-95 smooth-transition">
             <div class="flex items-center gap-2">
@@ -233,14 +233,14 @@
         </button>
     </div>
 
-    <!-- MODAL 1: PROSES & BAYAR -->
+    <!-- MODAL 1: PROSES & BAYAR (TERINTEGRASI GABUNG BAYAR & CITY LEDGER) -->
     <div id="modal-print" class="hidden-screen fixed inset-0 bg-black/85 z-[110] flex items-center justify-center p-6 smooth-transition">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-sm p-6 shadow-2xl flex flex-col text-center">
             <h3 class="text-xl font-black text-white mb-1">Selesaikan Pembayaran</h3>
             <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-4">ID Order: <span id="modal-order-id">-</span></p>
             
             <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 mb-4">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Tagihan</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Tagihan (Setelah Pembulatan)</p>
                 <p id="modal-grand-total" class="text-2xl font-black text-amber-500 tracking-tight mt-1">Rp 0</p>
             </div>
 
@@ -257,6 +257,19 @@
                         <button onclick="setQuickCash(100000)" class="py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition">100k</button>
                         <button onclick="setQuickCash(200000)" class="py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition">200k</button>
                     </div>
+
+                    <!-- GABUNG BAYAR (MIXED PAYMENT CONTROL) -->
+                    <div id="mixed-payment-container" class="hidden-screen border-t border-slate-800/80 pt-2.5 space-y-2">
+                        <p class="text-[9px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1">
+                            <i data-lucide="info" class="w-3.5 h-3.5 animate-pulse"></i> Uang Kurang! Gabung Sisa Bayar via:
+                        </p>
+                        <div class="grid grid-cols-3 gap-1.5 text-[10px] font-black">
+                            <button onclick="processMixedPayment('QRIS')" class="py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition flex flex-col items-center gap-0.5"><i data-lucide="qr-code" class="w-4 h-4"></i> QRIS</button>
+                            <button onclick="processMixedPayment('Transfer')" class="py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition flex flex-col items-center gap-0.5"><i data-lucide="send" class="w-4 h-4"></i> TRANSFER</button>
+                            <button onclick="processMixedPayment('Card')" class="py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl transition flex flex-col items-center gap-0.5"><i data-lucide="credit-card" class="w-4 h-4"></i> CARD</button>
+                        </div>
+                    </div>
+
                     <div class="flex justify-between items-center text-xs border-t border-slate-850 pt-2.5">
                         <span class="text-slate-400 font-medium">Uang Kembalian:</span>
                         <span id="cash-change-display" class="font-black text-emerald-400 text-sm">Rp 0</span>
@@ -269,30 +282,36 @@
 
             <div class="space-y-2 text-left">
                 <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Metode Non-Tunai / Hold Bill</p>
-                <div class="grid grid-cols-3 gap-2">
+                <div class="grid grid-cols-4 gap-1.5">
                     <button onclick="processNonCashPayment('QRIS')" class="py-2.5 bg-blue-600 hover:bg-blue-700 rounded-xl font-bold text-[10px] transition active:scale-95 text-center text-white flex flex-col items-center gap-1">
                         <i data-lucide="qr-code" class="w-4 h-4"></i> QRIS
                     </button>
                     <button onclick="processNonCashPayment('Transfer')" class="py-2.5 bg-purple-600 hover:bg-purple-700 rounded-xl font-bold text-[10px] transition active:scale-95 text-center text-white flex flex-col items-center gap-1">
-                        <i data-lucide="send" class="w-4 h-4"></i> TRANSFER
+                        <i data-lucide="send" class="w-4 h-4"></i> TRANS
                     </button>
                     <button onclick="processNonCashPayment('Card')" class="py-2.5 bg-orange-600 hover:bg-orange-700 rounded-xl font-bold text-[10px] transition active:scale-95 text-center text-white flex flex-col items-center gap-1">
                         <i data-lucide="credit-card" class="w-4 h-4"></i> CARD
                     </button>
-                    <button onclick="processComplimentPayment()" class="py-2.5 bg-rose-600 hover:bg-rose-700 rounded-xl font-bold text-[10px] transition active:scale-95 text-center text-white flex flex-col items-center gap-1">
-                        <i data-lucide="gift" class="w-4 h-4"></i> FOC
+                    <!-- TOMBOL CITY LEDGER KHUSUS OWNER DENGAN OTP -->
+                    <button onclick="processCityLedger()" class="py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold text-[10px] transition active:scale-95 text-center text-amber-500 border border-slate-700 flex flex-col items-center gap-1">
+                        <i data-lucide="book-open" class="w-4 h-4"></i> LEDGER
                     </button>
                 </div>
-                <button onclick="processNonCashPayment('Open')" class="w-full mt-1 py-2 bg-slate-850 hover:bg-slate-750 text-slate-300 rounded-lg font-semibold text-[10px] transition flex items-center justify-center gap-1.5 border border-slate-800">
-                    <i data-lucide="door-open" class="w-3.5 h-3.5 text-amber-500"></i> Simpan Meja (Open Bill)
-                </button>
+                <div class="grid grid-cols-2 gap-2 mt-1">
+                    <button onclick="processComplimentPayment()" class="py-2 bg-rose-600 hover:bg-rose-700 rounded-xl font-bold text-xs transition active:scale-95 text-center text-white flex items-center justify-center gap-1.5">
+                        <i data-lucide="gift" class="w-4 h-4"></i> FOC / COMP
+                    </button>
+                    <button onclick="processNonCashPayment('Open')" class="py-2 bg-slate-850 hover:bg-slate-750 text-slate-300 rounded-xl font-semibold text-xs transition flex items-center justify-center gap-1.5 border border-slate-800">
+                        <i data-lucide="door-open" class="w-4 h-4 text-amber-500"></i> Simpan Meja (Open)
+                    </button>
+                </div>
             </div>
             
             <button onclick="closeModal('modal-print')" class="mt-4 text-xs text-slate-500 font-bold hover:text-white transition">Batal</button>
         </div>
     </div>
 
-    <!-- MODAL 2: POPUP SUKSES & KEMBALIAN (DUA TAHAP - INTERAKTIF ECO PAPER) -->
+    <!-- MODAL 2: POPUP SUKSES & KEMBALIAN -->
     <div id="modal-success-change" class="hidden-screen fixed inset-0 bg-black/90 z-[120] flex items-center justify-center p-6 smooth-transition animate-slide-up">
         <div class="bg-slate-900 border border-emerald-500/20 rounded-3xl w-full max-w-xs p-6 shadow-2xl text-center">
             <div class="w-14 h-14 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto mb-3 text-emerald-400">
@@ -363,7 +382,7 @@
         </div>
     </div>
 
-    <!-- MODAL: HISTORY & DRAFT MANAGEMENT -->
+    <!-- MODAL: HISTORY & DRAFT MANAGEMENT (INTEGRASI TAB PIUTANG DEBT) -->
     <div id="modal-history" class="hidden-screen fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 sm:p-8 smooth-transition">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl p-6 shadow-2xl flex flex-col h-full max-h-[90vh]">
             <div class="flex justify-between items-center mb-6">
@@ -371,10 +390,12 @@
                 <button onclick="closeModal('modal-history')" class="p-2 bg-slate-800 rounded-xl text-slate-400 hover:bg-slate-700 hover:text-white smooth-transition"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
             
-            <div class="flex gap-2 mb-6 border-b border-slate-800 pb-2 overflow-x-auto no-scrollbar">
-                <button onclick="switchTab('Draft')" id="tab-Draft" class="hist-tab px-6 py-3 rounded-xl font-bold text-sm bg-slate-800 text-white transition">DRAFT (Belum Cetak)</button>
-                <button onclick="switchTab('Open')" id="tab-Open" class="hist-tab px-6 py-3 rounded-xl font-bold text-sm bg-slate-950 text-slate-500 hover:text-white transition">OPEN (Meja Aktif)</button>
-                <button onclick="switchTab('Paid')" id="tab-Paid" class="hist-tab px-6 py-3 rounded-xl font-bold text-sm bg-slate-950 text-slate-500 hover:text-white transition">PAID (Lunas Hari Ini)</button>
+            <div class="flex gap-1.5 mb-6 border-b border-slate-800 pb-2 overflow-x-auto no-scrollbar">
+                <button onclick="switchTab('Draft')" id="tab-Draft" class="hist-tab px-5 py-3 rounded-xl font-bold text-sm bg-slate-800 text-white transition">DRAFT</button>
+                <button onclick="switchTab('Open')" id="tab-Open" class="hist-tab px-5 py-3 rounded-xl font-bold text-sm bg-slate-950 text-slate-500 hover:text-white transition">OPEN</button>
+                <button onclick="switchTab('Paid')" id="tab-Paid" class="hist-tab px-5 py-3 rounded-xl font-bold text-sm bg-slate-950 text-slate-500 hover:text-white transition">PAID</button>
+                <!-- TAB BARU: KASIR DEBT TRACKER -->
+                <button onclick="switchTab('Debt')" id="tab-Debt" class="hist-tab px-5 py-3 rounded-xl font-bold text-sm bg-slate-950 text-slate-500 hover:text-white transition">PIUTANG (DEBT)</button>
             </div>
 
             <div id="history-container" class="flex-1 overflow-y-auto space-y-4"></div>
@@ -390,7 +411,6 @@
             
             <input type="text" id="void-reason" placeholder="Alasan pembatalan..." class="w-full mb-4 px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl focus:border-red-500 outline-none text-sm smooth-transition">
             
-            <!-- FIX: Menyesuaikan panjang input maksimal ke 4-Digit sesuai standar PIN & OTP Kiosk AMR -->
             <input type="password" id="void-pin" maxlength="4" pattern="[0-9]*" placeholder="PIN / OTP MANAGER" class="w-full mb-6 px-4 py-4 bg-slate-950 border border-slate-800 text-red-400 text-center text-xl tracking-[0.5em] rounded-xl outline-none focus:border-red-500 font-bold smooth-transition">
 
             <div class="flex gap-3">
@@ -432,7 +452,7 @@
         </div>
     </div>
 
-    <!-- MODAL BARU: PENGINGAT ABSEN PULANG (SHIFT ALARM OFFLINE-PROOF) -->
+    <!-- MODAL BARU: PENGINGAT ABSEN PULANG -->
     <div id="modal-shift-alarm" class="hidden-screen fixed inset-0 bg-black/90 z-[130] flex items-center justify-center p-6 smooth-transition">
         <div class="bg-slate-900 border border-amber-500/20 rounded-3xl w-full max-w-xs p-6 shadow-2xl text-center">
             <div class="w-14 h-14 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center justify-center mx-auto mb-4 text-amber-500 animate-bounce">
@@ -447,10 +467,50 @@
         </div>
     </div>
 
+    <!-- MODAL BARU: PEMBAYARAN KOMPLIMEN / FOC (VIP & KARYAWAN DENGAN OTP) -->
+    <div id="modal-compliment" class="hidden-screen fixed inset-0 bg-black/90 z-[125] flex items-center justify-center p-6 smooth-transition">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-sm p-6 shadow-2xl text-center">
+            <div class="w-14 h-14 bg-rose-500/10 border border-rose-500/30 rounded-full flex items-center justify-center mx-auto mb-3 text-rose-500">
+                <i data-lucide="gift" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-xl font-black text-white mb-1">Otorisasi Komplimen (FOC)</h3>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-4">Pilih Jenis Komplimen di Bawah</p>
+
+            <div class="grid grid-cols-2 gap-2 bg-slate-950 p-1 rounded-xl mb-4 border border-slate-800">
+                <button onclick="switchComplimentType('VIP')" id="tab-comp-vip" class="py-2 text-xs font-black rounded-lg transition-all bg-amber-500 text-slate-950">VIP / GUEST</button>
+                <button onclick="switchComplimentType('Karyawan')" id="tab-comp-karyawan" class="py-2 text-xs font-bold rounded-lg transition-all text-slate-400 hover:text-white">KARYAWAN</button>
+            </div>
+
+            <div class="space-y-4 text-left bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80 mb-6">
+                <div id="comp-field-desc">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Keterangan / Jamuan VIP</label>
+                    <input type="text" id="comp-desc-input" placeholder="misal: Jamuan VIP Kolega Owner" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none focus:border-amber-500 text-xs">
+                </div>
+                
+                <div id="comp-field-name" class="hidden-screen">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nama Karyawan Penerima</label>
+                    <input type="text" id="comp-name-input" placeholder="misal: Mbak Ayu (Pelayan)" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none focus:border-amber-500 text-xs">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">4-Digit OTP Manager</label>
+                    <input type="password" id="comp-otp-input" maxlength="4" pattern="[0-9]*" placeholder="••••" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-amber-500 text-center text-xl tracking-[0.5em] rounded-xl outline-none focus:border-amber-500 font-bold">
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="closeModal('modal-compliment')" class="flex-1 py-3 text-slate-400 font-semibold text-xs hover:text-white">Batal</button>
+                <button onclick="submitComplimentAuth()" id="btn-exec-compliment" class="flex-1 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs transition active:scale-95 shadow-lg shadow-rose-600/15 flex items-center justify-center gap-1.5">
+                    <i data-lucide="check" class="w-4 h-4"></i> PROSES FOC
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- PANGGIL FILE LOGIKA JAVASCRIPT MODULAR DENGAN CACHE BUSTER TERBARU (v=99) -->
-    <script src="config.js?v=99"></script>
-    <script src="pos-core.js?v=99"></script>
-    <script src="pos-printer.js?v=99"></script>
-    <script src="pos-checkout.js?v=99"></script>
+    <script src="config.js?v=23"></script>
+    <script src="pos-core.js?v=23"></script>
+    <script src="pos-printer.js?v=23"></script>
+    <script src="pos-checkout.js?v=23"></script>
 </body>
 </html>

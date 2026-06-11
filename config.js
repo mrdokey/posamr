@@ -1,5 +1,6 @@
 /**
  * MODUL 1: CONFIG & KEYPAD SESSION
+ * UPDATE: Mixed Payment, Rounding State, & Voucher Database Dropdown
  */
 lucide.createIcons();
 
@@ -19,8 +20,8 @@ try {
 let configData = {};
 let menuData = [];
 let discountData = []; 
-let voucherData = []; // NEW: State untuk database Voucher
-let appliedVoucher = null; // NEW: State voucher yang sedang digunakan
+let voucherData = []; 
+let appliedVoucher = null; 
 
 let filteredData = []; 
 let cart = [];
@@ -29,6 +30,12 @@ let activeOrderId = null;
 let historyDataRaw = [];
 let voidTargetId = null;
 let pollInterval = null; 
+
+// Global State Tambahan untuk Pembayaran Gabungan & Pembulatan Kasir
+window.lastCashReceived = 0;
+window.lastNonCashReceived = 0;
+window.lastNonCashMethod = "";
+window.lastRoundingAdjustment = 0;
 
 // --- SISTEM AUTO-ENTER PIN KASIR (TOUCH & KEYBOARD) ---
 let loginPinValue = "";
@@ -95,8 +102,6 @@ window.onload = () => {
     }, 1000); 
 };
 
-// FILE: config.js (Bagian checkState)
-
 function checkState() {
     if (!cashierInfo) {
         showScreen('login-screen');
@@ -110,7 +115,6 @@ function checkState() {
             pinInput.addEventListener('input', handlePhysicalKeyboard);
         }
     } else {
-        // FILTER KEAMANAN STARTUP: Jika data session ilegal (Pelayan), paksa logout
         const allowedRoles = ["admin", "hrd", "manager", "owner"];
         const jobdeskClean = cashierInfo.jobdesk ? cashierInfo.jobdesk.toLowerCase().trim() : "";
         const roleClean = cashierInfo.role ? cashierInfo.role.toLowerCase().trim() : "";

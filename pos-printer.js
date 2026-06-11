@@ -1,19 +1,16 @@
 /**
  * MODUL PRINTER: ENGINE RAWBT & TEMPLATE STRUK PREMIUM
- * Menangani Multi-Printer Routing Tanpa Karakter China (Safe ASCII)
- * UPDATE: Split Target Support & Label Struk "ARSIP"
+ * UPDATE: Cetak Data Pembayaran Gabungan, Pembulatan, & Struk Piutang "Debt"
  */
 
 const LINE_WIDTH = 32; // Standar lebar karakter kertas thermal 58mm
 
-// --- HELPER 1: PERATA TENGAH (CENTER ALIGN) ---
 function centerText(text) {
     if (text.length >= LINE_WIDTH) return text.substring(0, LINE_WIDTH);
     const padding = Math.floor((LINE_WIDTH - text.length) / 2);
     return " ".repeat(padding) + text;
 }
 
-// --- HELPER 2: PERATA KANAN-KIRI (LEFT-RIGHT FLUSH) ---
 function formatLeftRight(leftText, rightText) {
     const spacesNeeded = LINE_WIDTH - leftText.length - rightText.length;
     if (spacesNeeded > 0) {
@@ -22,21 +19,18 @@ function formatLeftRight(leftText, rightText) {
     return leftText + "\n" + " ".repeat(LINE_WIDTH - rightText.length) + rightText;
 }
 
-// --- HELPER 3: ENKODE TEKS KE BASE64 SECARA AMAN ---
 function safeStringToBase64(str) {
     return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
         return String.fromCharCode('0x' + p1);
     }));
 }
 
-// --- HELPER 4: KIRIM INTENT PRINTER RAWBT SPESIFIK ---
 function sendIntentToRawBT(plainTextReceipt, printerProfileName) {
     const base64Data = safeStringToBase64(plainTextReceipt);
     const intentUrl = `intent:base64,${base64Data}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.printer=${printerProfileName};end;`;
     window.location.href = intentUrl;
 }
 
-// --- ENGINE 1: DRAFT TO OPEN (KITCHEN & BAR ORDER) ---
 function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
     const printerKitchenProfile = configData["PRINTER_KITCHEN"] || "Kitchen";
     const printerBarProfile = configData["PRINTER_BAR"] || "Bar";
@@ -63,7 +57,7 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
         sendIntentToRawBT(kitchenReceipt, printerKitchenProfile);
     }
 
-    // 2. BAR PRINT (DELAYED)
+    // 2. BAR PRINT
     const barItems = bill.items.filter(item => item.route === "Bar");
     if (barItems.length > 0) {
         let barReceipt = "";
@@ -87,7 +81,6 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
     }
 }
 
-// --- ENGINE 2: CHASE OUT & INTERFACE ROUTING ---
 function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discountAmount, serviceCharge, tax, grandTotal, target, isReprint = false, itemsToPrint = null) {
     const printerKasirProfile = configData["PRINTER_KASIR"] || "Kasir";
     const printerKitchenProfile = configData["PRINTER_KITCHEN"] || "Kitchen";
@@ -103,7 +96,6 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
     const items = itemsToPrint || cart; 
     let delayMultiplier = 0; 
 
-    // 1. BILL UTAMA / STRUK LUNAS (KASIR PRINTER)
     if (target === "All" || target === "CustomerCopy" || target === "ArsipCopy" || target === "Kasir") {
         const generateInvoiceBody = (copyLabel) => {
             let body = "";
@@ -138,17 +130,34 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
             if(tax > 0) {
                 body += formatLeftRight("Pajak PB1", tax.toLocaleString('id-ID')) + "\n";
             }
+            
+            // CETAK INFO PEMBULATAN KASIR (Jika ada penyesuaian nominal pembulatan)
+            const rounding = window.lastRoundingAdjustment || 0;
+            if (rounding !== 0) {
+                body += formatLeftRight("Pembulatan", (rounding > 0 ? "+" : "") + rounding.toLocaleString('id-ID')) + "\n";
+            }
+
             body += "-".repeat(LINE_WIDTH) + "\n";
             body += formatLeftRight("GRAND TOTAL", grandTotal.toLocaleString('id-ID')) + "\n";
             
             if (status === "Paid") {
-                const tunai = window.lastCashReceived || grandTotal;
+                // DETEKSI & CETAK INFO PEMBAYARAN GABUNGAN (MIXED PAYMENTS)
+                if (payMethod.startsWith("Mixed")) {
+                    body += formatLeftRight("Bayar (Cash)", window.lastCashReceived.toLocaleString('id-ID')) + "\n";
+                    body += formatLeftRight(`Bayar (${window.lastNonCashMethod})`, window.lastNonCashReceived.toLocaleString('id-ID')) + "\n";
+                } else {
+                    const tunai = window.lastCashReceived || grandTotal;
+                    body += formatLeftRight(`Bayar (${payMethod})`, tunai.toLocaleString('id-ID')) + "\n";
+                }
                 const kembalian = window.lastCashChange || 0;
-                body += formatLeftRight(`Bayar (${payMethod})`, tunai.toLocaleString('id-ID')) + "\n";
                 body += formatLeftRight("Kembalian", kembalian.toLocaleString('id-ID')) + "\n";
                 body += "=".repeat(LINE_WIDTH) + "\n";
                 body += centerText("STATUS : LUNAS") + "\n";
                 body += centerText(footerStruk) + "\n";
+            } else if (status === "Debt") {
+                body += "=".repeat(LINE_WIDTH) + "\n";
+                body += centerText("STATUS : CITY LEDGER (DEBT)") + "\n";
+                body += centerText("Nota gantung piutang Owner") + "\n";
             } else {
                 body += "=".repeat(LINE_WIDTH) + "\n";
                 body += centerText("STATUS : TAGIHAN SEMENTARA") + "\n";
@@ -162,14 +171,14 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
         if (target === "CustomerCopy") {
             cashierReceipt += generateInvoiceBody("STRUK PELANGGAN");
         } else if (target === "ArsipCopy") {
-            cashierReceipt += generateInvoiceBody("ARSIP"); // FIX: Mengubah ARSIP TOKO menjadi ARSIP
+            cashierReceipt += generateInvoiceBody("ARSIP");
         } else if (target === "Kasir") {
             cashierReceipt += generateInvoiceBody(status === "Paid" ? "STRUK PELANGGAN" : "BILL TAGIHAN MEJA");
         } else {
-            if (status === "Paid") {
-                cashierReceipt += generateInvoiceBody("STRUK PELANGGAN");
+            if (status === "Paid" || status === "Debt") {
+                cashierReceipt += generateInvoiceBody(status === "Debt" ? "CITY LEDGER" : "STRUK PELANGGAN");
                 cashierReceipt += "- ".repeat(LINE_WIDTH/2) + "\n\n";
-                cashierReceipt += generateInvoiceBody("ARSIP"); // FIX: Mengubah ARSIP TOKO menjadi ARSIP
+                cashierReceipt += generateInvoiceBody("ARSIP");
             } else {
                 cashierReceipt += generateInvoiceBody("BILL TAGIHAN MEJA");
             }
@@ -179,14 +188,14 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
         delayMultiplier++;
     }
 
-    // 2. KITCHEN ORDER (DAPUR)
+    // 2. KITCHEN ORDER
     if (target === "All" || target === "Kitchen") {
         const kitchenItems = items.filter(item => item.route === "Kitchen");
         if (kitchenItems.length > 0) {
             let kitchenReceipt = "";
             if (isReprint) kitchenReceipt += centerText("*** REPRINT / SALINAN ***") + "\n";
             kitchenReceipt += centerText("ORDERAN DAPUR") + "\n";
-            kitchenReceipt += "=".repeat(LINE_WIDTH) + "\n";
+            kitchenReceipt += "═".repeat(LINE_WIDTH) + "\n";
             kitchenReceipt += `Meja : Meja ${table}\n`;
             kitchenReceipt += `ID   : ${orderId.substring(0, 15)}\n`;
             kitchenReceipt += `Jam  : ${currentTimeStr} WITA\n`;
@@ -206,14 +215,14 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
         }
     }
 
-    // 3. BAR ORDER (MINUMAN)
+    // 3. BAR ORDER
     if (target === "All" || target === "Bar") {
         const barItems = items.filter(item => item.route === "Bar");
         if (barItems.length > 0) {
             let barReceipt = "";
             if (isReprint) barReceipt += centerText("*** REPRINT / SALINAN ***") + "\n";
             barReceipt += centerText("ORDERAN MINUMAN") + "\n";
-            barReceipt += "=".repeat(LINE_WIDTH) + "\n";
+            barReceipt += "═".repeat(LINE_WIDTH) + "\n";
             barReceipt += `Meja : Meja ${table}\n`;
             barReceipt += `ID   : ${orderId.substring(0, 15)}\n`;
             barReceipt += `Jam  : ${currentTimeStr} WITA\n`;
