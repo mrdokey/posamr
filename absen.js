@@ -1,21 +1,16 @@
 /**
  * MODUL: KIOSK ABSENSI, SINGLE SIGN-ON (SSO), OTP GENERATOR, & PIN CHANGER
- * UPDATE: Case-Insensitive Property Extraction & Strict Waiter Role Filter
+ * UPDATE: Integrasi Penuh AI Face Recognition (TensorFlow Add-on)
  */
 
-// 1. REGISTRASI SERVICE WORKER (Jalur Relatif Aman untuk PWA & GitHub Pages)
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-            .catch(err => console.error("SW Registration failed: ", err));
+        navigator.serviceWorker.register('./sw.js').catch(err => console.error(err));
     });
 }
 
-// Inisialisasi Lucide secara aman setelah DOM siap sepenuhnya
 document.addEventListener('DOMContentLoaded', () => {
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 });
 
 const STORAGE_API = "MRD_API_URL"; 
@@ -28,7 +23,6 @@ let currentLatLong = "";
 let streamObject = null; 
 let countdownInterval = null; 
 let otpInterval = null;
-
 let isBypassRequest = false; 
 let bypassReason = "";
 
@@ -49,13 +43,10 @@ function checkState() {
     if (!GAS_URL) { 
         showScreen('activation-screen'); 
     } else { 
-        // Cek apakah ada session aktif Kasir atau Pelayan di perangkat ini
         const hasCashierSession = localStorage.getItem("MRD_CASHIER"); 
         const hasWaiterSession = localStorage.getItem("MRD_WAITER_SESSION");
-
         showScreen('pin-screen');
         
-        // Ikon shortcut kembali ke aplikasi hanya muncul jika karyawan sedang di tengah Shift
         const appShortcutBtn = document.getElementById('btn-manual-app-shortcut');
         if (appShortcutBtn) {
             if (hasCashierSession || hasWaiterSession) {
@@ -64,23 +55,17 @@ function checkState() {
                 appShortcutBtn.classList.add('hidden'); 
             }
         }
-
         fetchConfigBg();
     }
 }
 
-// Pintasan manual kembali ke aplikasi kerja tanpa ambil foto absen ulang (Khusus Waiter)
 function openManualLogin() { 
     const isCashier = localStorage.getItem("MRD_CASHIER"); 
     const isWaiter = localStorage.getItem("MRD_WAITER_SESSION");
 
-    if (isCashier) {
-        window.location.href = "pos.html";
-    } else if (isWaiter) {
-        window.location.href = "order.html";
-    } else {
-        alert("Sesi Anda telah berakhir. Silakan masukkan PIN untuk lanjut.");
-    }
+    if (isCashier) window.location.href = "pos.html";
+    else if (isWaiter) window.location.href = "order.html";
+    else alert("Sesi Anda telah berakhir. Silakan masukkan PIN untuk lanjut.");
 }
 
 function showScreen(id) { 
@@ -91,10 +76,7 @@ function showScreen(id) {
     }); 
     const target = document.getElementById(id); 
     if (target) target.classList.remove('hidden-screen'); 
-    
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons(); 
-    }
+    if (typeof lucide !== 'undefined') lucide.createIcons(); 
 }
 
 async function activateSystem() { 
@@ -123,6 +105,12 @@ async function fetchConfigBg() {
         const json = await res.json(); 
         if(json.success) {
             document.getElementById('absen-resto-name').innerText = json.data["NAMA_PERUSAAN"] || "LABARAC BAR"; 
+            
+            // CEK CONFIGURASI AI FACE RECOGNITION DARI GOOGLE SHEETS
+            if (json.data["FITUR_FACE_RECOGNITION"] === "ON" || json.data["FITUR_FACE_RECOGNITION"] === "TRUE") {
+                isFaceRecogEnabled = true;
+                loadAiModels(); // Inisiasi mesin AI di latar belakang
+            }
         }
     } catch(e) {} 
 }
@@ -134,7 +122,6 @@ function resetLicense() {
     } 
 }
 
-// --- FUNGSI NUMPAD PIN (LAYAR AWAL) --- 
 function updatePinDots() { 
     const dots = document.querySelectorAll('.pin-dot'); 
     dots.forEach((dot, idx) => { 
@@ -152,9 +139,7 @@ function pressNum(num) {
     if (currentPin.length < 4) { 
         currentPin += num;
         updatePinDots(); 
-        if (currentPin.length === 4) { 
-            setTimeout(verifyPin, 300); 
-        } 
+        if (currentPin.length === 4) setTimeout(verifyPin, 300); 
     } 
 }
 
@@ -170,10 +155,8 @@ function clearPin() {
     updatePinDots(); 
 }
 
-// --- VERIFIKASI PIN & MASUK DASHBOARD --- 
 async function verifyPin() {
     if(currentPin.length < 4) return;
-
     const dots = document.querySelectorAll('.pin-dot');
     dots.forEach(dot => dot.classList.add('animate-pulse'));
 
@@ -199,21 +182,22 @@ async function verifyPin() {
     }
 }
 
-// --- PUSAT NAVIGASI (DASHBOARD HUB) --- 
 function openDashboard() {
     showScreen('dashboard-screen'); 
     document.getElementById('emp-name').innerText = verifiedUser.name || verifiedUser.Name || ""; 
     document.getElementById('emp-area').innerText = verifiedUser.area || verifiedUser.Area || "PUSAT"; 
     
-    // DEFENSIP CHECK: Mengatasi sensitivitas huruf kapital 'Role' vs 'role' dari database
     const userRole = (verifiedUser.role || verifiedUser.Role || "").toString().toLowerCase().trim();
     const otpNavBtn = document.getElementById('btn-otp-nav');
     if (otpNavBtn) {
-        if (userRole === "manager") {
-            otpNavBtn.classList.remove('hidden-screen');
-        } else {
-            otpNavBtn.classList.add('hidden-screen');
-        }
+        if (userRole === "manager") otpNavBtn.classList.remove('hidden-screen');
+        else otpNavBtn.classList.add('hidden-screen');
+    }
+
+    // TARIK RUMUS WAJAH REFERENSI SAAT KARYAWAN BERHASIL LOGIN KIOSK
+    const userFoto = verifiedUser.fotoUrl || verifiedUser.FotoUrl || verifiedUser.foto || verifiedUser.Foto || "";
+    if (userFoto) {
+        extractReferenceFace(userFoto);
     }
 }
 
@@ -231,7 +215,6 @@ function backToDashboard() {
     showScreen('dashboard-screen'); 
 }
 
-// --- ROUTER MENU DASHBOARD --- 
 function openSubScreen(menu) { 
     if (menu === 'absen') { 
         setupAbsensiMenu(); 
@@ -239,7 +222,6 @@ function openSubScreen(menu) {
         const userRole = (verifiedUser.role || verifiedUser.Role || "").toString().toLowerCase().trim();
         const userStatus = (verifiedUser.status || verifiedUser.Status || "").toString().toUpperCase().trim();
         
-        // DEFENSIP CHECK: Validasi strict untuk atasan
         if (userRole !== "manager") {
             alert("Akses Ditolak!\n\nMenu OTP Otorisasi hanya boleh diakses oleh akun tingkat Manager.");
             return;
@@ -257,10 +239,8 @@ function openSubScreen(menu) {
     } 
 }
 
-// --- 1. LOGIKA MENU ABSENSI --- 
 function setupAbsensiMenu() {
     showScreen('sub-absen-screen');
-
     const msg = document.getElementById('status-msg');
     const sub = document.getElementById('status-sub');
     const timerContainer = document.getElementById('timer-container');
@@ -269,16 +249,12 @@ function setupAbsensiMenu() {
     timerContainer.classList.add('hidden-screen');
     sub.innerHTML = "";
 
-    // Reset visibilitas seluruh tombol menu absen
     document.getElementById('btn-clock-in').classList.add('hidden-screen');
     document.getElementById('btn-clock-out').classList.add('hidden-screen');
     document.getElementById('btn-bypass').classList.add('hidden-screen');
     
-    // Reset tombol goto-app jika ada di HTML
     const gotoAppBtn = document.getElementById('btn-goto-app');
-    if (gotoAppBtn) {
-        gotoAppBtn.classList.add('hidden-screen');
-    }
+    if (gotoAppBtn) gotoAppBtn.classList.add('hidden-screen');
 
     const userStatus = (verifiedUser.status || verifiedUser.Status || "").toString().toUpperCase().trim();
     const userRole = (verifiedUser.role || verifiedUser.Role || "").toString().toLowerCase().trim();
@@ -291,15 +267,10 @@ function setupAbsensiMenu() {
     } else {
         msg.innerText = verifiedUser.message || verifiedUser.Message || "Status Kerja Aktif"; 
 
-        // FIX SINKRONISASI: Menampilkan tombol hanya jika Role === Staff DAN Jobdesk === Pelayan
         if (userRole === "staff" && userJobdesk === "pelayan") {
-            if (gotoAppBtn) {
-                gotoAppBtn.classList.remove('hidden-screen');
-            }
+            if (gotoAppBtn) gotoAppBtn.classList.remove('hidden-screen');
         } else {
-            if (gotoAppBtn) {
-                gotoAppBtn.classList.add('hidden-screen');
-            }
+            if (gotoAppBtn) gotoAppBtn.classList.add('hidden-screen');
         }
 
         if (verifiedUser.canClockOut || verifiedUser.CanClockOut) {
@@ -307,11 +278,8 @@ function setupAbsensiMenu() {
             document.getElementById('btn-clock-out').classList.remove('hidden-screen');
         } else {
             const remainingMs = verifiedUser.remainingMs || verifiedUser.RemainingMs;
-            if (remainingMs) {
-                startLiveTimer(remainingMs);
-            } else {
-                sub.innerText = verifiedUser.remaining || verifiedUser.Remaining || "";
-            }
+            if (remainingMs) startLiveTimer(remainingMs);
+            else sub.innerText = verifiedUser.remaining || verifiedUser.Remaining || "";
             document.getElementById('btn-bypass').classList.remove('hidden-screen'); 
         }
     }
@@ -351,10 +319,19 @@ function triggerIzinCepat() {
     startCapture('OUT'); 
 }
 
-// --- FUNGSI KAMERA & GPS (ABSEN) --- 
 function startCapture(type) {
     currentActionType = type; 
     showScreen('capture-screen'); 
+    
+    const aiCont = document.getElementById('ai-status-container');
+    if (isFaceRecogEnabled && isAiModelsLoaded) {
+        if (aiCont) aiCont.classList.remove('hidden');
+        if (aiCont) aiCont.classList.add('flex');
+    } else {
+        if (aiCont) aiCont.classList.add('hidden');
+        if (aiCont) aiCont.classList.remove('flex');
+    }
+
     initCamera(); 
     initGPS();
 }
@@ -387,18 +364,98 @@ function initGPS() {
     }, { enableHighAccuracy: true });
 }
 
-function capture() { 
+// ============================================================================
+// ENGINE AI: TENSORFLOW FACE MATCHING & OVERRIDE CAPTURE
+// ============================================================================
+let isFaceRecogEnabled = false; 
+let isAiModelsLoaded = false;
+let referenceFaceDescriptor = null; 
+
+async function loadAiModels() {
+    if (isAiModelsLoaded) return;
+    const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+    try {
+        await Promise.all([
+            faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL), 
+            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL), 
+            faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL) 
+        ]);
+        isAiModelsLoaded = true;
+        console.log("Model AI Face Recognition siap!");
+    } catch (e) {
+        console.log("Gagal memuat model AI.");
+    }
+}
+
+async function extractReferenceFace(imageUrl) {
+    if (!isFaceRecogEnabled || !isAiModelsLoaded || !imageUrl) return;
+    referenceFaceDescriptor = null; 
+    
+    try {
+        const img = new Image();
+        img.crossOrigin = "Anonymous"; 
+        img.src = imageUrl; 
+
+        img.onload = async () => {
+            const detection = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
+            if (detection) {
+                referenceFaceDescriptor = detection.descriptor;
+            }
+        };
+    } catch (err) {
+        console.log("Gagal memproses foto acuan dari database.");
+    }
+}
+
+// Override Capture Function untuk Inject Validasi AI Wajah
+async function capture() { 
     const video = document.getElementById('webcam'); 
     const canvas = document.getElementById('canvas'); 
     const ctx = canvas.getContext('2d');
+    const snapBtn = document.getElementById('btn-snap');
 
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const base64Photo = canvas.toDataURL('image/jpeg', 0.8);
+
+    // BLOK ADD-ON AI
+    if (isFaceRecogEnabled && isAiModelsLoaded) {
+        snapBtn.innerText = "Memindai Wajah...";
+        snapBtn.disabled = true;
+        document.getElementById('ai-status-text').innerText = "AI sedang mencocokkan...";
+
+        try {
+            const detection = await faceapi.detectSingleFace(canvas).withFaceLandmarks().withFaceDescriptor();
+            
+            if (!detection) {
+                alert("Wajah tidak terdeteksi oleh kamera! Harap lepas masker dan hadap lurus ke kamera.");
+                snapBtn.innerText = "AMBIL FOTO";
+                snapBtn.disabled = false;
+                document.getElementById('ai-status-text').innerText = "Wajah tidak ditemukan!";
+                return; // GAGALKAN
+            }
+
+            if (referenceFaceDescriptor) {
+                const distance = faceapi.euclideanDistance(referenceFaceDescriptor, detection.descriptor);
+                if (distance > 0.6) {
+                    alert(`ABSEN DITOLAK! (Skor: ${distance.toFixed(2)})\n\nWajah Anda tidak cocok dengan foto profil di database. Dilarang titip absen!`);
+                    snapBtn.innerText = "AMBIL FOTO";
+                    snapBtn.disabled = false;
+                    document.getElementById('ai-status-text').innerText = "Wajah Tidak Cocok!";
+                    return; // GAGALKAN
+                }
+            } else {
+                console.log("Foto rujukan gagal diurai (CORS/Kosong), Bypass Face API.");
+            }
+        } catch (e) {
+            console.log("Kesalahan eksekusi Face API. Lanjut ke proses server normal.");
+        }
+    }
 
     if (streamObject) streamObject.getTracks().forEach(track => track.stop());
     submitAttendanceData(base64Photo);
 }
 
+// Lanjutan Proses Submit setelah Kamera/AI selesai
 async function submitAttendanceData(photoBase64) { 
     const snapBtn = document.getElementById('btn-snap'); 
     snapBtn.innerText = "Mengirim...";
@@ -425,14 +482,10 @@ async function submitAttendanceData(photoBase64) {
             document.getElementById('success-msg').innerText = json.message;
             showScreen('success-screen');
             
-            // JIKA MASUK (IN) -> LEMPAR KE DASHBOARD KIOSK (HAPUS AUTO SSO)
             if (currentActionType === "IN") {
                 document.getElementById('success-routing-msg').innerText = "Absen Masuk Berhasil! Memuat Dashboard Kiosk...";
-                setTimeout(() => { 
-                    verifyPin(); // Memanggil verifyPin ulang untuk memuat ulang status terbaru di Dashboard
-                }, 3000); 
+                setTimeout(() => { verifyPin(); }, 3000); 
             } else {
-                // JIKA PULANG (OUT) -> HAPUS SESSION LALU KEMBALI KE LAYAR PIN AWAL
                 localStorage.removeItem("MRD_CASHIER");
                 localStorage.removeItem("MRD_WAITER_SESSION");
                 document.getElementById('success-routing-msg').innerText = "Sampai Jumpa Besok...";
@@ -463,8 +516,6 @@ async function autoLoginApp() {
 
         if (json.success) {
             const userJobdesk = (json.jobdesk || json.Jobdesk || "").toString().toLowerCase().trim();
-
-            // Hanya mengizinkan pelayan beranjak ke order.html (Aplikasi Waiter HP) dari Kiosk
             if (userJobdesk === "pelayan") {
                 localStorage.setItem("MRD_WAITER_SESSION", JSON.stringify(json));
                 window.location.href = "order.html"; 
@@ -482,7 +533,7 @@ async function autoLoginApp() {
     }
 }
 
-// --- 2. LOGIKA UBAH PIN --- 
+// --- LOGIKA UBAH PIN --- 
 async function submitNewPin() { 
     const oldPin = document.getElementById('pin-old').value.trim(); 
     const newPin = document.getElementById('pin-new').value.trim();
@@ -522,7 +573,7 @@ async function submitNewPin() {
     }
 }
 
-// --- 3. LOGIKA OTP GENERATOR (1 JAM) --- 
+// --- LOGIKA OTP GENERATOR (1 JAM) --- 
 function startOtpGenerator() {
     updateOtp(); 
     otpInterval = setInterval(updateOtp, 1000); 
@@ -540,7 +591,7 @@ function updateOtp() {
     document.getElementById('otp-text').innerText = otpCode;
 
     const totalSecondsLeft = (minutesRemaining * 60) + secondsRemaining;
-    const progress = (totalSecondsLeft / 3600) * 264; // Dasharray 264
+    const progress = (totalSecondsLeft / 3600) * 264;
 
     document.getElementById('progress-bar').style.strokeDashoffset = 264 - progress;
     document.getElementById('countdown-text').innerText = minutesRemaining + "m";
