@@ -1,7 +1,7 @@
 {
   "name": "AMR System",
-  "short_name": "AMR",
-  "description": "Kiosk Absensi & SSO Router AMR POS",
+  "short_name": "AMR One",
+  "description": "Kiosk Absensi AMR",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0f172a",
@@ -9,14 +9,14 @@
   "orientation": "potrait",
   "icons": [
     {
-      "src": "https://i.ibb.co.com/gMmSSTgq/IMG-20260606-WA0000.jpg",
+      "src": "https://i.ibb.co.com/934bwtWJ/1780277980692.png",
       "sizes": "192x192",
-      "type": "image/jpeg"
+      "type": "image/png"
     },
     {
-      "src": "https://i.ibb.co.com/gMmSSTgq/IMG-20260606-WA0000.jpg",
+      "src": "https://i.ibb.co.com/934bwtWJ/1780277980692.png",
       "sizes": "512x512",
-      "type": "image/jpeg"
+      "type": "image/png"
     }
   ]
 }
