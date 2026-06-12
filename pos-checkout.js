@@ -332,6 +332,7 @@ async function activateAndPrintDraft(orderId) {
             voucherCode: bill.voucherCode || "",
             tax: bill.tax,
             serviceCharge: bill.serviceCharge,
+            rounding: 0, // Injeksi rounding default untuk Open Bill
             totalAmount: bill.totalAmount,
             paymentMethod: "-",
             orderStatus: "Open", 
@@ -427,7 +428,7 @@ async function executeVoidVerified(reasonText) {
         data: {
             orderId: voidTargetId, tableNo: bill.tableNo, area: userArea, 
             discount: bill.discountId, voucherCode: bill.voucherCode || "",
-            tax: bill.tax, serviceCharge: bill.serviceCharge, totalAmount: 0, 
+            tax: bill.tax, serviceCharge: bill.serviceCharge, rounding: 0, totalAmount: 0, 
             paymentMethod: "-", orderStatus: "Void", voidReason: reasonText, items: [] 
         }
     };
@@ -556,6 +557,7 @@ async function confirmSplit() {
             voucherCode: "",
             tax: taxOrig,
             serviceCharge: serviceChargeOrig,
+            rounding: 0, // Split bill original update belum dilunasi
             totalAmount: grandTotalOrig,
             paymentMethod: "-",
             orderStatus: "Open", 
@@ -809,6 +811,9 @@ async function submitOrderPayload(statusTarget, printTarget, forceStatus = null,
 
     let userArea = cashierInfo ? cashierInfo.area : "";
 
+    // INJEKSI NILAI PEMBULATAN KE PAYLOAD API
+    let currentRounding = window.lastRoundingAdjustment || 0;
+
     const payload = {
         action: "placeOrder", 
         data: {
@@ -820,6 +825,7 @@ async function submitOrderPayload(statusTarget, printTarget, forceStatus = null,
             voucherCode: customVoucher || (appliedVoucher ? appliedVoucher.code : ""), 
             tax: tax, 
             serviceCharge: serviceCharge, 
+            rounding: currentRounding, // <--- SUNTIKAN PROPERTI ROUNDING
             totalAmount: grandTotal, 
             paymentMethod: paymentMethod,
             orderStatus: orderStatus, 
@@ -1044,6 +1050,7 @@ async function settleDebtInDatabase(orderId, paymentMethod, amount, tableNo) {
             voucherCode: `LUNAS PIUTANG (ACC KASIR: ${cashierInfo.name})`, // Log pelunasan
             tax: 0,
             serviceCharge: 0,
+            rounding: 0, // INJEKSI ROUNDING SAAT PELUNASAN
             totalAmount: amount,
             paymentMethod: paymentMethod, // Mengubah ke metode bayar asli
             orderStatus: "Paid", // Mengubah status Debt ke Paid (Lunas)
@@ -1188,6 +1195,7 @@ async function submitComplimentPayload(logAuditText, paymentMethodTarget, employ
             voucherCode: logAuditText, 
             tax: 0,              
             serviceCharge: 0,    
+            rounding: 0,         // INJEKSI ROUNDING FOC
             totalAmount: 0,      
             paymentMethod: paymentMethodTarget, 
             orderStatus: "Paid", 
