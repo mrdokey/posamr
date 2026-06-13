@@ -1,11 +1,14 @@
 /**
  * MODUL 4: WAITER/PELAYAN ENGINE (FULL RESPONSIVE & DRAFT ORDER)
- * UPDATE: Fix Kategori Spasi Spreadsheet & Clone CSS Card Kasir
+ * UPDATE: SaaS Multi-Client Dynamic Token & Waiter Shift Alarm (Eco Banner)
  */
 
 lucide.createIcons();
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxUP-K2iIaP8qF8ZBjeOI3h0OG7du_wcJQE2qM507YTb7magRRZejs6DZmqzy-Dulgy/exec";
+// KUNCI AMAN SAAS: Mengambil URL API Lisensi secara dinamis dari memori perangkat
+const STORAGE_API = "MRD_API_URL";
+let GAS_URL = localStorage.getItem(STORAGE_API);
+
 const STORAGE_USER = "MRD_WAITER_SESSION";
 const OFFLINE_QUEUE_KEY = "MRD_OFFLINE_WAITER_QUEUE";
 
@@ -77,6 +80,13 @@ window.onload = () => {
 };
 
 function checkState() {
+    // PROTEKSI UTAMA SAAS: Jika Lisensi Kosong, paksa alihkan HP ke Kiosk Absen untuk aktivasi
+    if (!GAS_URL) {
+        alert("Sistem PWA Pelayan Belum Aktif!\n\nHarap lakukan aktivasi berlisensi terlebih dahulu melalui Kiosk Absensi di Tablet Utama.");
+        window.location.href = "index.html";
+        return;
+    }
+
     if (!cashierInfo) {
         showScreen('login-screen');
         fetchConfigBg();
@@ -166,7 +176,6 @@ async function loginWaiter() {
 function logoutKasir() {
     if(confirm("Keluar dari sesi aplikasi saat ini?")) {
         localStorage.removeItem(STORAGE_USER);
-        // Mengalihkan pengguna kembali ke Pintu Utama (Kiosk Absensi)
         window.location.href = "index.html"; 
     }
 }
@@ -200,6 +209,9 @@ async function initApp() {
             applyConfig();
         }
     } catch (e) { console.log("Sedang Offline"); }
+
+    // Jalankan sistem pengingat otomatis Absen Pulang (Shift Alarm)
+    checkWaiterShiftAlarm();
 }
 
 function applyConfig() {
@@ -227,7 +239,6 @@ function applyFilters(searchStr = "") {
     filteredData = menuData;
     
     if(currentCategory !== 'Semua') { 
-        // PERBAIKAN: Gunakan .trim() untuk mengabaikan spasi nyasar dari Spreadsheet
         filteredData = filteredData.filter(m => (m.category || "").trim() === currentCategory); 
     }
     
@@ -247,8 +258,6 @@ function applyFilters(searchStr = "") {
         }, 150);
     }
 }
-
-// FILE: waiter.js (Timpa fungsi renderMenuHTML ini)
 
 function renderMenuHTML(items) {
     const container = document.getElementById('menu-container');
@@ -272,27 +281,21 @@ function renderMenuHTML(items) {
         const isHot = (parseInt(item.totalSold) || 0) > 10;
         const badgeHtml = isHot ? `<div class="absolute top-2 left-2 bg-rose-600 text-white text-[9px] font-black px-2 py-1 rounded-md shadow-md animate-pulse">🔥 HOT</div>` : ``;
 
-        // PERBAIKAN FINAL: 
-        // 1. Card utama dikunci tingginya (h-[240px])
-        // 2. Gambar dikunci (h-[130px])
-        // 3. Teks dikunci (h-[110px])
         return `
         <div onclick="addToCart('${safeId}', '${safeName}', ${safePrice}, '${safeRoute}')" class="bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden cursor-pointer active:scale-95 transition-transform relative h-[240px]">
             
-            <!-- Area Gambar (Tinggi Tetap) -->
             <div class="h-[130px] w-full relative shrink-0 overflow-hidden bg-slate-900">
                 <img src="${item.image || fallbackImg}" onerror="this.onerror=null; this.src='${fallbackImg}';" class="w-full h-full object-cover">
                 ${badgeHtml}
                 <div class="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-md text-slate-300 text-[9px] font-bold px-2 py-0.5 rounded border border-slate-700">${safeCat}</div>
             </div>
 
-            <!-- Area Teks (Tinggi Tetap) -->
             <div class="h-[110px] p-3 flex flex-col justify-between bg-slate-800 w-full">
-                <div>
+                <div class="text-left">
                     <h3 class="text-xs font-bold text-white line-clamp-2 leading-snug">${safeName}</h3>
                     <p class="text-[9px] text-slate-400 mt-1 line-clamp-2">${safeDesc}</p>
                 </div>
-                <p class="text-xs font-black text-amber-500 mt-1 tracking-tight">Rp ${safePrice.toLocaleString('id-ID')}</p>
+                <p class="text-xs font-black text-amber-500 mt-1 tracking-tight text-left">Rp ${safePrice.toLocaleString('id-ID')}</p>
             </div>
 
         </div>
@@ -320,10 +323,13 @@ function addNote(index) {
     if(note !== null) { cart[index].notes = note; renderCart(); }
 }
 
+// FILE: waiter.js (Ubah fungsi clearCart ini)
+
 function clearCart() {
     if(confirm("Kosongkan keranjang pelayan?")) { 
         cart = []; 
-        document.getElementById('order-table').value = ""; 
+        const orderTableEl = document.getElementById('order-table');
+        if (orderTableEl) orderTableEl.value = ""; 
         renderCart(); 
         toggleMobileCart(); 
     }
@@ -353,7 +359,7 @@ function renderCart() {
     container.innerHTML = cart.map((item, idx) => `
         <div class="bg-slate-800 p-3 rounded-2xl border border-slate-700 shadow-sm relative text-slate-100">
             <div class="flex justify-between items-start mb-2">
-                <div class="pr-2">
+                <div class="pr-2 text-left">
                     <h4 class="text-xs font-bold leading-tight">${item.name}</h4>
                     <p class="text-xs text-amber-500 font-black mt-1">Rp ${item.subtotal.toLocaleString('id-ID')}</p>
                 </div>
@@ -414,6 +420,7 @@ async function sendOrderToCashier() {
             voucherCode: "",
             tax: 0, 
             serviceCharge: 0, 
+            rounding: 0, // Injeksi nilai pembulatan default ke draf
             totalAmount: subtotal, 
             paymentMethod: "-",
             orderStatus: "Draft", 
@@ -428,7 +435,9 @@ async function sendOrderToCashier() {
         localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
 
         alert(`⚠️ Koneksi terputus! Draft disimpan di antrean HP Anda. Klik Sync nanti saat sinyal bagus.`);
-        cart = []; document.getElementById('order-table').value = "";
+        cart = []; 
+        const orderTableEl = document.getElementById('order-table');
+        if (orderTableEl) orderTableEl.value = "";
         renderCart(); toggleMobileCart();
         return;
     }
@@ -445,7 +454,8 @@ async function sendOrderToCashier() {
             
             setTimeout(() => {
                 cart = [];
-                document.getElementById('order-table').value = "";
+                const orderTableEl = document.getElementById('order-table');
+                if (orderTableEl) orderTableEl.value = "";
                 renderCart();
                 btn.innerHTML = `<i data-lucide="send" class="w-5 h-5"></i> <span>KIRIM KE KASIR (DRAFT)</span>`;
                 btn.disabled = false;
@@ -477,3 +487,25 @@ window.addEventListener('online', async () => {
         if (queue.length === 0) alert("Semua draft tertunda berhasil dikirim ke Kasir!");
     }
 });
+
+// ==========================================
+// SEKSI 5: PENGINGAT ABSEN PULANG WAITER (SHIFT ALARM)
+// ==========================================
+function checkWaiterShiftAlarm() {
+    if (!cashierInfo) return;
+    
+    // Interval cek pasif setiap 1 menit sekali (Sangat Hemat Baterai HP)
+    setInterval(() => {
+        const nowObj = new Date();
+        const currentHour = nowObj.getHours();
+        const alarmBanner = document.getElementById('waiter-shift-alarm-banner');
+        
+        if (alarmBanner) {
+            // Alarm bergetar jika melewati batas shift malam default (01:00 WITA)
+            if (currentHour >= 1 && currentHour < 6) {
+                alarmBanner.classList.remove('hidden-screen');
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100]); // Getar halus HP pelayan
+            }
+        }
+    }, 60000);
+}

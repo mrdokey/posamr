@@ -1,10 +1,13 @@
 /**
  * MODUL 1: CONFIG & KEYPAD SESSION
- * UPDATE: Mixed Payment, Rounding State, & Voucher Database Dropdown
+ * UPDATE: Dynamic SaaS License Check (No Hardcoded GAS URL)
  */
 lucide.createIcons();
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxUP-K2iIaP8qF8ZBjeOI3h0OG7du_wcJQE2qM507YTb7magRRZejs6DZmqzy-Dulgy/exec";
+// KUNCI AMAN SAAS: Mengambil URL API Lisensi secara dinamis dari memori perangkat
+const STORAGE_API = "MRD_API_URL";
+let GAS_URL = localStorage.getItem(STORAGE_API);
+
 const STORAGE_USER = "MRD_CASHIER";
 const OFFLINE_QUEUE_KEY = "MRD_OFFLINE_QUEUE";
 const LOCAL_OPEN_BILLS_KEY = "MRD_LOCAL_OPEN_BILLS";
@@ -103,6 +106,13 @@ window.onload = () => {
 };
 
 function checkState() {
+    // PROTEKSI UTAMA SAAS: Jika Lisensi Kosong, paksa alihkan perangkat ke halaman Aktivasi Absensi
+    if (!GAS_URL) {
+        alert("Aplikasi Kasir Belum Diaktivasi!\n\nAnda akan dialihkan ke halaman utama Absensi untuk memasukkan URL API Lisensi.");
+        window.location.href = "index.html";
+        return;
+    }
+
     if (!cashierInfo) {
         showScreen('login-screen');
         fetchConfigBg();
