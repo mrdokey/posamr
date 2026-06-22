@@ -33,7 +33,7 @@
 </head>
 <body class="h-[100dvh] w-screen flex flex-col select-none text-slate-100 relative">
 
-    <!-- TOAST CONTAINER: NOTIFIKASI ORDERAN MASUK MELAYANG (FIX: Ditambahkan untuk wadah popup kasir) -->
+    <!-- TOAST CONTAINER: NOTIFIKASI ORDERAN MASUK MELAYANG -->
     <div id="toast-container" class="fixed top-6 right-6 z-[140] flex flex-col gap-3 max-w-sm pointer-events-none"></div>
 
     <!-- 1. SPLASH SCREEN -->
@@ -99,8 +99,6 @@
                         <span id="draft-alert-dot" class="hidden absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full animate-ping border-2 border-slate-900"></span>
                     </button>
                     
-                    
-
                     <button onclick="syncData()" id="btn-sync" class="p-2.5 text-blue-400 bg-blue-950/30 rounded-xl hover:bg-blue-950/50 smooth-transition"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
                     <button onclick="logoutKasir()" class="p-2.5 text-rose-500 bg-rose-950/30 rounded-xl hover:bg-rose-950/50 smooth-transition"><i data-lucide="log-out" class="w-5 h-5"></i></button>
                 </div>
@@ -311,7 +309,7 @@
         </div>
     </div>
 
-    <!-- MODAL 2: POPUP SUKSES & KEMBALIAN -->
+    <!-- MODAL 2: POPUP SUKSES & KEMBALIAN (DUA TAHAP - INTERAKTIF ECO PAPER) -->
     <div id="modal-success-change" class="hidden-screen fixed inset-0 bg-black/90 z-[120] flex items-center justify-center p-6 smooth-transition animate-slide-up">
         <div class="bg-slate-900 border border-emerald-500/20 rounded-3xl w-full max-w-xs p-6 shadow-2xl text-center">
             <div class="w-14 h-14 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto mb-3 text-emerald-400">
@@ -410,6 +408,7 @@
             
             <input type="text" id="void-reason" placeholder="Alasan pembatalan..." class="w-full mb-4 px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl focus:border-red-500 outline-none text-sm smooth-transition">
             
+            <!-- FIX: Menyesuaikan panjang input maksimal ke 4-Digit sesuai standar PIN & OTP Kiosk AMR -->
             <input type="password" id="void-pin" maxlength="4" pattern="[0-9]*" placeholder="PIN / OTP MANAGER" class="w-full mb-6 px-4 py-4 bg-slate-950 border border-slate-800 text-red-400 text-center text-xl tracking-[0.5em] rounded-xl outline-none focus:border-red-500 font-bold smooth-transition">
 
             <div class="flex gap-3">
