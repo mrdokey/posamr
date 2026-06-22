@@ -284,14 +284,14 @@ function renderMenuHTML(items) {
         const badgeHtml = isHot ? `<div class="absolute top-2 left-2 bg-rose-600 text-white text-[9px] font-black px-2 py-1 rounded-md shadow-md animate-pulse">🔥 HOT</div>` : ``;
 
         // PERBAIKAN STRUKTUR TEKS WAITER (HP):
-        // 1. Kartu luar diubah menjadi "h-full" (bukan h-[240px]) agar bisa memanjang otomatis.
-        // 2. Gambar tetap terkunci tinggi h-[130px] agar irit ruang di layar HP.
-        // 3. line-clamp-2 pada nama dan deskripsi dihapus, diganti break-words agar teks tampil penuh.
+        // 1. h-full tetap dipertahankan pada pembungkus luar agar kartu sejajar.
+        // 2. Gambar dikunci ke h-[110px].
+        // 3. Deskripsi bebas memanjang ke bawah (break-words).
         return `
         <div onclick="addToCart('${safeId}', '${safeName}', ${safePrice}, '${safeRoute}')" class="bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden cursor-pointer active:scale-95 transition-transform relative h-full">
             
-            <div class="h-[130px] w-full relative shrink-0 overflow-hidden bg-slate-900">
-                <img src="${item.image || fallbackImg}" onerror="this.onerror=null; this.src='${fallbackImg}';" class="w-full h-full object-cover">
+            <div class="h-[110px] w-full relative shrink-0 overflow-hidden bg-slate-900">
+                <img src="${item.image || fallbackImg}" onerror="this.onerror=null; this.src='${fallbackImg}';" class="w-full h-full object-cover transition-transform duration-700 hover:scale-110">
                 ${badgeHtml}
                 <div class="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-md text-slate-300 text-[9px] font-bold px-2 py-0.5 rounded border border-slate-700">${safeCat}</div>
             </div>
