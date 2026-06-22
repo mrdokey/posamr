@@ -1,9 +1,9 @@
 /**
  * MODUL 2: CORE POS, VOUCHER DROPDOWN, ROUNDING, & COMPACT CARD GRID LOGIC
- * UPDATE: Responsive Row-Align Card Layout (No Clipping & Safe Auto-Height)
+ * UPDATE: Proportional Row-Align Card Layout (Fixed Image & Flexible Card)
  */
 
-// HELPER: Kalkulator Pembulatan Kasir Dinamis dari Database Config Sheets
+// --- HELPER: KALKULASI PEMBULATAN DINAMIS KASIR ---
 function getRoundedAmount(amount) {
     const arah = (configData["PEMBULATAN_ARAH"] || "NONE").toUpperCase().trim(); 
     const nominal = parseInt(configData["PEMBULATAN_NOMINAL"] || "1000") || 1000;
@@ -26,11 +26,6 @@ async function fetchConfigBg() {
         if(json.success) {
             const nameEl = document.getElementById('login-resto-name');
             if (nameEl) nameEl.innerText = json.data["NAMA_PERUSAAN"] || "RESTO";
-            
-            // Cek status PWA Face Recognition
-            if (json.data["FITUR_FACE_RECOGNITION"] === "ON" || json.data["FITUR_FACE_RECOGNITION"] === "TRUE") {
-                isFaceRecogEnabled = true;
-            }
         }
     } catch(e) {}
 }
@@ -70,7 +65,7 @@ async function loginKasir() {
 function logoutKasir() {
     if(confirm("Keluar dari sesi aplikasi saat ini?")) {
         localStorage.removeItem(STORAGE_USER);
-        window.location.reload(); 
+        window.location.href = "index.html"; 
     }
 }
 
@@ -164,7 +159,7 @@ function searchMenu(val) { applyFilters(val.toLowerCase()); }
 function applyFilters(searchStr = "") {
     const keyword = searchStr || document.getElementById('search-menu').value.toLowerCase();
     filteredData = menuData;
-    if(currentCategory !== 'Semua') { filteredData = filteredData.filter(m => m.category === currentCategory); }
+    if(currentCategory !== 'Semua') { filteredData = filteredData.filter(m => (m.category || "").trim() === currentCategory); }
     if(keyword !== "") {
         filteredData = filteredData.filter(m => 
             m.name.toLowerCase().includes(keyword) || 
@@ -181,9 +176,9 @@ function applyFilters(searchStr = "") {
     }
 }
 
-// ===========================================================================
-// SEKSI RENDERING MENU GRID (FIXED: Penyelarasan tinggi agar tidak terpotong)
-// ===========================================================================
+// ==========================================
+// SEKSI TAMPILAN MENU KASIR (FIX: FIXED IMAGE & FLEXIBLE HEIGHT CARD)
+// ==========================================
 function renderMenuHTML(items) {
     const container = document.getElementById('menu-container');
     if (!container) return;
@@ -195,33 +190,40 @@ function renderMenuHTML(items) {
     }
 
     container.innerHTML = items.map(item => {
-        const fallbackImg = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&background=1e293b&color=f59e0b&size=200&font-size=0.33`;
+        const safeId = String(item.id || '').replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        const safeName = String(item.name || 'Menu').replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        const safeRoute = String(item.route || 'Kitchen').replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        const safeDesc = String(item.description || '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const safeCat = String(item.category || '-').trim();
+        const safePrice = Number(item.price) || 0;
+
+        const fallbackImg = `https://ui-avatars.com/api/?name=${encodeURIComponent(safeName)}&background=1e293b&color=f59e0b&size=200&font-size=0.33`;
         const totalSoldData = parseInt(item.totalSold) || 0; 
         const isHot = totalSoldData > 10;
         
         const badgeHtml = isHot ? `<div class="absolute top-2 left-2 bg-rose-600 text-white text-[9px] font-black px-2.5 py-1 rounded-md shadow-md animate-pulse">🔥 HOT</div>` : ``;
 
-        // PERBAIKAN STRUKTUR CSS KARTU:
-        // 1. Tinggi pembungkus dibuat fleksibel-segaris (h-full) mengikuti grid
-        // 2. Gambar dikunci ke ukuran sedang (h-28) agar menghemat ruang vertikal
-        // 3. Deskripsi diberi batas tinggi minimum (min-h-[28px]) agar posisi harga selalu sejajar
+        // PERBAIKAN STRUKTUR KARTU RESPONSIF (ANTI-TERPOTONG):
+        // 1. Tinggi kartu dibuat h-full agar rapi sejajar secara otomatis dalam baris grid
+        // 2. Tinggi gambar dikunci mutlak ke h-28 (112px) di semua ukuran layar
+        // 3. Deskripsi dibatasi maksimal 1 baris (line-clamp-1) untuk kasir agar hemat ruang
         return `
-        <div onclick="addToCart('${item.id}', '${item.name}', ${item.price}, '${item.route}')" class="menu-card bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden cursor-pointer hover:border-amber-500 relative transition-all duration-300 h-full">
+        <div onclick="addToCart('${safeId}', '${safeName}', ${safePrice}, '${safeRoute}')" class="menu-card bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden cursor-pointer hover:border-amber-500 relative transition-all duration-300 h-full active:scale-95">
             
-            <!-- Area Gambar -->
-            <div class="h-28 relative shrink-0 overflow-hidden bg-slate-900">
+            <!-- Area Gambar (Tinggi Terkunci 112px) -->
+            <div class="h-28 w-full relative shrink-0 overflow-hidden bg-slate-900">
                 <img src="${item.image || fallbackImg}" onerror="this.onerror=null; this.src='${fallbackImg}';" class="w-full h-full object-cover transition-transform duration-700 hover:scale-110">
                 ${badgeHtml}
-                <div class="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-md text-slate-300 text-[9px] font-bold px-2 py-0.5 rounded border border-slate-700">${item.category}</div>
+                <div class="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-md text-slate-300 text-[9px] font-bold px-2 py-0.5 rounded border border-slate-700">${safeCat}</div>
             </div>
 
-            <!-- Area Teks Detail & Harga (Auto-Alignment) -->
-            <div class="p-3 flex flex-col justify-between flex-1">
-                <div class="text-left">
-                    <h3 class="text-xs font-bold text-white line-clamp-2 leading-snug">${item.name}</h3>
-                    <p class="text-[9px] text-slate-400 mt-1 line-clamp-2 min-h-[28px] leading-relaxed">${item.description || ''}</p>
+            <!-- Area Teks Detail & Harga (Tinggi Otomatis Sejajar) -->
+            <div class="p-3 flex flex-col justify-between flex-1 bg-slate-800">
+                <div class="text-left mb-2">
+                    <h3 class="text-xs font-bold text-white line-clamp-2 leading-snug">${safeName}</h3>
+                    <p class="text-[9px] text-slate-400 mt-1 line-clamp-1 leading-relaxed">${safeDesc}</p>
                 </div>
-                <p class="text-[13px] font-black text-amber-500 mt-2 tracking-tight text-left">Rp ${item.price.toLocaleString('id-ID')}</p>
+                <p class="text-xs font-black text-amber-500 tracking-tight text-left">Rp ${safePrice.toLocaleString('id-ID')}</p>
             </div>
 
         </div>
@@ -353,15 +355,22 @@ function renderCart() {
     const vInfo = document.getElementById('active-voucher-info');
     const vInputCont = document.getElementById('voucher-input-container');
     if (appliedVoucher) {
-        vInfo.classList.remove('hidden');
-        vInfo.classList.add('flex');
-        vInputCont.classList.add('hidden');
-        document.getElementById('active-voucher-code').innerText = appliedVoucher.code;
-        document.getElementById('active-voucher-value').innerText = "- Rp " + voucherAmount.toLocaleString('id-ID');
+        if (vInfo) {
+            vInfo.classList.remove('hidden');
+            vInfo.classList.add('flex');
+        }
+        if (vInputCont) vInputCont.classList.add('hidden');
+        
+        const codeEl = document.getElementById('active-voucher-code');
+        const valEl = document.getElementById('active-voucher-value');
+        if (codeEl) codeEl.innerText = appliedVoucher.code;
+        if (valEl) valEl.innerText = "- Rp " + voucherAmount.toLocaleString('id-ID');
     } else {
-        vInfo.classList.add('hidden');
-        vInfo.classList.remove('flex');
-        vInputCont.classList.remove('hidden');
+        if (vInfo) {
+            vInfo.classList.add('hidden');
+            vInfo.classList.remove('flex');
+        }
+        if (vInputCont) vInputCont.classList.remove('hidden');
     }
 
     const totalDiscounts = discountAmount + voucherAmount;
