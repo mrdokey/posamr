@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "id.my.mrdsolution.amrpos.twa",
+      "sha256_cert_fingerprints": [
+        "D2:61:B2:3D:45:66:03:1E:96:13:75:D9:88:C8:05:74:7C:D6:95:69:52:C2:06:5C:33:1D:E1:62:6A:B8:4F:05",
+        "C0:13:4E:2A:36:21:8E:1A:25:D5:6C:F5:6D:21:5F:B7:FA:74:B7:93:06:77:64:DD:D3:36:2F:A4:6E:14:A1:CC"
+      ]
+    }
+  }
+]
