@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SaaS Backoffice Admin AMR</title>
-    <link rel="icon" type="image/jpeg" href="https://i.ibb.co.com/gMmSSTgq/IMG-20260606-WA0000.jpg">
+    <link rel="icon" type="image/png" href="https://i.ibb.co.com/JW1FFbCz/1780229137561.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -28,14 +28,14 @@
 
     <!-- 1. SPLASH SCREEN -->
     <div id="splash-screen" class="fixed inset-0 bg-[#020617] z-[150] flex flex-col items-center justify-center smooth-transition">
-        <img src="https://i.ibb.co.com/gMmSSTgq/IMG-20260606-WA0000.jpg" alt="Loading" class="w-48 animate-pulse mb-4">
+        <img src="https://i.ibb.co.com/R4ZYj74K/1780229303550.png" alt="Loading" class="w-48 animate-pulse mb-4">
         <p class="text-slate-300 text-sm font-semibold tracking-widest animate-bounce">MEMUAT BACKOFFICE ADMIN...</p>
     </div>
 
     <!-- 2. SCREEN AKTIVASI (Mencegah blank hitam di komputer baru) -->
     <div id="activation-screen" class="hidden-screen fixed inset-0 bg-slate-950 z-[110] flex items-center justify-center p-4 smooth-transition">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl w-full max-w-md p-8 text-center">
-            <img src="https://i.ibb.co.com/gMmSSTgq/IMG-20260606-WA0000.jpg" class="w-24 h-24 mx-auto mb-4">
+            <img src="https://i.ibb.co.com/JW1FFbCz/1780229137561.png" class="w-24 h-24 mx-auto mb-4">
             <h2 class="text-2xl font-bold text-white mb-2">Aktivasi Backoffice</h2>
             <p class="text-xs text-slate-400 mb-6">Masukkan URL API dari MRD Solution</p>
             <input type="url" id="api-input" placeholder="Masukkan URL API..." class="w-full px-4 py-3 bg-slate-950 border-2 border-slate-800 text-white rounded-xl focus:border-amber-500 outline-none mb-4 text-sm text-center smooth-transition">
@@ -43,10 +43,10 @@
         </div>
     </div>
 
-    <!-- 3. SCREEN LOGIN ADMIN (PIN TERPROTEKSI) -->
+    <!-- 3. SCREEN LOGIN ADMIN -->
     <div id="login-screen" class="hidden-screen fixed inset-0 bg-slate-950 z-[100] flex items-center justify-center p-4 smooth-transition">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center">
-            <img src="https://i.ibb.co.com/gMmSSTgq/IMG-20260606-WA0000.jpg" class="w-20 h-20 mx-auto mb-4">
+            <img src="https://i.ibb.co.com/JW1FFbCz/1780229137561.png" class="w-20 h-20 mx-auto mb-4">
             <h2 id="login-resto-name" class="text-xl font-black text-amber-500 mb-6 uppercase tracking-widest">AMR ADMIN</h2>
             <h3 class="text-2xl font-bold text-white mb-2">Otorisasi Atasan</h3>
             <p class="text-xs text-slate-400 mb-6">Masukkan PIN Atasan (Manager/Owner/HRD)</p>
@@ -61,18 +61,18 @@
             <input type="password" id="login-pin" class="hidden-screen">
 
             <div class="grid grid-cols-3 gap-4 w-full max-w-xs mx-auto mb-4 text-white">
-                <button onclick="pressNum('1')" class="h-14 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">1</button>
-                <button onclick="pressNum('2')" class="h-14 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">2</button>
-                <button onclick="pressNum('3')" class="h-14 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">3</button>
-                <button onclick="pressNum('4')" class="h-14 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">4</button>
+                <button onclick="pressNum('1')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">1</button>
+                <button onclick="pressNum('2')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">2</button>
+                <button onclick="pressNum('3')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">3</button>
+                <button onclick="pressNum('4')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">4</button>
                 <button onclick="pressNum('5')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">5</button>
                 <button onclick="pressNum('6')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">6</button>
                 <button onclick="pressNum('7')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">7</button>
                 <button onclick="pressNum('8')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">8</button>
                 <button onclick="pressNum('9')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">9</button>
-                <button onclick="clearPin()" class="h-14 rounded-2xl bg-red-950/40 text-red-500 font-bold text-sm active:scale-95 smooth-transition">CLEAR</button>
-                <button onclick="pressNum('0')" class="h-14 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">0</button>
-                <button onclick="backspacePin()" class="h-14 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-lg active:scale-95 smooth-transition flex items-center justify-center text-amber-500"><i data-lucide="delete" class="w-6 h-6"></i></button>
+                <button onclick="clearPin()" class="h-16 rounded-2xl bg-red-950/40 text-red-500 font-bold text-sm active:scale-95 smooth-transition">CLEAR</button>
+                <button onclick="pressNum('0')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">0</button>
+                <button onclick="backspacePin()" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-lg active:scale-95 smooth-transition flex items-center justify-center text-amber-500"><i data-lucide="delete" class="w-6 h-6"></i></button>
             </div>
             
             <button onclick="resetLicense()" class="text-[10px] text-red-500 mt-6 hover:underline uppercase font-bold tracking-wider">Hapus Sesi & Reset</button>
@@ -86,7 +86,7 @@
         <aside class="w-full md:w-64 bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 flex flex-row md:flex-col justify-between p-4 shrink-0 z-20">
             <div class="flex flex-row md:flex-col items-center md:items-start gap-4 md:w-full">
                 <div class="flex items-center gap-3">
-                    <img src="https://i.ibb.co.com/gMmSSTgq/IMG-20260606-WA0000.jpg" class="w-8 h-8 rounded-lg">
+                    <img src="https://i.ibb.co.com/JW1FFbCz/1780229137561.png" class="w-8 h-8 rounded-lg">
                     <h1 class="text-md font-black text-amber-500 tracking-tight uppercase">AMR SaaS</h1>
                 </div>
 
@@ -130,7 +130,7 @@
         </main>
     </div>
 
-    <!-- MODAL FORM INPUT -->
+    <!-- MODAL FORM INPUT: TAMBAH / EDIT DATA -->
     <div id="modal-form" class="hidden-screen fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 smooth-transition">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg p-6 shadow-2xl flex flex-col max-h-[90vh]">
             <div class="flex justify-between items-center mb-4 shrink-0">
@@ -155,6 +155,9 @@
         let adminInfo = null;
         let loginPinValue = "";
 
+        // Contoh fallback area yang terdaftar di database untuk render ceklis dinamis
+        let availableAreas = ["Renon", "Denpasar", "Suci"]; 
+
         window.onload = () => {
             setTimeout(() => {
                 document.getElementById('splash-screen').classList.add('fade-out');
@@ -165,7 +168,6 @@
             }, 1000);
         };
 
-        // FIX: Menambahkan Fungsi Pembantu ShowScreen & Modal yang Hilang Kemarin
         function showScreen(id) {
             ['activation-screen', 'login-screen', 'main-app'].forEach(el => {
                 const screen = document.getElementById(el);
@@ -186,7 +188,6 @@
         }
 
         function checkAdminState() {
-            // FIX: Alihkan ke layar aktivasi alih-alih redirect kasar ke index.html jika token kosong
             if (!GAS_URL) {
                 showScreen('activation-screen');
                 return;
@@ -209,7 +210,6 @@
             }
         }
 
-        // --- SISTEM AKTIVASI SISTEM BACKOFFICE ---
         async function activateAdminSystem() {
             const input = document.getElementById('api-input').value.trim();
             if(!input) return alert("Masukkan URL!");
@@ -221,7 +221,7 @@
                 const json = await res.json();
                 if(json.success) {
                     localStorage.setItem(STORAGE_API, input);
-                    GAS_URL = input; // Setel token global aktif
+                    GAS_URL = input; 
                     window.location.reload();
                 } else throw new Error("Gagal");
             } catch (e) {
@@ -346,56 +346,172 @@
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
+        // ==========================================
+        // SISTEM FORM INPUT DAN CEKLIS AREA (ENUMLIST)
+        // ==========================================
         function openFormModal(tab) {
             document.getElementById('modal-title').innerText = `Tambah Data ${tab}`;
             const body = document.getElementById('modal-form-body');
             
+            // FORM INPUT LENGKAP DETAIL MATCHING GOOGLE SHEETS
             if (tab === "Users") {
                 body.innerHTML = `
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Nama Lengkap</label>
-                        <input type="text" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500">
-                    </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Role (Atasan/Staff)</label>
-                            <select class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 outline-none text-xs text-white focus:border-amber-500">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">UserID (Auto)</label>
+                            <input type="text" id="form-user-id" placeholder="Auto-generated" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-slate-500 rounded-xl outline-none text-xs" readonly>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nama Lengkap</label>
+                            <input type="text" id="form-user-name" placeholder="Nama Karyawan" class="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500 transition">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Role (Jabatan)</label>
+                            <select id="form-user-role" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2.5 outline-none text-xs text-white focus:border-amber-500">
                                 <option value="Staff">Staff</option>
                                 <option value="Manager">Manager</option>
                                 <option value="HRD">HRD</option>
+                                <option value="Owner">Owner</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Jobdesk Kerja</label>
-                            <select class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 outline-none text-xs text-white focus:border-amber-500">
-                                <option value="Pelayan">Pelayan</option>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Jobdesk</label>
+                            <select id="form-user-jobdesk" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2.5 outline-none text-xs text-white focus:border-amber-500">
+                                <option value="">- Tanpa Jobdesk -</option>
                                 <option value="Kasir">Kasir</option>
+                                <option value="Pelayan">Pelayan</option>
                             </select>
                         </div>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">PIN Login (4 Angka)</label>
-                        <input type="password" maxlength="4" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs text-center font-black focus:border-amber-500">
-                    </div>
-                `;
-            } else if (tab === "Menu") {
-                body.innerHTML = `
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Nama Menu Kuliner</label>
-                        <input type="text" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Area Cabang</label>
+                            <select id="form-user-area" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2.5 outline-none text-xs text-white focus:border-amber-500">
+                                <option value="Renon">Renon</option>
+                                <option value="Denpasar">Denpasar</option>
+                                <option value="Suci">Suci</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">PIN Absen (4 Angka)</label>
+                            <input type="password" id="form-user-pin" maxlength="4" placeholder="••••" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white text-center font-black text-base rounded-xl outline-none focus:border-amber-500 transition">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status Profil</label>
+                            <select id="form-user-status" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2.5 outline-none text-xs text-white focus:border-amber-500">
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">No WhatsApp</label>
+                            <input type="tel" id="form-user-wa" placeholder="08..." class="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500 transition">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Alamat Rumah</label>
+                            <input type="text" id="form-user-alamat" placeholder="Nama Jalan, Kota" class="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500 transition">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status User</label>
+                            <select id="form-user-statususer" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2.5 outline-none text-xs text-white focus:border-amber-500">
+                                <option value="Permanent">Permanent</option>
+                                <option value="Contract">Contract</option>
+                                <option value="Training">Training</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status Calendar</label>
+                            <select id="form-user-statuscalender" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2.5 outline-none text-xs text-white focus:border-amber-500">
+                                <option value="Synced">Synced</option>
+                                <option value="Unsynced">Unsynced</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Geotag Radius</label>
+                            <select id="form-user-geotag" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2.5 outline-none text-xs text-white focus:border-amber-500">
+                                <option value="Inactive">Inactive</option>
+                                <option value="Active">Active</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Join Date</label>
+                            <input type="date" id="form-user-joindate" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500 transition">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Kontrak (Bulan)</label>
+                            <input type="number" id="form-user-contract" placeholder="6" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500 transition">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">End Contract</label>
+                            <input type="date" id="form-user-enddate" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500 transition">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Deskripsi Tambahan</label>
+                        <textarea id="form-user-keterangan" rows="2" placeholder="Tulis catatan tambahan disini..." class="w-full px-4 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500 transition"></textarea>
+                    </div>
+                `;
+            } else if (tab === "Menu") {
+                // RENDER DAFTAR CEKLIS AREA (ENUMLIST APPSHEET STYLE)
+                const areaCheckboxes = availableAreas.map(areaName => `
+                    <label class="flex items-center gap-2 bg-slate-950/80 px-3 py-2 rounded-xl border border-slate-850 cursor-pointer hover:border-amber-500 transition">
+                        <input type="checkbox" name="form-menu-area" value="${areaName}" class="w-4 h-4 rounded accent-amber-500">
+                        <span class="text-xs font-semibold text-white">${areaName}</span>
+                    </label>
+                `).join('');
+
+                body.innerHTML = `
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">MenuID (Auto)</label>
+                            <input type="text" id="form-menu-id" placeholder="Auto-generated" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-slate-500 rounded-xl outline-none text-xs" readonly>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nama Menu</label>
+                            <input type="text" id="form-menu-name" placeholder="Ayam Goreng" class="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500 transition">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Kategori</label>
+                            <select id="form-menu-category" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2.5 outline-none text-xs text-white focus:border-amber-500">
+                                <option value="Makanan">Makanan</option>
+                                <option value="Minuman">Minuman</option>
+                                <option value="Snack">Snack</option>
+                            </select>
+                        </div>
+                        <div>
                             <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Harga Jual (Selling Price)</label>
-                            <input type="number" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500">
+                            <input type="number" id="form-menu-price" placeholder="45000" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500">
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Rute Printer</label>
-                            <select class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 outline-none text-xs text-white focus:border-amber-500">
+                            <select id="form-menu-route" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 outline-none text-xs text-white focus:border-amber-500">
                                 <option value="Kitchen">Dapur (Kitchen)</option>
                                 <option value="Bar">Bar (Drinks)</option>
                             </select>
                         </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Deskripsi Hidangan</label>
+                        <textarea id="form-menu-desc" rows="2" placeholder="Penjelasan singkat menu kuliner..." class="w-full px-4 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500 transition"></textarea>
+                    </div>
+                    
+                    <!-- AREA CEKLIS MULTI-CABANG (ENUMLIST) -->
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Aktif di Area (Cabang)</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            ${areaCheckboxes}
+                        </div>
+                        <p class="text-[9px] text-slate-500 mt-1.5 uppercase font-bold tracking-wider">Ceklis area untuk mendaftarkan menu ini pada cabang-cabang tertentu.</p>
                     </div>
                 `;
             } else {
