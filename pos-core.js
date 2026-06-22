@@ -1,6 +1,6 @@
 /**
- * MODUL 2: CORE POS, VOUCHER DROPDOWN, ROUNDING, & COMPACT CARD GRID LOGIC
- * UPDATE: Proportional Row-Align Card Layout (Fixed Image & Flexible Card)
+ * MODUL 2: CORE POS, VOUCHER DROPDOWN, ROUNDING, & CART LOGIC
+ * UPDATE: Responsive Row-Align Card Layout (No Clipping & Safe Auto-Height)
  */
 
 // --- HELPER: KALKULASI PEMBULATAN DINAMIS KASIR ---
@@ -177,7 +177,7 @@ function applyFilters(searchStr = "") {
 }
 
 // ==========================================
-// SEKSI TAMPILAN MENU KASIR (FIX: FIXED IMAGE & FLEXIBLE HEIGHT CARD)
+// SEKSI TAMPILAN MENU KASIR (FIX FINAL: No Clipping, Flexible Card)
 // ==========================================
 function renderMenuHTML(items) {
     const container = document.getElementById('menu-container');
@@ -203,27 +203,26 @@ function renderMenuHTML(items) {
         
         const badgeHtml = isHot ? `<div class="absolute top-2 left-2 bg-rose-600 text-white text-[9px] font-black px-2.5 py-1 rounded-md shadow-md animate-pulse">🔥 HOT</div>` : ``;
 
-        // PERBAIKAN STRUKTUR KARTU RESPONSIF (ANTI-TERPOTONG):
-        // 1. Tinggi kartu dibuat h-full agar rapi sejajar secara otomatis dalam baris grid
-        // 2. Tinggi gambar dikunci mutlak ke h-28 (112px) di semua ukuran layar
-        // 3. Deskripsi dibatasi maksimal 1 baris (line-clamp-1) untuk kasir agar hemat ruang
+        // STRUKTUR KARTU:
+        // h-full di tingkat paling luar mengatur agar semua kartu dalam satu baris (row) punya tinggi simetris.
+        // h-[110px] mutlak pada gambar menghemat ruang dan mencegah gambar menjadi gepeng/terlalu tinggi.
         return `
         <div onclick="addToCart('${safeId}', '${safeName}', ${safePrice}, '${safeRoute}')" class="menu-card bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden cursor-pointer hover:border-amber-500 relative transition-all duration-300 h-full active:scale-95">
             
-            <!-- Area Gambar (Tinggi Terkunci 112px) -->
-            <div class="h-28 w-full relative shrink-0 overflow-hidden bg-slate-900">
+            <!-- Area Gambar (Tinggi Terkunci) -->
+            <div class="h-[110px] w-full relative shrink-0 overflow-hidden bg-slate-900">
                 <img src="${item.image || fallbackImg}" onerror="this.onerror=null; this.src='${fallbackImg}';" class="w-full h-full object-cover transition-transform duration-700 hover:scale-110">
                 ${badgeHtml}
                 <div class="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-md text-slate-300 text-[9px] font-bold px-2 py-0.5 rounded border border-slate-700">${safeCat}</div>
             </div>
 
-            <!-- Area Teks Detail & Harga (Tinggi Otomatis Sejajar) -->
-            <div class="p-3 flex flex-col justify-between flex-1 bg-slate-800">
-                <div class="text-left mb-2">
-                    <h3 class="text-xs font-bold text-white line-clamp-2 leading-snug">${safeName}</h3>
-                    <p class="text-[9px] text-slate-400 mt-1 line-clamp-1 leading-relaxed">${safeDesc}</p>
+            <!-- Area Teks Detail & Harga (Fleksibel & Sejajar) -->
+            <div class="p-3 flex flex-col justify-between flex-1 bg-slate-800 w-full">
+                <div class="text-left mb-2 w-full">
+                    <h3 class="text-xs font-bold text-white line-clamp-2 leading-snug w-full">${safeName}</h3>
+                    <p class="text-[9px] text-slate-400 mt-1 line-clamp-1 leading-relaxed w-full">${safeDesc}</p>
                 </div>
-                <p class="text-xs font-black text-amber-500 tracking-tight text-left">Rp ${safePrice.toLocaleString('id-ID')}</p>
+                <p class="text-[13px] font-black text-amber-500 mt-auto tracking-tight text-left">Rp ${safePrice.toLocaleString('id-ID')}</p>
             </div>
 
         </div>
@@ -383,6 +382,7 @@ function renderCart() {
     
     const rawTotal = netSubtotal + serviceCharge + tax;
 
+    // KALKULASI PEMBULATAN KASIR
     const roundedTotal = getRoundedAmount(rawTotal);
     window.lastRoundingAdjustment = roundedTotal - rawTotal;
 
