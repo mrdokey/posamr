@@ -32,7 +32,7 @@
         <p class="text-slate-300 text-sm font-semibold tracking-widest animate-bounce">MEMUAT BACKOFFICE ADMIN...</p>
     </div>
 
-    <!-- 2. SCREEN AKTIVASI (FIX: Ditambahkan langsung untuk mencegah blank hitam di komputer baru) -->
+    <!-- 2. SCREEN AKTIVASI (Mencegah blank hitam di komputer baru) -->
     <div id="activation-screen" class="hidden-screen fixed inset-0 bg-slate-950 z-[110] flex items-center justify-center p-4 smooth-transition">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl w-full max-w-md p-8 text-center">
             <img src="https://i.ibb.co.com/gMmSSTgq/IMG-20260606-WA0000.jpg" class="w-24 h-24 mx-auto mb-4">
@@ -165,8 +165,28 @@
             }, 1000);
         };
 
+        // FIX: Menambahkan Fungsi Pembantu ShowScreen & Modal yang Hilang Kemarin
+        function showScreen(id) {
+            ['activation-screen', 'login-screen', 'main-app'].forEach(el => {
+                const screen = document.getElementById(el);
+                if (screen) screen.classList.add('hidden-screen');
+            });
+            const target = document.getElementById(id);
+            if (target) target.classList.remove('hidden-screen');
+        }
+
+        function openModal(id) { 
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('hidden-screen'); 
+        }
+
+        function closeModal(id) { 
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden-screen'); 
+        }
+
         function checkAdminState() {
-            // FIX: Alihkan ke layar aktivasi alih-alih redirect kasar ke index.html
+            // FIX: Alihkan ke layar aktivasi alih-alih redirect kasar ke index.html jika token kosong
             if (!GAS_URL) {
                 showScreen('activation-screen');
                 return;
