@@ -1,8 +1,9 @@
 /**
- * MODUL 2: CORE POS, VOUCHER DROPDOWN, ROUNDING, & CART LOGIC
+ * MODUL 2: CORE POS, VOUCHER DROPDOWN, ROUNDING, & COMPACT CARD GRID LOGIC
+ * UPDATE: Responsive Row-Align Card Layout (No Clipping & Safe Auto-Height)
  */
 
-// --- HELPER: KALKULASI PEMBULATAN DINAMIS KASIR ---
+// HELPER: Kalkulator Pembulatan Kasir Dinamis dari Database Config Sheets
 function getRoundedAmount(amount) {
     const arah = (configData["PEMBULATAN_ARAH"] || "NONE").toUpperCase().trim(); 
     const nominal = parseInt(configData["PEMBULATAN_NOMINAL"] || "1000") || 1000;
@@ -25,6 +26,11 @@ async function fetchConfigBg() {
         if(json.success) {
             const nameEl = document.getElementById('login-resto-name');
             if (nameEl) nameEl.innerText = json.data["NAMA_PERUSAAN"] || "RESTO";
+            
+            // Cek status PWA Face Recognition
+            if (json.data["FITUR_FACE_RECOGNITION"] === "ON" || json.data["FITUR_FACE_RECOGNITION"] === "TRUE") {
+                isFaceRecogEnabled = true;
+            }
         }
     } catch(e) {}
 }
@@ -64,7 +70,7 @@ async function loginKasir() {
 function logoutKasir() {
     if(confirm("Keluar dari sesi aplikasi saat ini?")) {
         localStorage.removeItem(STORAGE_USER);
-        window.location.href = "index.html"; 
+        window.location.reload(); 
     }
 }
 
@@ -83,7 +89,7 @@ async function initApp() {
     if(localDisc) { discountData = JSON.parse(localDisc); renderDiscounts(); }
     if(localVouchers) { 
         voucherData = JSON.parse(localVouchers); 
-        renderVouchers(); // Render awal dropdown voucher dari cache lokal
+        renderVouchers(); 
     }
 
     let userArea = cashierInfo ? cashierInfo.area : "";
@@ -117,11 +123,11 @@ async function initApp() {
         if(jsonVoucher.success) {
             voucherData = jsonVoucher.data;
             localStorage.setItem('localVouchers', JSON.stringify(voucherData));
-            renderVouchers(); // Sinkronisasi dropdown voucher terbaru dari database
+            renderVouchers(); 
         }
     } catch (e) { 
         document.getElementById('offline-badge').classList.remove('hidden'); 
-        renderVouchers(); // Fallback render dalam kondisi offline
+        renderVouchers(); 
     }
 }
 
@@ -175,6 +181,9 @@ function applyFilters(searchStr = "") {
     }
 }
 
+// ===========================================================================
+// SEKSI RENDERING MENU GRID (FIXED: Penyelarasan tinggi agar tidak terpotong)
+// ===========================================================================
 function renderMenuHTML(items) {
     const container = document.getElementById('menu-container');
     if (!container) return;
@@ -192,27 +201,35 @@ function renderMenuHTML(items) {
         
         const badgeHtml = isHot ? `<div class="absolute top-2 left-2 bg-rose-600 text-white text-[9px] font-black px-2.5 py-1 rounded-md shadow-md animate-pulse">🔥 HOT</div>` : ``;
 
+        // PERBAIKAN STRUKTUR CSS KARTU:
+        // 1. Tinggi pembungkus dibuat fleksibel-segaris (h-full) mengikuti grid
+        // 2. Gambar dikunci ke ukuran sedang (h-28) agar menghemat ruang vertikal
+        // 3. Deskripsi diberi batas tinggi minimum (min-h-[28px]) agar posisi harga selalu sejajar
         return `
-        <div onclick="addToCart('${item.id}', '${item.name}', ${item.price}, '${item.route}')" class="menu-card bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden cursor-pointer hover:border-amber-500 relative">
-            <div class="h-32 relative shrink-0 overflow-hidden bg-slate-900">
+        <div onclick="addToCart('${item.id}', '${item.name}', ${item.price}, '${item.route}')" class="menu-card bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden cursor-pointer hover:border-amber-500 relative transition-all duration-300 h-full">
+            
+            <!-- Area Gambar -->
+            <div class="h-28 relative shrink-0 overflow-hidden bg-slate-900">
                 <img src="${item.image || fallbackImg}" onerror="this.onerror=null; this.src='${fallbackImg}';" class="w-full h-full object-cover transition-transform duration-700 hover:scale-110">
                 ${badgeHtml}
-                <div class="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-md text-slate-300 text-[10px] font-bold px-2 py-1 rounded-md border border-slate-700">${item.category}</div>
+                <div class="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-md text-slate-300 text-[9px] font-bold px-2 py-0.5 rounded border border-slate-700">${item.category}</div>
             </div>
-            <div class="p-4 flex flex-col justify-between flex-1">
-                <div>
-                    <h3 class="text-sm font-bold text-white line-clamp-2 leading-snug">${item.name}</h3>
-                    <p class="text-[10px] text-slate-400 mt-1 line-clamp-2">${item.description || ''}</p>
+
+            <!-- Area Teks Detail & Harga (Auto-Alignment) -->
+            <div class="p-3 flex flex-col justify-between flex-1">
+                <div class="text-left">
+                    <h3 class="text-xs font-bold text-white line-clamp-2 leading-snug">${item.name}</h3>
+                    <p class="text-[9px] text-slate-400 mt-1 line-clamp-2 min-h-[28px] leading-relaxed">${item.description || ''}</p>
                 </div>
-                <p class="text-[15px] font-black text-amber-500 mt-3 tracking-tight">Rp ${item.price.toLocaleString('id-ID')}</p>
+                <p class="text-[13px] font-black text-amber-500 mt-2 tracking-tight text-left">Rp ${item.price.toLocaleString('id-ID')}</p>
             </div>
+
         </div>
     `}).join('');
     lucide.createIcons();
 }
 
 // --- SEKSI VOUCHER DROPDOWN RENDERING ENGINE ---
-
 function renderVouchers() {
     const select = document.getElementById('cart-voucher-select');
     if (select) {
@@ -336,22 +353,15 @@ function renderCart() {
     const vInfo = document.getElementById('active-voucher-info');
     const vInputCont = document.getElementById('voucher-input-container');
     if (appliedVoucher) {
-        if (vInfo) {
-            vInfo.classList.remove('hidden');
-            vInfo.classList.add('flex');
-        }
-        if (vInputCont) vInputCont.classList.add('hidden');
-        
-        const codeEl = document.getElementById('active-voucher-code');
-        const valEl = document.getElementById('active-voucher-value');
-        if (codeEl) codeEl.innerText = appliedVoucher.code;
-        if (valEl) valEl.innerText = "- Rp " + voucherAmount.toLocaleString('id-ID');
+        vInfo.classList.remove('hidden');
+        vInfo.classList.add('flex');
+        vInputCont.classList.add('hidden');
+        document.getElementById('active-voucher-code').innerText = appliedVoucher.code;
+        document.getElementById('active-voucher-value').innerText = "- Rp " + voucherAmount.toLocaleString('id-ID');
     } else {
-        if (vInfo) {
-            vInfo.classList.add('hidden');
-            vInfo.classList.remove('flex');
-        }
-        if (vInputCont) vInputCont.classList.remove('hidden');
+        vInfo.classList.add('hidden');
+        vInfo.classList.remove('flex');
+        vInputCont.classList.remove('hidden');
     }
 
     const totalDiscounts = discountAmount + voucherAmount;
@@ -364,7 +374,6 @@ function renderCart() {
     
     const rawTotal = netSubtotal + serviceCharge + tax;
 
-    // KALKULASI PEMBULATAN KASIR
     const roundedTotal = getRoundedAmount(rawTotal);
     window.lastRoundingAdjustment = roundedTotal - rawTotal;
 
