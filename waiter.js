@@ -259,6 +259,8 @@ function applyFilters(searchStr = "") {
     }
 }
 
+// --- SUNTIKAN PADA FILE waiter.js ---
+
 function renderMenuHTML(items) {
     const container = document.getElementById('menu-container');
     if (!container) return;
@@ -281,8 +283,12 @@ function renderMenuHTML(items) {
         const isHot = (parseInt(item.totalSold) || 0) > 10;
         const badgeHtml = isHot ? `<div class="absolute top-2 left-2 bg-rose-600 text-white text-[9px] font-black px-2 py-1 rounded-md shadow-md animate-pulse">🔥 HOT</div>` : ``;
 
+        // PERBAIKAN STRUKTUR TEKS WAITER (HP):
+        // 1. Kartu luar diubah menjadi "h-full" (bukan h-[240px]) agar bisa memanjang otomatis.
+        // 2. Gambar tetap terkunci tinggi h-[130px] agar irit ruang di layar HP.
+        // 3. line-clamp-2 pada nama dan deskripsi dihapus, diganti break-words agar teks tampil penuh.
         return `
-        <div onclick="addToCart('${safeId}', '${safeName}', ${safePrice}, '${safeRoute}')" class="bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden cursor-pointer active:scale-95 transition-transform relative h-[240px]">
+        <div onclick="addToCart('${safeId}', '${safeName}', ${safePrice}, '${safeRoute}')" class="bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden cursor-pointer active:scale-95 transition-transform relative h-full">
             
             <div class="h-[130px] w-full relative shrink-0 overflow-hidden bg-slate-900">
                 <img src="${item.image || fallbackImg}" onerror="this.onerror=null; this.src='${fallbackImg}';" class="w-full h-full object-cover">
@@ -290,12 +296,13 @@ function renderMenuHTML(items) {
                 <div class="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-md text-slate-300 text-[9px] font-bold px-2 py-0.5 rounded border border-slate-700">${safeCat}</div>
             </div>
 
-            <div class="h-[110px] p-3 flex flex-col justify-between bg-slate-800 w-full">
-                <div class="text-left">
-                    <h3 class="text-xs font-bold text-white line-clamp-2 leading-snug">${safeName}</h3>
-                    <p class="text-[9px] text-slate-400 mt-1 line-clamp-2">${safeDesc}</p>
+            <!-- Fleksibel Container Teks -->
+            <div class="p-3 flex flex-col justify-between flex-1 bg-slate-800 w-full">
+                <div class="text-left mb-2 w-full">
+                    <h3 class="text-xs font-bold text-white break-words whitespace-normal leading-snug w-full">${safeName}</h3>
+                    <p class="text-[9px] text-slate-400 mt-1 break-words whitespace-normal leading-relaxed w-full">${safeDesc}</p>
                 </div>
-                <p class="text-xs font-black text-amber-500 mt-1 tracking-tight text-left">Rp ${safePrice.toLocaleString('id-ID')}</p>
+                <p class="text-xs font-black text-amber-500 mt-auto tracking-tight text-left">Rp ${safePrice.toLocaleString('id-ID')}</p>
             </div>
 
         </div>

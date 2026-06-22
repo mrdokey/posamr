@@ -176,9 +176,9 @@ function applyFilters(searchStr = "") {
     }
 }
 
-// ==========================================
-// SEKSI TAMPILAN MENU KASIR (FIX FINAL: No Clipping, Flexible Card)
-// ==========================================
+// ===========================================================================
+// SEKSI TAMPILAN MENU KASIR (FIX: Deskripsi Tampil Penuh / Full Text)
+// ===========================================================================
 function renderMenuHTML(items) {
     const container = document.getElementById('menu-container');
     if (!container) return;
@@ -203,7 +203,9 @@ function renderMenuHTML(items) {
         
         const badgeHtml = isHot ? `<div class="absolute top-2 left-2 bg-rose-600 text-white text-[9px] font-black px-2.5 py-1 rounded-md shadow-md animate-pulse">🔥 HOT</div>` : ``;
 
-        // FIX: h-full dipasang pada kartu luar agar fleksibel.
+        // PERBAIKAN STRUKTUR TEKS:
+        // 1. Menghapus line-clamp agar deskripsi panjang bisa tampil utuh.
+        // 2. Menambahkan "break-words whitespace-normal" agar teks panjang mau membengkok ke bawah dan tidak keluar dari kartu.
         return `
         <div onclick="addToCart('${safeId}', '${safeName}', ${safePrice}, '${safeRoute}')" class="menu-card bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden cursor-pointer hover:border-amber-500 relative transition-all duration-300 h-full active:scale-95">
             
@@ -214,12 +216,11 @@ function renderMenuHTML(items) {
                 <div class="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-md text-slate-300 text-[9px] font-bold px-2 py-0.5 rounded border border-slate-700">${safeCat}</div>
             </div>
 
-            <!-- Area Teks Detail & Harga -->
-            <div class="p-3 flex flex-col justify-between flex-1 bg-slate-800">
-                <div class="text-left mb-2">
-                    <h3 class="text-xs font-bold text-white line-clamp-2 leading-snug">${safeName}</h3>
-                    <!-- FIX: line-clamp-1 untuk deskripsi kasir agar tidak numpuk panjang -->
-                    <p class="text-[9px] text-slate-400 mt-1 line-clamp-1 leading-relaxed">${safeDesc}</p>
+            <!-- Area Teks Detail & Harga (Tampil Penuh / Bebas Teks) -->
+            <div class="p-3 flex flex-col justify-between flex-1 bg-slate-800 w-full">
+                <div class="text-left mb-2 w-full">
+                    <h3 class="text-xs font-bold text-white break-words whitespace-normal leading-snug w-full">${safeName}</h3>
+                    <p class="text-[9px] text-slate-400 mt-1 break-words whitespace-normal leading-relaxed w-full">${safeDesc}</p>
                 </div>
                 <p class="text-xs font-black text-amber-500 mt-auto tracking-tight text-left">Rp ${safePrice.toLocaleString('id-ID')}</p>
             </div>
