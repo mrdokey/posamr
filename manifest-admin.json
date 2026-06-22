@@ -1,0 +1,22 @@
+{
+  "name": "AMR Admin Backoffice",
+  "short_name": "AMR Admin",
+  "description": "Aplikasi Pengelolaan Backoffice Mandiri AMR POS",
+  "start_url": "./admin.html",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "https://i.ibb.co.com/gMmSSTgq/IMG-20260606-WA0000.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "https://i.ibb.co.com/gMmSSTgq/IMG-20260606-WA0000.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

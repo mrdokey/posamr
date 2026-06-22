@@ -8,14 +8,20 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tautkan ke Manifest khusus Admin -->
+    <link rel="manifest" href="./manifest-admin.json">
+    
     <style>
         button, input, select { touch-action: manipulation; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #020617; }
         .hidden-screen { display: none !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .smooth-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .menu-card:active { transform: scale(0.95); opacity: 0.8; }
         .fade-out { animation: fadeOut 0.5s forwards; }
         @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
+        #menu-container { transition: opacity 0.3s ease-in-out; }
     </style>
 </head>
 <body class="h-[100dvh] w-screen flex flex-col select-none text-slate-100 overflow-hidden">
@@ -26,7 +32,18 @@
         <p class="text-slate-300 text-sm font-semibold tracking-widest animate-bounce">MEMUAT BACKOFFICE ADMIN...</p>
     </div>
 
-    <!-- 2. SCREEN LOGIN ADMIN (PIN TERPROTEKSI) -->
+    <!-- 2. SCREEN AKTIVASI (FIX: Ditambahkan langsung untuk mencegah blank hitam di komputer baru) -->
+    <div id="activation-screen" class="hidden-screen fixed inset-0 bg-slate-950 z-[110] flex items-center justify-center p-4 smooth-transition">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl w-full max-w-md p-8 text-center">
+            <img src="https://i.ibb.co.com/JW1FFbCz/1780229137561.png" class="w-24 h-24 mx-auto mb-4">
+            <h2 class="text-2xl font-bold text-white mb-2">Aktivasi Backoffice</h2>
+            <p class="text-xs text-slate-400 mb-6">Masukkan URL API dari MRD Solution</p>
+            <input type="url" id="api-input" placeholder="Masukkan URL API..." class="w-full px-4 py-3 bg-slate-950 border-2 border-slate-800 text-white rounded-xl focus:border-amber-500 outline-none mb-4 text-sm text-center smooth-transition">
+            <button onclick="activateAdminSystem()" id="btn-activate" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 rounded-xl smooth-transition shadow-lg">Aktifkan Backoffice</button>
+        </div>
+    </div>
+
+    <!-- 3. SCREEN LOGIN ADMIN (PIN TERPROTEKSI) -->
     <div id="login-screen" class="hidden-screen fixed inset-0 bg-slate-950 z-[100] flex items-center justify-center p-4 smooth-transition">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center">
             <img src="https://i.ibb.co.com/JW1FFbCz/1780229137561.png" class="w-20 h-20 mx-auto mb-4">
@@ -48,11 +65,11 @@
                 <button onclick="pressNum('2')" class="h-14 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">2</button>
                 <button onclick="pressNum('3')" class="h-14 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">3</button>
                 <button onclick="pressNum('4')" class="h-14 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">4</button>
-                <button onclick="pressNum('5')" class="h-14 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">5</button>
-                <button onclick="pressNum('6')" class="h-14 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">6</button>
-                <button onclick="pressNum('7')" class="h-14 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">7</button>
-                <button onclick="pressNum('8')" class="h-14 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">8</button>
-                <button onclick="pressNum('9')" class="h-14 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">9</button>
+                <button onclick="pressNum('5')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">5</button>
+                <button onclick="pressNum('6')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">6</button>
+                <button onclick="pressNum('7')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">7</button>
+                <button onclick="pressNum('8')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">8</button>
+                <button onclick="pressNum('9')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">9</button>
                 <button onclick="clearPin()" class="h-14 rounded-2xl bg-red-950/40 text-red-500 font-bold text-sm active:scale-95 smooth-transition">CLEAR</button>
                 <button onclick="pressNum('0')" class="h-14 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">0</button>
                 <button onclick="backspacePin()" class="h-14 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-lg active:scale-95 smooth-transition flex items-center justify-center text-amber-500"><i data-lucide="delete" class="w-6 h-6"></i></button>
@@ -62,19 +79,17 @@
         </div>
     </div>
 
-    <!-- 3. MAIN DASHBOARD APPLICATION LAYOUT -->
+    <!-- 4. MAIN DASHBOARD APPLICATION LAYOUT -->
     <div id="main-app" class="hidden-screen h-full w-full flex flex-col md:flex-row bg-[#020617] overflow-hidden smooth-transition">
         
         <!-- SIDEBAR KIRI (DESKTOP) & NAV ATAS (MOBILE) -->
         <aside class="w-full md:w-64 bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 flex flex-row md:flex-col justify-between p-4 shrink-0 z-20">
             <div class="flex flex-row md:flex-col items-center md:items-start gap-4 md:w-full">
-                <!-- Logo -->
                 <div class="flex items-center gap-3">
                     <img src="https://i.ibb.co.com/JW1FFbCz/1780229137561.png" class="w-8 h-8 rounded-lg">
                     <h1 class="text-md font-black text-amber-500 tracking-tight uppercase">AMR SaaS</h1>
                 </div>
 
-                <!-- Tombol Navigasi Tab (Dinamis) -->
                 <nav class="hidden md:flex flex-col gap-1.5 w-full mt-6">
                     <button onclick="switchTab('Users')" id="nav-Users" class="nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 bg-amber-500 text-slate-950 transition">
                         <i data-lucide="users" class="w-4 h-4"></i> <span>Data Karyawan</span>
@@ -91,7 +106,6 @@
                 </nav>
             </div>
 
-            <!-- Profile Atasan & Logout -->
             <div class="flex items-center gap-3 md:w-full md:border-t border-slate-800 md:pt-4">
                 <div class="hidden md:block flex-1 min-w-0 text-left">
                     <p id="admin-name" class="text-xs font-black text-white truncate">-</p>
@@ -105,7 +119,6 @@
 
         <!-- CONTAINER UTAMA KONTEN -->
         <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-950">
-            <!-- Header Mobile Tab Switcher (Hanya muncul di Layar HP/Portrait) -->
             <div class="md:hidden flex gap-2 overflow-x-auto p-4 bg-slate-900 border-b border-slate-800 no-scrollbar">
                 <button onclick="switchTab('Users')" id="mob-nav-Users" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-amber-500 text-slate-950">Karyawan</button>
                 <button onclick="switchTab('Menu')" id="mob-nav-Menu" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Menu</button>
@@ -113,27 +126,18 @@
                 <button onclick="switchTab('Reports')" id="mob-nav-Reports" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Laporan</button>
             </div>
 
-            <!-- AREA SEKSI KONTEN YANG BERGANTI DINAMIS -->
-            <div id="content-area" class="flex-1 overflow-y-auto p-6 space-y-6">
-                <!-- Data terekam dinamis lewat JS -->
-            </div>
+            <div id="content-area" class="flex-1 overflow-y-auto p-6 space-y-6"></div>
         </main>
     </div>
 
-    <!-- MODAL FORM INPUT: TAMBAH / EDIT DATA (GLOBAL SKELETON) -->
+    <!-- MODAL FORM INPUT -->
     <div id="modal-form" class="hidden-screen fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 smooth-transition">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg p-6 shadow-2xl flex flex-col max-h-[90vh]">
             <div class="flex justify-between items-center mb-4 shrink-0">
                 <h3 id="modal-title" class="text-md font-black text-amber-500 uppercase tracking-wider">-</h3>
                 <button onclick="closeModal('modal-form')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-
-            <!-- Isian Form Input Dinamis -->
-            <div id="modal-form-body" class="flex-1 overflow-y-auto space-y-4 pr-1 text-left">
-                <!-- Kontrol Form terisi dinamis via JS -->
-            </div>
-
-            <!-- Footer Modal -->
+            <div id="modal-form-body" class="flex-1 overflow-y-auto space-y-4 pr-1 text-left"></div>
             <div class="mt-6 pt-4 border-t border-slate-800 flex justify-end gap-2 shrink-0">
                 <button onclick="closeModal('modal-form')" class="px-5 py-2.5 text-xs font-bold text-slate-400 hover:text-white transition">Batal</button>
                 <button id="btn-save-form" class="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-lg transition">SIMPAN DATA</button>
@@ -143,16 +147,14 @@
 
     <!-- JAVASCRIPT LOGIKA KONTROL ADMIN -->
     <script>
-        // Kunci aman SaaS Multi-Client
         const STORAGE_API = "MRD_API_URL";
-        const GAS_URL = localStorage.getItem(STORAGE_API);
+        let GAS_URL = localStorage.getItem(STORAGE_API);
         const STORAGE_ADMIN = "MRD_ADMIN_SESSION";
 
         let currentTab = "Users";
         let adminInfo = null;
         let loginPinValue = "";
 
-        // Verifikasi Lisensi & Sesi Login Admin
         window.onload = () => {
             setTimeout(() => {
                 document.getElementById('splash-screen').classList.add('fade-out');
@@ -164,9 +166,9 @@
         };
 
         function checkAdminState() {
+            // FIX: Alihkan ke layar aktivasi alih-alih redirect kasar ke index.html
             if (!GAS_URL) {
-                alert("Aplikasi Backoffice Belum Diaktivasi! Silakan buka Kiosk Absensi terlebih dahulu.");
-                window.location.href = "index.html";
+                showScreen('activation-screen');
                 return;
             }
 
@@ -184,6 +186,27 @@
                 document.getElementById('admin-name').innerText = adminInfo.name;
                 document.getElementById('admin-role').innerText = adminInfo.role;
                 switchTab(currentTab);
+            }
+        }
+
+        // --- SISTEM AKTIVASI SISTEM BACKOFFICE ---
+        async function activateAdminSystem() {
+            const input = document.getElementById('api-input').value.trim();
+            if(!input) return alert("Masukkan URL!");
+            const btn = document.getElementById('btn-activate');
+            btn.innerHTML = "Loading...";
+            
+            try {
+                const res = await fetch(input, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) });
+                const json = await res.json();
+                if(json.success) {
+                    localStorage.setItem(STORAGE_API, input);
+                    GAS_URL = input; // Setel token global aktif
+                    window.location.reload();
+                } else throw new Error("Gagal");
+            } catch (e) {
+                alert("URL API tidak valid!");
+                btn.innerHTML = "Aktifkan Backoffice";
             }
         }
 
@@ -221,7 +244,6 @@
             });
         }
 
-        // Otentikasi Login Atasan ke GAS
         async function loginAdmin() {
             try {
                 const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) });
@@ -254,18 +276,15 @@
             }
         }
 
-        // --- SISTEM SWITCH TAB KONTROL ---
         function switchTab(tabName) {
             currentTab = tabName;
             
-            // Setel CSS Nav Desktop
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.className = "nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-400 hover:bg-slate-800 hover:text-white transition";
             });
             const activeBtn = document.getElementById(`nav-${tabName}`);
             if (activeBtn) activeBtn.className = "nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 bg-amber-500 text-slate-950 transition";
 
-            // Setel CSS Nav Mobile
             document.querySelectorAll('.mob-nav-btn').forEach(btn => {
                 btn.className = "mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400";
             });
@@ -275,29 +294,26 @@
             renderContent(tabName);
         }
 
-        // Render Konten Dashboard Dinamis Sesuai Aturan Pembatasan Hak Akses (Role-Based)
         function renderContent(tab) {
             const area = document.getElementById('content-area');
             if (!area) return;
 
             const userRole = adminInfo.role ? adminInfo.role.toLowerCase().trim() : "";
 
-            // --- PROTEKSI ROLE-BASED ACCESS CONTROL (RBAC) ---
             if (tab === "Users" && userRole === "manager") {
                 area.innerHTML = `<div class="py-20 text-center text-rose-500 font-bold text-xs"><i data-lucide="shield-alert" class="w-12 h-12 mx-auto mb-3"></i>AKSES DITOLAK! Manajemen Karyawan hanya boleh diakses oleh Owner dan HRD.</div>`;
-                lucide.createIcons();
+                if (typeof lucide !== 'undefined') lucide.createIcons();
                 return;
             }
             if (tab === "Promo" && (userRole === "hrd" || userRole === "manager")) {
                 area.innerHTML = `<div class="py-20 text-center text-rose-500 font-bold text-xs"><i data-lucide="shield-alert" class="w-12 h-12 mx-auto mb-3"></i>AKSES DITOLAK! Pengaturan Diskon & Voucher hanya boleh dikelola oleh Owner.</div>`;
-                lucide.createIcons();
+                if (typeof lucide !== 'undefined') lucide.createIcons();
                 return;
             }
 
-            // SKELETON LAYOUT SEMENTARA (Nanti di-fetch dinamis dari GAS di file admin.js)
             area.innerHTML = `
-                <div class="flex justify-between items-center shrink-0 border-b border-slate-800 pb-4">
-                    <div>
+                <div class="flex justify-between items-center shrink-0 border-b border-slate-800 pb-4 animate-slide-up">
+                    <div class="text-left">
                         <h2 class="text-xl font-black text-white uppercase tracking-wider">${tab} Management</h2>
                         <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1">Kelola data ${tab} cabang ${adminInfo.area}</p>
                     </div>
@@ -307,14 +323,13 @@
                 </div>
                 <div class="py-20 text-center text-slate-600 animate-pulse text-xs">Menarik data dari database Google Sheets...</div>
             `;
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         function openFormModal(tab) {
             document.getElementById('modal-title').innerText = `Tambah Data ${tab}`;
             const body = document.getElementById('modal-form-body');
             
-            // CONTOH STRUKTUR INPUT FORM DINAMIS SESUAI TAB
             if (tab === "Users") {
                 body.innerHTML = `
                     <div>
@@ -367,6 +382,10 @@
                 body.innerHTML = `<p class="text-xs text-slate-500">Form untuk ${tab} sedang dalam proses inisialisasi...</p>`;
             }
 
+            openFormModalShow();
+        }
+
+        function openFormModalShow() {
             openModal('modal-form');
         }
     </script>
