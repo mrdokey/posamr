@@ -1,7 +1,7 @@
 /**
- * MODUL PRINTER: ENGINE RAWBT & TEMPLATE STRUK PREMIUM (THE ARIA CUSTOM TEMPLATE)
+ * MODUL PRINTER: ENGINE QUICK PRINTER (DIEGOVELOPER) & TEMPLATE STRUK PREMIUM (THE ARIA)
  * Menangani Multi-Printer Routing Tanpa Karakter China (Safe ASCII)
- * UPDATE: Dukungan Dinamis Lebar Kertas 58mm (32 Chars) & 80mm (48 Chars)
+ * UPDATE: Integrasi Skema Quick Printer & Multi-Branch Area Config Compatibility
  */
 
 let LINE_WIDTH = 32; // Default fallback ke kertas 58mm
@@ -41,10 +41,18 @@ function safeStringToBase64(str) {
     }));
 }
 
-// --- HELPER 4: KIRIM INTENT PRINTER RAWBT SPESIFIK ---
-function sendIntentToRawBT(plainTextReceipt, printerProfileName) {
+// --- HELPER 4: KIRIM INTENT SPESIFIK KE DIEGOVELOPER QUICK PRINTER ---
+function sendIntentToQuickPrinter(plainTextReceipt, printerProfileName) {
+    // 1. Konversi teks struk ke Base64 secara aman (Bebas Crash Rupiah/Unicode)
     const base64Data = safeStringToBase64(plainTextReceipt);
-    const intentUrl = `intent:base64,${base64Data}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.printer=${printerProfileName};end;`;
+    
+    // 2. Gunakan skema Intent resmi Quick Printer karya diegoveloper
+    // - Package: com.diegoveloper.quickprinter
+    // - Scheme: quickprinter
+    // - Uri Path: //print/base64,
+    // - Extra Parameter: S.printer_name (mencocokkan nama profil printer di HP/tablet kasir)
+    const intentUrl = `intent://print/base64,${base64Data}#Intent;scheme=quickprinter;package=com.diegoveloper.quickprinter;S.printer_name=${printerProfileName};end;`;
+    
     window.location.href = intentUrl;
 }
 
@@ -74,7 +82,7 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
         });
         kitchenReceipt += "\n\n\n\n";
         
-        sendIntentToRawBT(kitchenReceipt, printerKitchenProfile);
+        sendIntentToQuickPrinter(kitchenReceipt, printerKitchenProfile);
     }
 
     // 2. BAR PRINT (DELAYED)
@@ -96,12 +104,12 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
         barReceipt += "\n\n\n\n";
         
         setTimeout(() => {
-            sendIntentToRawBT(barReceipt, printerBarProfile);
+            sendIntentToQuickPrinter(barReceipt, printerBarProfile);
         }, 1200); 
     }
 }
 
-// --- ENGINE 2: CHASE OUT & INTERFACE ROUTING ---
+// --- ENGINE 2: CHASE OUT & INTERFACE ROUTING (Paid, Open, & Reprint) ---
 function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discountAmount, serviceCharge, tax, grandTotal, target, isReprint = false, itemsToPrint = null) {
     updateLineWidth(); // Pemicu lebar kertas
     
@@ -110,11 +118,11 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
     const printerBarProfile = configData["PRINTER_BAR"] || "Bar";
     
     const namaResto = configData["NAMA_PERUSAAN"] || "THE ARIA";
-    const alamat = configData["ALAMAT"] || "Jl. Batu Belig No.48, Badung, Bali 80361";
-    const footerStruk = configData["FOOTER_STRUK"] || "Thank you ! see you again !";
+    const alamat = configData["ALAMAT"] || "Jl. Pantai Berawa No. 99, Canggu";
+    const footerStruk = configData["FOOTER_STRUK"] || "Terima Kasih Atas Kunjungannya!";
     
-    const currentDateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' });
-    const currentTimeStr = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    const currentDateStr = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: '2-digit' });
+    const currentTimeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
 
     const items = itemsToPrint || cart; 
     let delayMultiplier = 0; 
@@ -215,7 +223,7 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
             }
         }
 
-        sendIntentToRawBT(cashierReceipt, printerKasirProfile);
+        sendIntentToQuickPrinter(cashierReceipt, printerKasirProfile);
         delayMultiplier++;
     }
 
@@ -240,7 +248,7 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
             kitchenReceipt += "\n\n\n\n";
 
             setTimeout(() => {
-                sendIntentToRawBT(kitchenReceipt, printerKitchenProfile);
+                sendIntentToQuickPrinter(kitchenReceipt, printerKitchenProfile);
             }, delayMultiplier * 1200);
             delayMultiplier++;
         }
@@ -267,7 +275,7 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
             barReceipt += "\n\n\n\n";
 
             setTimeout(() => {
-                sendIntentToRawBT(barReceipt, printerBarProfile);
+                sendIntentToQuickPrinter(barReceipt, printerBarProfile);
             }, delayMultiplier * 1200);
         }
     }
