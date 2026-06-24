@@ -1,7 +1,7 @@
 /**
- * MODUL PRINTER: ENGINE QUICK PRINTER (DIEGOVELOPER) & TEMPLATE STRUK PREMIUM (THE ARIA)
+ * MODUL PRINTER: ENGINE QUICK PRINTER (DIEGOVELOPER SDK) & TEMPLATE STRUK PREMIUM
  * Menangani Multi-Printer Routing Tanpa Karakter China (Safe ASCII)
- * UPDATE: Integrasi Skema Quick Printer & Multi-Branch Area Config Compatibility
+ * UPDATE: Integrasi Skema SDK pe.diegoveloper.printing & Multi-Branch Area
  */
 
 let LINE_WIDTH = 32; // Default fallback ke kertas 58mm
@@ -34,7 +34,7 @@ function formatLeftRight(leftText, rightText) {
     return leftText + "\n" + " ".repeat(LINE_WIDTH - rightText.length) + rightText;
 }
 
-// --- HELPER 3: ENKODE TEKS KE BASE64 SECARA AMAN ---
+// --- HELPER 3: ENKODE TEKS KE BASE64 SECARA AMAN (Dipertahankan sebagai cadangan) ---
 function safeStringToBase64(str) {
     return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
         return String.fromCharCode('0x' + p1);
@@ -43,15 +43,16 @@ function safeStringToBase64(str) {
 
 // --- HELPER 4: KIRIM INTENT SPESIFIK KE DIEGOVELOPER QUICK PRINTER ---
 function sendIntentToQuickPrinter(plainTextReceipt, printerProfileName) {
-    // 1. Konversi teks struk ke Base64 secara aman (Bebas Crash Rupiah/Unicode)
-    const base64Data = safeStringToBase64(plainTextReceipt);
+    // 1. URL Encode teks struk agar aman dikirim lewat Intent URI (Tanpa perlu Base64!)
+    const safeText = encodeURIComponent(plainTextReceipt);
     
-    // 2. Gunakan skema Intent resmi Quick Printer karya diegoveloper
-    // - Package: com.diegoveloper.quickprinter
-    // - Scheme: quickprinter
-    // - Uri Path: //print/base64,
-    // - Extra Parameter: S.printer_name (mencocokkan nama profil printer di HP/tablet kasir)
-    const intentUrl = `intent://print/base64,${base64Data}#Intent;scheme=quickprinter;package=com.diegoveloper.quickprinter;S.printer_name=${printerProfileName};end;`;
+    // 2. Gunakan struktur Intent Resmi sesuai dokumentasi SDK Quick Printer (diegoveloper)
+    // - Action: pe.diegoveloper.printing
+    // - Package: pe.diegoveloper.printing
+    // - Type: text/plain
+    // - Extra: S.android.intent.extra.TEXT (Menampung teks struk)
+    // - Extra: S.printer_name (Rute nama printer tujuan)
+    const intentUrl = `intent:#Intent;action=pe.diegoveloper.printing;type=text/plain;S.android.intent.extra.TEXT=${safeText};S.printer_name=${printerProfileName};package=pe.diegoveloper.printing;end;`;
     
     window.location.href = intentUrl;
 }
@@ -109,7 +110,7 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
     }
 }
 
-// --- ENGINE 2: CHASE OUT & INTERFACE ROUTING (Paid, Open, & Reprint) ---
+// --- ENGINE 2: CHASE OUT & INTERFACE ROUTING ---
 function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discountAmount, serviceCharge, tax, grandTotal, target, isReprint = false, itemsToPrint = null) {
     updateLineWidth(); // Pemicu lebar kertas
     
