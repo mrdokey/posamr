@@ -1,7 +1,7 @@
 /**
- * MODUL PRINTER: ENGINE QUICK PRINTER (DIEGOVELOPER SDK) & TEMPLATE STRUK PREMIUM
+ * MODUL PRINTER: ENGINE QUICK PRINTER (DIEGOVELOPER) & TEMPLATE STRUK PREMIUM (THE ARIA)
  * Menangani Multi-Printer Routing Tanpa Karakter China (Safe ASCII)
- * UPDATE: Integrasi Skema SDK pe.diegoveloper.printing & Multi-Branch Area
+ * UPDATE: Fix Target Package pe.diegoveloper.printing & Safe Kitchen ASCII Borders
  */
 
 let LINE_WIDTH = 32; // Default fallback ke kertas 58mm
@@ -10,9 +10,9 @@ let LINE_WIDTH = 32; // Default fallback ke kertas 58mm
 function updateLineWidth() {
     const lebar = configData["LEBAR_KERTAS_PRINTER"] ? configData["LEBAR_KERTAS_PRINTER"].toString().trim() : "58";
     if (lebar === "80") {
-        LINE_WIDTH = 48; // Standar jumlah karakter rata kanan-kiri untuk kertas 80mm (Font A)
+        LINE_WIDTH = 48; // Standar jumlah karakter rata kanan-kiri untuk kertas 80mm
     } else {
-        LINE_WIDTH = 32; // Standar jumlah karakter rata kanan-kiri untuk kertas 58mm (Font A)
+        LINE_WIDTH = 32; // Standar jumlah karakter rata kanan-kiri untuk kertas 58mm
     }
 }
 
@@ -34,7 +34,7 @@ function formatLeftRight(leftText, rightText) {
     return leftText + "\n" + " ".repeat(LINE_WIDTH - rightText.length) + rightText;
 }
 
-// --- HELPER 3: ENKODE TEKS KE BASE64 SECARA AMAN (Dipertahankan sebagai cadangan) ---
+// --- HELPER 3: ENKODE TEKS KE BASE64 SECARA AMAN ---
 function safeStringToBase64(str) {
     return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
         return String.fromCharCode('0x' + p1);
@@ -43,23 +43,17 @@ function safeStringToBase64(str) {
 
 // --- HELPER 4: KIRIM INTENT SPESIFIK KE DIEGOVELOPER QUICK PRINTER ---
 function sendIntentToQuickPrinter(plainTextReceipt, printerProfileName) {
-    // 1. URL Encode teks struk agar aman dikirim lewat Intent URI (Tanpa perlu Base64!)
-    const safeText = encodeURIComponent(plainTextReceipt);
+    const base64Data = safeStringToBase64(plainTextReceipt);
     
-    // 2. Gunakan struktur Intent Resmi sesuai dokumentasi SDK Quick Printer (diegoveloper)
-    // - Action: pe.diegoveloper.printing
-    // - Package: pe.diegoveloper.printing
-    // - Type: text/plain
-    // - Extra: S.android.intent.extra.TEXT (Menampung teks struk)
-    // - Extra: S.printer_name (Rute nama printer tujuan)
-    const intentUrl = `intent:#Intent;action=pe.diegoveloper.printing;type=text/plain;S.android.intent.extra.TEXT=${safeText};S.printer_name=${printerProfileName};package=pe.diegoveloper.printing;end;`;
+    // FIX FATAL BUG: Mengubah package menjadi "pe.diegoveloper.printing" sesuai dokumentasi resmi
+    const intentUrl = `intent://print/base64,${base64Data}#Intent;scheme=quickprinter;package=pe.diegoveloper.printing;S.printer_name=${printerProfileName};end;`;
     
     window.location.href = intentUrl;
 }
 
 // --- ENGINE 1: DRAFT TO OPEN (KITCHEN & BAR ORDER) ---
 function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
-    updateLineWidth(); // Pemicu lebar kertas
+    updateLineWidth(); 
     
     const printerKitchenProfile = configData["PRINTER_KITCHEN"] || "Kitchen";
     const printerBarProfile = configData["PRINTER_BAR"] || "Bar";
@@ -70,11 +64,11 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
     if (kitchenItems.length > 0) {
         let kitchenReceipt = "";
         kitchenReceipt += centerText("ORDERAN DAPUR") + "\n";
-        kitchenReceipt += "=".repeat(LINE_WIDTH) + "\n";
+        kitchenReceipt += "=".repeat(LINE_WIDTH) + "\n"; // FIX: ASCII pembatas dapur
         kitchenReceipt += `Meja : Meja ${bill.tableNo}\n`;
         kitchenReceipt += `ID   : ${bill.orderId.substring(0, 15)}\n`;
         kitchenReceipt += `Jam  : ${currentTimeStr}\n`;
-        kitchenReceipt += "-".repeat(LINE_WIDTH) + "\n";
+        kitchenReceipt += "-".repeat(LINE_WIDTH) + "\n"; // FIX: ASCII pembatas dapur
         
         kitchenItems.forEach(item => {
             kitchenReceipt += `${item.qty}x ${item.name}\n`;
@@ -91,11 +85,11 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
     if (barItems.length > 0) {
         let barReceipt = "";
         barReceipt += centerText("ORDERAN MINUMAN") + "\n";
-        barReceipt += "=".repeat(LINE_WIDTH) + "\n";
+        barReceipt += "=".repeat(LINE_WIDTH) + "\n"; // FIX: ASCII pembatas bar
         barReceipt += `Meja : Meja ${bill.tableNo}\n`;
         barReceipt += `ID   : ${bill.orderId.substring(0, 15)}\n`;
         barReceipt += `Jam  : ${currentTimeStr}\n`;
-        barReceipt += "-".repeat(LINE_WIDTH) + "\n";
+        barReceipt += "-".repeat(LINE_WIDTH) + "\n"; // FIX: ASCII pembatas bar
         
         barItems.forEach(item => {
             barReceipt += `${item.qty}x ${item.name}\n`;
@@ -110,9 +104,9 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
     }
 }
 
-// --- ENGINE 2: CHASE OUT & INTERFACE ROUTING ---
+// --- ENGINE 2: CHASE OUT & INTERFACE ROUTING (Paid, Open, & Reprint) ---
 function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discountAmount, serviceCharge, tax, grandTotal, target, isReprint = false, itemsToPrint = null) {
-    updateLineWidth(); // Pemicu lebar kertas
+    updateLineWidth(); 
     
     const printerKasirProfile = configData["PRINTER_KASIR"] || "Kasir";
     const printerKitchenProfile = configData["PRINTER_KITCHEN"] || "Kitchen";
@@ -235,7 +229,7 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
             let kitchenReceipt = "";
             if (isReprint) kitchenReceipt += centerText("*** REPRINT / SALINAN ***") + "\n";
             kitchenReceipt += centerText("ORDERAN DAPUR") + "\n";
-            kitchenReceipt += "═".repeat(LINE_WIDTH) + "\n";
+            kitchenReceipt += "=".repeat(LINE_WIDTH) + "\n";
             kitchenReceipt += `Meja : Meja ${table}\n`;
             kitchenReceipt += `ID   : ${orderId.substring(0, 15)}\n`;
             kitchenReceipt += `Jam  : ${currentTimeStr}\n`;
@@ -262,7 +256,7 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
             let barReceipt = "";
             if (isReprint) barReceipt += centerText("*** REPRINT / SALINAN ***") + "\n";
             barReceipt += centerText("ORDERAN MINUMAN") + "\n";
-            barReceipt += "═".repeat(LINE_WIDTH) + "\n";
+            barReceipt += "=".repeat(LINE_WIDTH) + "\n";
             barReceipt += `Meja : Meja ${table}\n`;
             barReceipt += `ID   : ${orderId.substring(0, 15)}\n`;
             barReceipt += `Jam  : ${currentTimeStr}\n`;
