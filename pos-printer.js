@@ -45,8 +45,9 @@ function safeStringToBase64(str) {
 function sendIntentToQuickPrinter(plainTextReceipt, printerProfileName) {
     const base64Data = safeStringToBase64(plainTextReceipt);
     
-    // FIX FATAL BUG: Mengubah package menjadi "pe.diegoveloper.printing" sesuai dokumentasi resmi
-    const intentUrl = `intent://print/base64,${base64Data}#Intent;scheme=quickprinter;package=pe.diegoveloper.printing;S.printer_name=${printerProfileName};end;`;
+    // PERBAIKAN: Menghapus ";package=pe.diegoveloper.printing;" untuk menghindari redirect paksa ke Play Store 404 (Gambar Satelit)
+    // Sistem Android akan mencari aplikasi terinstal yang merespons scheme "quickprinter" secara otomatis.
+    const intentUrl = `intent://print/base64,${base64Data}#Intent;scheme=quickprinter;S.printer_name=${printerProfileName};end;`;
     
     window.location.href = intentUrl;
 }
