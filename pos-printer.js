@@ -41,21 +41,20 @@ function safeStringToBase64(str) {
     }));
 }
 
-// --- HELPER 4: KIRIM INTENT UNIVERSAL KE RAWBT (METODE ACTION_SEND) ---
+// --- HELPER 4: KIRIM VIA SKEMA KUSTOM RAWBT (ANTI BLOKIR CHROME & ANTI PLAYSTORE) ---
 function sendIntentToQuickPrinter(plainTextReceipt, printerProfileName) {
     try {
-        // Encode teks struk agar aman dikirim sebagai bagian dari URL
-        const encodedText = encodeURIComponent(plainTextReceipt);
-
-        // Intent URL universal (ACTION_SEND) untuk RawBT. 
-        // Ini adalah metode paling stabil dan direkomendasikan.
-        // Langsung mengirim teks mentah, tidak perlu Base64.
-        const intentUrl = `intent:${encodedText}#Intent;action=android.intent.action.SEND;type=text/plain;package=ru.a2011.asg.rawbtprinter;end;`;
-
+        // Enkripsi teks struk ke Base64 menggunakan fungsi pembantu Anda yang sudah ada
+        const base64Data = safeStringToBase64(plainTextReceipt);
+        
+        // Menggunakan Protokol Kustom Resmi RawBT "rawbt://"
+        // Metode ini langsung membuka aplikasi RawBT tanpa perantara, sangat stabil untuk PWA
+        const intentUrl = `rawbt://base64,${base64Data}`;
+        
         window.location.href = intentUrl;
     } catch (error) {
-        console.error("Gagal mengirim intent ke RawBT:", error);
-        alert("Gagal memproses cetakan. Pastikan RawBT terinstal.");
+        console.error("Gagal memproses ke RawBT:", error);
+        alert("Gagal mengirim data ke printer.");
     }
 }
 
