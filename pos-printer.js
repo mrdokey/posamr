@@ -41,13 +41,13 @@ function safeStringToBase64(str) {
     }));
 }
 
-// --- HELPER 4: KIRIM INTENT SPESIFIK KE DIEGOVELOPER QUICK PRINTER ---
+// --- HELPER 4: KIRIM INTENT SPESIFIK KE RAWBT (DIUBAH KEMBALI DARI QUICK PRINTER) ---
 function sendIntentToQuickPrinter(plainTextReceipt, printerProfileName) {
+    // Enkripsi teks struk ke Base64 secara aman
     const base64Data = safeStringToBase64(plainTextReceipt);
     
-    // PERBAIKAN: Menghapus ";package=pe.diegoveloper.printing;" untuk menghindari redirect paksa ke Play Store 404 (Gambar Satelit)
-    // Sistem Android akan mencari aplikasi terinstal yang merespons scheme "quickprinter" secara otomatis.
-    const intentUrl = `intent://base64,${base64Data}#Intent;scheme=quickprinter;package=pe.diegoveloper.printing;S.printer_name=${printerProfileName};end;`;
+    // Intent URL untuk aplikasi RawBT (ru.a2011.asg.rawbtprinter)
+    const intentUrl = `intent:#Intent;launchFlags=0x10000000;component=ru.a2011.asg.rawbtprinter/.local.PrintServiceActivity;S.base64=${base64Data};end;`;
     
     window.location.href = intentUrl;
 }
