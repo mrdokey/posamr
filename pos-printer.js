@@ -41,15 +41,22 @@ function safeStringToBase64(str) {
     }));
 }
 
-// --- HELPER 4: KIRIM INTENT SPESIFIK KE RAWBT (DIUBAH KEMBALI DARI QUICK PRINTER) ---
+// --- HELPER 4: KIRIM INTENT UNIVERSAL KE RAWBT (METODE ACTION_SEND) ---
 function sendIntentToQuickPrinter(plainTextReceipt, printerProfileName) {
-    // Enkripsi teks struk ke Base64 secara aman
-    const base64Data = safeStringToBase64(plainTextReceipt);
-    
-    // Intent URL untuk aplikasi RawBT (ru.a2011.asg.rawbtprinter)
-    const intentUrl = `intent:#Intent;launchFlags=0x10000000;component=ru.a2011.asg.rawbtprinter/.local.PrintServiceActivity;S.base64=${base64Data};end;`;
-    
-    window.location.href = intentUrl;
+    try {
+        // Encode teks struk agar aman dikirim sebagai bagian dari URL
+        const encodedText = encodeURIComponent(plainTextReceipt);
+
+        // Intent URL universal (ACTION_SEND) untuk RawBT. 
+        // Ini adalah metode paling stabil dan direkomendasikan.
+        // Langsung mengirim teks mentah, tidak perlu Base64.
+        const intentUrl = `intent:${encodedText}#Intent;action=android.intent.action.SEND;type=text/plain;package=ru.a2011.asg.rawbtprinter;end;`;
+
+        window.location.href = intentUrl;
+    } catch (error) {
+        console.error("Gagal mengirim intent ke RawBT:", error);
+        alert("Gagal memproses cetakan. Pastikan RawBT terinstal.");
+    }
 }
 
 // --- ENGINE 1: DRAFT TO OPEN (KITCHEN & BAR ORDER) ---
