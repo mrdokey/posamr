@@ -47,7 +47,7 @@ function sendIntentToQuickPrinter(plainTextReceipt, printerProfileName) {
     
     // PERBAIKAN: Menghapus ";package=pe.diegoveloper.printing;" untuk menghindari redirect paksa ke Play Store 404 (Gambar Satelit)
     // Sistem Android akan mencari aplikasi terinstal yang merespons scheme "quickprinter" secara otomatis.
-    const intentUrl = `intent://print/base64,${base64Data}#Intent;scheme=quickprinter;S.printer_name=${printerProfileName};end;`;
+    const intentUrl = `intent://base64,${base64Data}#Intent;scheme=quickprinter;package=pe.diegoveloper.printing;S.printer_name=${printerProfileName};end;`;
     
     window.location.href = intentUrl;
 }
