@@ -129,7 +129,7 @@ function checkState() {
         const jobdeskClean = cashierInfo.jobdesk ? cashierInfo.jobdesk.toLowerCase().trim() : "";
         const roleClean = cashierInfo.role ? cashierInfo.role.toLowerCase().trim() : "";
 
-        if (jobdeskClean !== "kasir" && !allowedRoles.includes(roleClean)) {
+        if (jobdeskClean !== "cashier" && !allowedRoles.includes(roleClean)) {
             localStorage.removeItem(STORAGE_USER);
             window.location.reload();
             return;
