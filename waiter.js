@@ -1,5 +1,5 @@
 /**
- * MODUL 4: WAITER/PELAYAN ENGINE (FULL RESPONSIVE & DRAFT ORDER)
+ * MODUL 4: WAITER/Waiterss ENGINE (FULL RESPONSIVE & DRAFT ORDER)
  * UPDATE: SaaS Multi-Client Dynamic Token & Waiter Shift Alarm (Eco Banner)
  */
 
@@ -82,7 +82,7 @@ window.onload = () => {
 function checkState() {
     // PROTEKSI UTAMA SAAS: Jika Lisensi Kosong, paksa alihkan HP ke Kiosk Absen untuk aktivasi
     if (!GAS_URL) {
-        alert("Sistem PWA Pelayan Belum Aktif!\n\nHarap lakukan aktivasi berlisensi terlebih dahulu melalui Kiosk Absensi di Tablet Utama.");
+        alert("Sistem PWA Waiterss Belum Aktif!\n\nHarap lakukan aktivasi berlisensi terlebih dahulu melalui Kiosk Absensi di Tablet Utama.");
         window.location.href = "index.html";
         return;
     }
@@ -96,7 +96,7 @@ function checkState() {
         const jobdeskClean = cashierInfo.jobdesk ? cashierInfo.jobdesk.toLowerCase().trim() : "";
         const roleClean = cashierInfo.role ? cashierInfo.role.toLowerCase().trim() : "";
 
-        if (jobdeskClean === "kasir" || (jobdeskClean !== "pelayan" && !allowedRoles.includes(roleClean))) {
+        if (jobdeskClean === "kasir" || (jobdeskClean !== "Waiterss" && !allowedRoles.includes(roleClean))) {
             localStorage.removeItem(STORAGE_USER);
             window.location.reload();
             return;
@@ -118,7 +118,7 @@ function showScreen(id) {
 }
 
 function resetLicense() {
-    if(confirm("Yakin reset cache dan data login pelayan?")) {
+    if(confirm("Yakin reset cache dan data login Waiterss?")) {
         localStorage.clear();
         window.location.reload();
     }
@@ -138,7 +138,7 @@ async function fetchConfigBg() {
 async function loginWaiter() {
     if(loginPinValue.length < 4) return;
     const statusText = document.getElementById('login-status');
-    statusText.innerText = "Memeriksa Akses Pelayan...";
+    statusText.innerText = "Memeriksa Akses Waiterss...";
     
     try {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) });
@@ -153,11 +153,11 @@ async function loginWaiter() {
                 alert("Akses Ditolak! Anda adalah Kasir. Silakan login di Mesin POS Utama.");
                 clearPin();
                 statusText.innerText = "";
-            } else if (jobdeskClean === "pelayan" || allowedRoles.includes(roleClean)) {
+            } else if (jobdeskClean === "Waiterss" || allowedRoles.includes(roleClean)) {
                 localStorage.setItem(STORAGE_USER, JSON.stringify(json));
                 window.location.reload();
             } else {
-                alert("Akses Ditolak! Aplikasi ini khusus Pelayan.");
+                alert("Akses Ditolak! Aplikasi ini khusus Waiterss.");
                 clearPin();
                 statusText.innerText = "";
             }
@@ -333,7 +333,7 @@ function addNote(index) {
 // FILE: waiter.js (Ubah fungsi clearCart ini)
 
 function clearCart() {
-    if(confirm("Kosongkan keranjang pelayan?")) { 
+    if(confirm("Kosongkan keranjang Waiterss?")) { 
         cart = []; 
         const orderTableEl = document.getElementById('order-table');
         if (orderTableEl) orderTableEl.value = ""; 
@@ -511,7 +511,7 @@ function checkWaiterShiftAlarm() {
             // Alarm bergetar jika melewati batas shift malam default (01:00 WITA)
             if (currentHour >= 1 && currentHour < 6) {
                 alarmBanner.classList.remove('hidden-screen');
-                if (navigator.vibrate) navigator.vibrate([100, 50, 100]); // Getar halus HP pelayan
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100]); // Getar halus HP Waiterss
             }
         }
     }, 60000);

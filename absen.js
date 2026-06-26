@@ -267,7 +267,7 @@ function setupAbsensiMenu() {
     } else {
         msg.innerText = verifiedUser.message || verifiedUser.Message || "Status Kerja Aktif"; 
 
-        if (userRole === "staff" && userJobdesk === "pelayan") {
+        if (userRole === "staff" && userJobdesk === "Waiterss") {
             if (gotoAppBtn) gotoAppBtn.classList.remove('hidden-screen');
         } else {
             if (gotoAppBtn) gotoAppBtn.classList.add('hidden-screen');
@@ -516,7 +516,7 @@ async function autoLoginApp() {
 
         if (json.success) {
             const userJobdesk = (json.jobdesk || json.Jobdesk || "").toString().toLowerCase().trim();
-            if (userJobdesk === "pelayan") {
+            if (userJobdesk === "Waiterss") {
                 localStorage.setItem("MRD_WAITER_SESSION", JSON.stringify(json));
                 window.location.href = "order.html"; 
             } else {

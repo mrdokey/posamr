@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Order Pelayan AMR</title>
+    <title>Order Waiterss AMR</title>
     <link rel="icon" type="image/png" href="https://i.ibb.co.com/JW1FFbCz/1780229137561.png">
     
-    <!-- Integrasi Manifest & Service Worker Mandiri untuk HP Pelayan (Portrait) -->
+    <!-- Integrasi Manifest & Service Worker Mandiri untuk HP Waiterss (Portrait) -->
     <link rel="manifest" href="./manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        /* KUNCI ANTI-ZOOM DI HP PELAYAN */
+        /* KUNCI ANTI-ZOOM DI HP Waiterss */
         button, input, select { touch-action: manipulation; }
         
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f172a; overflow: hidden; }
@@ -48,15 +48,15 @@
     <!-- 1. SPLASH SCREEN -->
     <div id="splash-screen" class="fixed inset-0 bg-[#0f172a] z-[100] flex flex-col items-center justify-center smooth-transition">
         <img src="https://i.ibb.co.com/JW1FFbCz/1780229137561.png" alt="Loading" class="w-32 animate-pulse mb-4">
-        <p class="text-slate-300 text-sm font-semibold tracking-widest animate-bounce">MEMUAT LAYANAN PELAYAN...</p>
+        <p class="text-slate-300 text-sm font-semibold tracking-widest animate-bounce">MEMUAT LAYANAN Waiterss...</p>
     </div>
 
-    <!-- 2. SCREEN LOGIN PELAYAN -->
+    <!-- 2. SCREEN LOGIN Waiterss -->
     <div id="login-screen" class="hidden-screen fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4 smooth-transition">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center">
             <img src="https://i.ibb.co.com/JW1FFbCz/1780229137561.png" class="w-24 h-24 mx-auto mb-4">
             <h2 class="text-xl font-black text-amber-500 mb-6 uppercase tracking-widest">AMR ORDER</h2>
-            <h3 class="text-2xl font-bold text-white mb-2">Login Pelayan</h3>
+            <h3 class="text-2xl font-bold text-white mb-2">Login Waiterss</h3>
             <p class="text-xs text-slate-400 mb-6">Masukkan PIN 4 Angka Anda</p>
             
             <div class="flex gap-4 justify-center mb-8">
