@@ -96,7 +96,7 @@ function checkState() {
         const jobdeskClean = cashierInfo.jobdesk ? cashierInfo.jobdesk.toLowerCase().trim() : "";
         const roleClean = cashierInfo.role ? cashierInfo.role.toLowerCase().trim() : "";
 
-        if (jobdeskClean === "kasir" || (jobdeskClean !== "Waiterss" && !allowedRoles.includes(roleClean))) {
+        if (jobdeskClean === "cashier" || (jobdeskClean !== "waiter" && !allowedRoles.includes(roleClean))) {
             localStorage.removeItem(STORAGE_USER);
             window.location.reload();
             return;
@@ -149,11 +149,11 @@ async function loginWaiter() {
             const jobdeskClean = json.jobdesk ? json.jobdesk.toLowerCase().trim() : "";
             const roleClean = json.role ? json.role.toLowerCase().trim() : "";
 
-            if (jobdeskClean === "kasir") {
-                alert("Akses Ditolak! Anda adalah Kasir. Silakan login di Mesin POS Utama.");
-                clearPin();
-                statusText.innerText = "";
-            } else if (jobdeskClean === "Waiterss" || allowedRoles.includes(roleClean)) {
+            if (jobdeskClean === "cashier") {
+    alert("Akses Ditolak! Anda adalah Cashier. Silakan login di Mesin POS Utama.");
+    clearPin();
+    statusText.innerText = "";
+} else if (jobdeskClean === "waiter" || allowedRoles.includes(roleClean)) {
                 localStorage.setItem(STORAGE_USER, JSON.stringify(json));
                 window.location.reload();
             } else {
