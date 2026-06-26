@@ -39,17 +39,18 @@ async function loginKasir() {
         const json = await res.json();
         if(json.success) {
             const allowedRoles = ["admin", "hrd", "manager", "owner"];
-            const jobdeskClean = json.jobdesk ? json.jobdesk.toLowerCase().trim() : "";
-            const roleClean = json.role ? json.role.toLowerCase().trim() : "";
+const jobdeskClean = json.jobdesk ? json.jobdesk.toLowerCase().trim() : "";
+const roleClean = json.role ? json.role.toLowerCase().trim() : "";
 
-            if (jobdeskClean === "kasir" || allowedRoles.includes(roleClean)) {
-                localStorage.setItem(STORAGE_USER, JSON.stringify(json));
-                window.location.reload();
-            } else {
-                alert(`Akses Ditolak! Pelayan/Staff tidak diizinkan masuk ke aplikasi POS Utama.`);
-                clearPin();
-                if (btn) btn.innerText = "Buka Mesin POS";
-            }
+// PERBAIKAN: Diubah menjadi "cashier"
+if (jobdeskClean === "cashier" || allowedRoles.includes(roleClean)) { 
+    localStorage.setItem(STORAGE_USER, JSON.stringify(json));
+    window.location.reload();
+} else {
+    alert(`Akses Ditolak! Pelayan/Staff tidak diizinkan masuk ke aplikasi POS Utama.`);
+    clearPin();
+    if (btn) btn.innerText = "Buka Mesin POS";
+}
         } else {
             alert(json.message);
             clearPin();
