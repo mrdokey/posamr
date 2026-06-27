@@ -1,4 +1,4 @@
-NAMA_PERUSAAN/**
+NAMA_PERUSAHAAN/**
  * MODUL: KIOSK ABSENSI, SINGLE SIGN-ON (SSO), OTP GENERATOR, & PIN CHANGER
  * UPDATE: Integrasi Penuh AI Face Recognition (TensorFlow Add-on)
  */
@@ -104,7 +104,7 @@ async function fetchConfigBg() {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) }); 
         const json = await res.json(); 
         if(json.success) {
-            document.getElementById('absen-resto-name').innerText = json.data["NAMA_PERUSAAN"] || "LABARAC BAR"; 
+            document.getElementById('absen-resto-name').innerText = json.data["NAMA_PERUSAHAAN"] || "LABARAC BAR"; 
             
             // CEK CONFIGURASI AI FACE RECOGNITION DARI GOOGLE SHEETS
             if (json.data["FITUR_FACE_RECOGNITION"] === "ON" || json.data["FITUR_FACE_RECOGNITION"] === "TRUE") {

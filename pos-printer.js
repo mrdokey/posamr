@@ -127,7 +127,7 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
     const printerKitchenProfile = configData["PRINTER_KITCHEN"] || "Kitchen";
     const printerBarProfile = configData["PRINTER_BAR"] || "Bar";
     
-    const namaResto = configData["NAMA_PERUSAAN"] || "THE ARIA";
+    const namaResto = configData["NAMA_PERUSAHAAN"] || "THE ARIA";
     const alamat = configData["ALAMAT"] || "Jl. Pantai Berawa No. 99, Canggu";
     const footerStruk = configData["FOOTER_STRUK"] || "Terima Kasih Atas Kunjungannya!";
     
