@@ -1,7 +1,7 @@
 /**
- * MODUL PRINTER: ENGINE QUICK PRINTER (DIEGOVELOPER) & TEMPLATE STRUK PREMIUM (THE ARIA)
+ * MODUL PRINTER: ENGINE RAWBT WEB INTENT & TEMPLATE STRUK PREMIUM (THE ARIA)
  * Menangani Multi-Printer Routing Tanpa Karakter China (Safe ASCII)
- * UPDATE: Fix Target Package pe.diegoveloper.printing & Safe Kitchen ASCII Borders
+ * UPDATE: Menggunakan Protokol Kustom Resmi "rawbt:base64," (Bypass Chrome Block & Anti-Satelit)
  */
 
 let LINE_WIDTH = 32; // Default fallback ke kertas 58mm
@@ -44,12 +44,12 @@ function safeStringToBase64(str) {
 // --- HELPER 4: KIRIM VIA SKEMA KUSTOM RAWBT (ANTI BLOKIR CHROME & ANTI PLAYSTORE) ---
 function sendIntentToQuickPrinter(plainTextReceipt, printerProfileName) {
     try {
-        // Enkripsi teks struk ke Base64 menggunakan fungsi pembantu Anda yang sudah ada
+        // Enkripsi teks struk ke Base64 secara aman
         const base64Data = safeStringToBase64(plainTextReceipt);
         
-        // Menggunakan Protokol Kustom Resmi RawBT "rawbt://"
-        // Metode ini langsung membuka aplikasi RawBT tanpa perantara, sangat stabil untuk PWA
-        const intentUrl = `rawbt://base64,${base64Data}`;
+        // PERBAIKAN: Menggunakan protokol kustom resmi tanpa double slash (//)
+        // Jika menggunakan rawbt://base64, RawBT akan mencetak kode base64 mentah ke kertas.
+        const intentUrl = `rawbt:base64,${base64Data}`;
         
         window.location.href = intentUrl;
     } catch (error) {
