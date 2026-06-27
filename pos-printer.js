@@ -1,7 +1,7 @@
 /**
  * MODUL PRINTER: ENGINE RAWBT WEB INTENT & TEMPLATE STRUK PREMIUM (THE ARIA)
  * Menangani Multi-Printer Routing Tanpa Karakter China (Safe ASCII)
- * UPDATE: Integrasi Antrean Cetak Sekuensial (Sequential Confirm Queue) untuk 3 Printer Fisik
+ * UPDATE: Pendeteksi Bahasa Dinamis (ID / EN) Berbasis Google Sheets Config
  */
 
 let LINE_WIDTH = 32; // Default fallback ke kertas 58mm
@@ -56,6 +56,29 @@ function sendIntentToQuickPrinter(plainTextReceipt, printerProfileName) {
     }
 }
 
+// --- HELPER 5: KAMUS PENERJEMAH STRUK DINAMIS ---
+function getTranslationDictionary() {
+    const lang = configData["BAHASA_STRUK"] ? configData["BAHASA_STRUK"].toString().toUpperCase().trim() : "ID";
+    
+    return {
+        kitchen: lang === "EN" ? "KITCHEN ORDER" : "ORDERAN DAPUR",
+        bar: lang === "EN" ? "BAR ORDER" : "ORDERAN MINUMAN",
+        table: lang === "EN" ? "Table" : "Meja",
+        time: lang === "EN" ? "Time" : "Jam",
+        cashier: lang === "EN" ? "Cashier" : "Kasir",
+        items: lang === "EN" ? "Total Items" : "Total Item",
+        qty: lang === "EN" ? "Total Qty" : "Total Qty",
+        subtotal: lang === "EN" ? "Subtotal" : "Subtotal",
+        discount: lang === "EN" ? "DISCOUNT" : "DISKON",
+        rounding: lang === "EN" ? "ROUNDING" : "PEMBULATAN",
+        change: lang === "EN" ? "CHANGE" : "KEMBALIAN",
+        paidStatus: lang === "EN" ? "STATUS : PAID" : "STATUS : LUNAS",
+        unpaidStatus: lang === "EN" ? "STATUS : BILL" : "STATUS : TAGIHAN SEMENTARA",
+        reprint: lang === "EN" ? "*** REPRINT / COPY ***" : "*** REPRINT / SALINAN ***",
+        debtStatus: lang === "EN" ? "STATUS : CITY LEDGER (DEBT)" : "STATUS : CITY LEDGER (DEBT)"
+    };
+}
+
 // --- ENGINE 1: DRAFT TO OPEN (KITCHEN & BAR ORDER) ---
 function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
     updateLineWidth(); 
@@ -63,6 +86,9 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
     const printerKitchenProfile = configData["PRINTER_KITCHEN"] || "Kitchen";
     const printerBarProfile = configData["PRINTER_BAR"] || "Bar";
     const currentTimeStr = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    
+    // Ambil Kamus Bahasa Aktif
+    const t = getTranslationDictionary();
 
     // 1. KITCHEN PRINT
     const kitchenItems = bill.items.filter(item => item.route === "Kitchen");
@@ -70,11 +96,11 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
 
     if (kitchenItems.length > 0) {
         let kitchenReceipt = "";
-        kitchenReceipt += centerText("KITCHEN ORDER") + "\n";
+        kitchenReceipt += centerText(t.kitchen) + "\n";
         kitchenReceipt += "=".repeat(LINE_WIDTH) + "\n";
-        kitchenReceipt += `Meja : Meja ${bill.tableNo}\n`;
+        kitchenReceipt += `${t.table} : ${bill.tableNo}\n`;
         kitchenReceipt += `ID   : ${bill.orderId.substring(0, 15)}\n`;
-        kitchenReceipt += `Jam  : ${currentTimeStr}\n`;
+        kitchenReceipt += `${t.time} : ${currentTimeStr}\n`;
         kitchenReceipt += "-".repeat(LINE_WIDTH) + "\n";
         
         kitchenItems.forEach(item => {
@@ -92,11 +118,11 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
     const barItems = bill.items.filter(item => item.route === "Bar");
     if (barItems.length > 0) {
         let barReceipt = "";
-        barReceipt += centerText("BAR ORDER") + "\n";
+        barReceipt += centerText(t.bar) + "\n";
         barReceipt += "=".repeat(LINE_WIDTH) + "\n";
-        barReceipt += `Meja : Meja ${bill.tableNo}\n`;
+        barReceipt += `${t.table} : ${bill.tableNo}\n`;
         barReceipt += `ID   : ${bill.orderId.substring(0, 15)}\n`;
-        barReceipt += `Jam  : ${currentTimeStr}\n`;
+        barReceipt += `${t.time} : ${currentTimeStr}\n`;
         barReceipt += "-".repeat(LINE_WIDTH) + "\n";
         
         barItems.forEach(item => {
@@ -109,7 +135,7 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
         // Jika dapur juga dicetak, berikan dialog konfirmasi agar tidak diblokir Chrome
         if (kitchenPrinted) {
             setTimeout(() => {
-                if (confirm("Cetak Orderan Minuman (Bar)?")) {
+                if (confirm(`Cetak ${t.bar}?`)) {
                     sendIntentToQuickPrinter(barReceipt, printerBarProfile);
                 }
             }, 1000);
@@ -136,21 +162,24 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
 
     const items = itemsToPrint || cart; 
     let cashierPrinted = false;
+    
+    // Ambil Kamus Bahasa Aktif
+    const t = getTranslationDictionary();
 
     // 1. BILL UTAMA / STRUK LUNAS (KASIR PRINTER)
     if (target === "All" || target === "CustomerCopy" || target === "ArsipCopy" || target === "Kasir" || target === "Cashier") {
         const generateInvoiceBody = (copyLabel) => {
             let body = "";
-            if (isReprint) body += centerText("*** REPRINT / SALINAN ***") + "\n";
+            if (isReprint) body += centerText(t.reprint) + "\n";
             body += centerText(namaResto) + "\n";
             body += centerText(alamat) + "\n";
             body += "=".repeat(LINE_WIDTH) + "\n";
-            body += formatLeftRight("POS: Cashier", `Cashier: ${cashierInfo.name}`) + "\n";
+            body += formatLeftRight(`POS: ${t.cashier}`, `${t.cashier}: ${cashierInfo.name}`) + "\n";
             body += "-".repeat(LINE_WIDTH) + "\n";
             body += centerText(copyLabel) + "\n";
             body += "=".repeat(LINE_WIDTH) + "\n";
             
-            body += formatLeftRight(`ID: ${orderId.substring(0, 11)}...`, `TBL  ${table.toUpperCase()}`) + "\n";
+            body += formatLeftRight(`ID: ${orderId.substring(0, 11)}...`, `${t.table.toUpperCase()}  ${table.toUpperCase()}`) + "\n";
             body += formatLeftRight(`${currentDateStr}`, currentTimeStr) + "\n";
             body += "=".repeat(LINE_WIDTH) + "\n";
             
@@ -165,12 +194,12 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
             
             const totalItemsCount = items.length;
             const totalQtyCount = items.reduce((sum, item) => sum + item.qty, 0);
-            body += formatLeftRight(`Total Item : ${totalItemsCount}`, `Total Qty : ${totalQtyCount}`) + "\n";
+            body += formatLeftRight(`${t.items} : ${totalItemsCount}`, `${t.qty} : ${totalQtyCount}`) + "\n";
             
             body += "-".repeat(LINE_WIDTH) + "\n";
-            body += formatLeftRight("Subtotal", subtotal.toLocaleString('id-ID')) + "\n";
+            body += formatLeftRight(t.subtotal, subtotal.toLocaleString('id-ID')) + "\n";
             if(discountAmount > 0) {
-                body += formatLeftRight("DISCOUNT", `-${discountAmount.toLocaleString('id-ID')}`) + "\n";
+                body += formatLeftRight(t.discount, `-${discountAmount.toLocaleString('id-ID')}`) + "\n";
             }
             if(serviceCharge > 0) {
                 body += formatLeftRight("SERVICE CHARGE", serviceCharge.toLocaleString('id-ID')) + "\n";
@@ -181,7 +210,7 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
             
             const rounding = window.lastRoundingAdjustment || 0;
             if (rounding !== 0) {
-                body += formatLeftRight("PEMBULATAN", (rounding > 0 ? "+" : "") + rounding.toLocaleString('id-ID')) + "\n";
+                body += formatLeftRight(t.rounding, (rounding > 0 ? "+" : "") + rounding.toLocaleString('id-ID')) + "\n";
             }
 
             body += "-".repeat(LINE_WIDTH) + "\n";
@@ -196,16 +225,16 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
                     body += formatLeftRight(payMethod.toUpperCase(), tunai.toLocaleString('id-ID')) + "\n";
                 }
                 const kembalian = window.lastCashChange || 0;
-                body += formatLeftRight("CHANGE", kembalian.toLocaleString('id-ID')) + "\n";
+                body += formatLeftRight(t.change, kembalian.toLocaleString('id-ID')) + "\n";
                 body += "=".repeat(LINE_WIDTH) + "\n";
-                body += centerText("STATUS : LUNAS") + "\n";
+                body += centerText(t.paidStatus) + "\n";
             } else if (status === "Debt") {
                 body += "=".repeat(LINE_WIDTH) + "\n";
-                body += centerText("STATUS : CITY LEDGER (DEBT)") + "\n";
+                body += centerText(t.debtStatus) + "\n";
                 body += centerText("Nota gantung piutang Owner") + "\n";
             } else {
                 body += "=".repeat(LINE_WIDTH) + "\n";
-                body += centerText("STATUS : TAGIHAN SEMENTARA") + "\n";
+                body += centerText(t.unpaidStatus) + "\n";
             }
             body += "=".repeat(LINE_WIDTH) + "\n";
             
@@ -218,18 +247,18 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
 
         let cashierReceipt = "";
         if (target === "CustomerCopy") {
-            cashierReceipt += generateInvoiceBody("STRUK PELANGGAN");
+            cashierReceipt += generateInvoiceBody(lang === "EN" ? "CUSTOMER RECEIPT" : "STRUK PELANGGAN");
         } else if (target === "ArsipCopy") {
-            cashierReceipt += generateInvoiceBody("ARSIP");
+            cashierReceipt += generateInvoiceBody(lang === "EN" ? "ARCHIVE COPY" : "ARSIP");
         } else if (target === "Kasir") {
-            cashierReceipt += generateInvoiceBody(status === "Paid" ? "STRUK PELANGGAN" : "BILL TAGIHAN MEJA");
+            cashierReceipt += generateInvoiceBody(status === "Paid" ? (lang === "EN" ? "CUSTOMER RECEIPT" : "STRUK PELANGGAN") : (lang === "EN" ? "UNPAID BILL" : "BILL TAGIHAN MEJA"));
         } else {
             if (status === "Paid" || status === "Debt") {
-                cashierReceipt += generateInvoiceBody(status === "Debt" ? "CITY LEDGER" : "STRUK PELANGGAN");
+                cashierReceipt += generateInvoiceBody(status === "Debt" ? "CITY LEDGER" : (lang === "EN" ? "CUSTOMER RECEIPT" : "STRUK PELANGGAN"));
                 cashierReceipt += "- ".repeat(LINE_WIDTH/2) + "\n\n";
-                cashierReceipt += generateInvoiceBody("ARSIP");
+                cashierReceipt += generateInvoiceBody(lang === "EN" ? "ARCHIVE COPY" : "ARSIP");
             } else {
-                cashierReceipt += generateInvoiceBody("BILL TAGIHAN MEJA");
+                cashierReceipt += generateInvoiceBody(lang === "EN" ? "UNPAID BILL" : "BILL TAGIHAN MEJA");
             }
         }
 
@@ -243,12 +272,12 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
         const kitchenItems = items.filter(item => item.route === "Kitchen");
         if (kitchenItems.length > 0) {
             let kitchenReceipt = "";
-            if (isReprint) kitchenReceipt += centerText("*** REPRINT / SALINAN ***") + "\n";
-            kitchenReceipt += centerText("KITCHEN ORDER") + "\n";
+            if (isReprint) kitchenReceipt += centerText(t.reprint) + "\n";
+            kitchenReceipt += centerText(t.kitchen) + "\n";
             kitchenReceipt += "=".repeat(LINE_WIDTH) + "\n";
-            kitchenReceipt += `Meja : Meja ${table}\n`;
+            kitchenReceipt += `${t.table} : ${table}\n`;
             kitchenReceipt += `ID   : ${orderId.substring(0, 15)}\n`;
-            kitchenReceipt += `Jam  : ${currentTimeStr}\n`;
+            kitchenReceipt += `${t.time} : ${currentTimeStr}\n`;
             kitchenReceipt += "-".repeat(LINE_WIDTH) + "\n";
             
             kitchenItems.forEach(item => {
@@ -261,34 +290,28 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
             // Jika sebelumnya cetak kasir sudah dipicu, berikan popup konfirmasi
             if (cashierPrinted) {
                 setTimeout(() => {
-                    if (confirm("Kirim orderan ke Printer Dapur sekarang?")) {
+                    if (confirm(`Kirim orderan ke ${t.kitchen}?`)) {
                         sendIntentToQuickPrinter(kitchenReceipt, printerKitchenProfile);
                     }
                 }, 1000);
             } else {
                 sendIntentToQuickPrinter(kitchenReceipt, printerKitchenProfile);
             }
-            kitchenReceipt = ""; 
-            delayMultiplier++;
-            kitchenItems.length = 0; 
-            kitchenReceipt = null;
-            kitchenReceipt = undefined;
-            kitchenItems.length = 0;
-            delayMultiplier++;
+            kitchenPrinted = true;
         }
     }
 
-    // 3. BAR ORDER (DENGAN JEJARAN DELAY PROSES)
+    // 3. BAR ORDER (DENGAN JEJARAN DELAY PROSES & KONFIRMASI)
     if (target === "All" || target === "Bar") {
         const barItems = items.filter(item => item.route === "Bar");
         if (barItems.length > 0) {
             let barReceipt = "";
-            if (isReprint) barReceipt += centerText("*** REPRINT / SALINAN ***") + "\n";
-            barReceipt += centerText("BAR ORDER") + "\n";
+            if (isReprint) barReceipt += centerText(t.reprint) + "\n";
+            barReceipt += centerText(t.bar) + "\n";
             barReceipt += "=".repeat(LINE_WIDTH) + "\n";
-            barReceipt += `Meja : Meja ${table}\n`;
+            barReceipt += `${t.table} : ${table}\n`;
             barReceipt += `ID   : ${orderId.substring(0, 15)}\n`;
-            barReceipt += `Jam  : ${currentTimeStr}\n`;
+            barReceipt += `${t.time} : ${currentTimeStr}\n`;
             barReceipt += "-".repeat(LINE_WIDTH) + "\n";
             
             barItems.forEach(item => {
@@ -298,9 +321,16 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
             });
             barReceipt += "\n\n\n\n";
 
-            setTimeout(() => {
+            // Menggunakan sistem konfirmasi jika kasir atau dapur sebelumnya sudah dicetak
+            if (cashierPrinted || kitchenPrinted) {
+                setTimeout(() => {
+                    if (confirm(`Cetak ${t.bar}?`)) {
+                        sendIntentToQuickPrinter(barReceipt, printerBarProfile);
+                    }
+                }, 2000);
+            } else {
                 sendIntentToQuickPrinter(barReceipt, printerBarProfile);
-            }, delayMultiplier * 1200);
+            }
         }
     }
 }
