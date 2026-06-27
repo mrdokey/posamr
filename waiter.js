@@ -1,4 +1,4 @@
-/**
+NAMA_PERUSAHAAN/**
  * MODUL 4: WAITER/Waiterss ENGINE (FULL RESPONSIVE & DRAFT ORDER)
  * UPDATE: SaaS Multi-Client Dynamic Token & Waiter Shift Alarm (Eco Banner)
  */
@@ -130,7 +130,7 @@ async function fetchConfigBg() {
         const json = await res.json();
         if(json.success) {
             const nameEl = document.getElementById('login-resto-name');
-            if (nameEl) nameEl.innerText = json.data["NAMA_PERUSAAN"] || "RESTO";
+            if (nameEl) nameEl.innerText = json.data["NAMA_PERUSAHAAN"] || "RESTO";
         }
     } catch(e) {}
 }
@@ -216,7 +216,7 @@ async function initApp() {
 
 function applyConfig() {
     const titleEl = document.getElementById('pos-title');
-    if(configData["NAMA_PERUSAAN"] && titleEl) titleEl.innerText = configData["NAMA_PERUSAAN"] + " ORDER";
+    if(configData["NAMA_PERUSAHAAN"] && titleEl) titleEl.innerText = configData["NAMA_PERUSAHAAN"] + " ORDER";
 }
 
 function filterMenu(cat, btnElement = null) {
