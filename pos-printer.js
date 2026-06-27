@@ -1,7 +1,7 @@
 /**
  * MODUL PRINTER: ENGINE RAWBT WEB INTENT & TEMPLATE STRUK PREMIUM (THE ARIA)
  * Menangani Multi-Printer Routing Tanpa Karakter China (Safe ASCII)
- * UPDATE: Menggunakan Protokol Kustom Resmi "rawbt:base64," (Bypass Chrome Block & Anti-Satelit)
+ * UPDATE: Integrasi Antrean Cetak Sekuensial (Sequential Confirm Queue) untuk 3 Printer Fisik
  */
 
 let LINE_WIDTH = 32; // Default fallback ke kertas 58mm
@@ -44,11 +44,9 @@ function safeStringToBase64(str) {
 // --- HELPER 4: KIRIM VIA SKEMA KUSTOM RAWBT (ANTI BLOKIR CHROME & ANTI PLAYSTORE) ---
 function sendIntentToQuickPrinter(plainTextReceipt, printerProfileName) {
     try {
-        // Enkripsi teks struk ke Base64 secara aman
         const base64Data = safeStringToBase64(plainTextReceipt);
         
-        // PERBAIKAN: Menggunakan protokol kustom resmi tanpa double slash (//)
-        // Jika menggunakan rawbt://base64, RawBT akan mencetak kode base64 mentah ke kertas.
+        // Menggunakan Protokol Kustom Resmi RawBT "rawbt:base64," (tanpa double slash //)
         const intentUrl = `rawbt:base64,${base64Data}`;
         
         window.location.href = intentUrl;
@@ -68,14 +66,16 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
 
     // 1. KITCHEN PRINT
     const kitchenItems = bill.items.filter(item => item.route === "Kitchen");
+    let kitchenPrinted = false;
+
     if (kitchenItems.length > 0) {
         let kitchenReceipt = "";
         kitchenReceipt += centerText("ORDERAN DAPUR") + "\n";
-        kitchenReceipt += "=".repeat(LINE_WIDTH) + "\n"; // FIX: ASCII pembatas dapur
+        kitchenReceipt += "=".repeat(LINE_WIDTH) + "\n";
         kitchenReceipt += `Meja : Meja ${bill.tableNo}\n`;
         kitchenReceipt += `ID   : ${bill.orderId.substring(0, 15)}\n`;
         kitchenReceipt += `Jam  : ${currentTimeStr}\n`;
-        kitchenReceipt += "-".repeat(LINE_WIDTH) + "\n"; // FIX: ASCII pembatas dapur
+        kitchenReceipt += "-".repeat(LINE_WIDTH) + "\n";
         
         kitchenItems.forEach(item => {
             kitchenReceipt += `${item.qty}x ${item.name}\n`;
@@ -85,18 +85,19 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
         kitchenReceipt += "\n\n\n\n";
         
         sendIntentToQuickPrinter(kitchenReceipt, printerKitchenProfile);
+        kitchenPrinted = true;
     }
 
-    // 2. BAR PRINT (DELAYED)
+    // 2. BAR PRINT (DELAYED DENGAN INTERAKSI KASIR)
     const barItems = bill.items.filter(item => item.route === "Bar");
     if (barItems.length > 0) {
         let barReceipt = "";
         barReceipt += centerText("ORDERAN MINUMAN") + "\n";
-        barReceipt += "=".repeat(LINE_WIDTH) + "\n"; // FIX: ASCII pembatas bar
+        barReceipt += "=".repeat(LINE_WIDTH) + "\n";
         barReceipt += `Meja : Meja ${bill.tableNo}\n`;
         barReceipt += `ID   : ${bill.orderId.substring(0, 15)}\n`;
         barReceipt += `Jam  : ${currentTimeStr}\n`;
-        barReceipt += "-".repeat(LINE_WIDTH) + "\n"; // FIX: ASCII pembatas bar
+        barReceipt += "-".repeat(LINE_WIDTH) + "\n";
         
         barItems.forEach(item => {
             barReceipt += `${item.qty}x ${item.name}\n`;
@@ -105,9 +106,16 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
         });
         barReceipt += "\n\n\n\n";
         
-        setTimeout(() => {
+        // Jika dapur juga dicetak, berikan dialog konfirmasi agar tidak diblokir Chrome
+        if (kitchenPrinted) {
+            setTimeout(() => {
+                if (confirm("Cetak Orderan Minuman (Bar)?")) {
+                    sendIntentToQuickPrinter(barReceipt, printerBarProfile);
+                }
+            }, 1000);
+        } else {
             sendIntentToQuickPrinter(barReceipt, printerBarProfile);
-        }, 1200); 
+        }
     }
 }
 
@@ -127,10 +135,10 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
     const currentTimeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
 
     const items = itemsToPrint || cart; 
-    let delayMultiplier = 0; 
+    let cashierPrinted = false;
 
     // 1. BILL UTAMA / STRUK LUNAS (KASIR PRINTER)
-    if (target === "All" || target === "CustomerCopy" || target === "ArsipCopy" || target === "Kasir") {
+    if (target === "All" || target === "CustomerCopy" || target === "ArsipCopy" || target === "Kasir" || target === "Cashier") {
         const generateInvoiceBody = (copyLabel) => {
             let body = "";
             if (isReprint) body += centerText("*** REPRINT / SALINAN ***") + "\n";
@@ -226,10 +234,11 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
         }
 
         sendIntentToQuickPrinter(cashierReceipt, printerKasirProfile);
-        delayMultiplier++;
+        cashierPrinted = true;
     }
 
-    // 2. KITCHEN ORDER
+    // 2. KITCHEN ORDER (DENGAN JEJALAN KONFIRMASI)
+    let kitchenPrinted = false;
     if (target === "All" || target === "Kitchen") {
         const kitchenItems = items.filter(item => item.route === "Kitchen");
         if (kitchenItems.length > 0) {
@@ -249,14 +258,27 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
             });
             kitchenReceipt += "\n\n\n\n";
 
-            setTimeout(() => {
+            // Jika sebelumnya cetak kasir sudah dipicu, berikan popup konfirmasi
+            if (cashierPrinted) {
+                setTimeout(() => {
+                    if (confirm("Kirim orderan ke Printer Dapur sekarang?")) {
+                        sendIntentToQuickPrinter(kitchenReceipt, printerKitchenProfile);
+                    }
+                }, 1000);
+            } else {
                 sendIntentToQuickPrinter(kitchenReceipt, printerKitchenProfile);
-            }, delayMultiplier * 1200);
+            }
+            kitchenReceipt = ""; 
+            delayMultiplier++;
+            kitchenItems.length = 0; 
+            kitchenReceipt = null;
+            kitchenReceipt = undefined;
+            kitchenItems.length = 0;
             delayMultiplier++;
         }
     }
 
-    // 3. BAR ORDER
+    // 3. BAR ORDER (DENGAN JEJARAN DELAY PROSES)
     if (target === "All" || target === "Bar") {
         const barItems = items.filter(item => item.route === "Bar");
         if (barItems.length > 0) {
