@@ -70,7 +70,7 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
 
     if (kitchenItems.length > 0) {
         let kitchenReceipt = "";
-        kitchenReceipt += centerText("ORDERAN DAPUR") + "\n";
+        kitchenReceipt += centerText("KITCHEN ORDER") + "\n";
         kitchenReceipt += "=".repeat(LINE_WIDTH) + "\n";
         kitchenReceipt += `Meja : Meja ${bill.tableNo}\n`;
         kitchenReceipt += `ID   : ${bill.orderId.substring(0, 15)}\n`;
@@ -92,7 +92,7 @@ function executeRoutingPrintDirect(bill, subtotal, discountAmount) {
     const barItems = bill.items.filter(item => item.route === "Bar");
     if (barItems.length > 0) {
         let barReceipt = "";
-        barReceipt += centerText("ORDERAN MINUMAN") + "\n";
+        barReceipt += centerText("BAR ORDER") + "\n";
         barReceipt += "=".repeat(LINE_WIDTH) + "\n";
         barReceipt += `Meja : Meja ${bill.tableNo}\n`;
         barReceipt += `ID   : ${bill.orderId.substring(0, 15)}\n`;
@@ -244,7 +244,7 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
         if (kitchenItems.length > 0) {
             let kitchenReceipt = "";
             if (isReprint) kitchenReceipt += centerText("*** REPRINT / SALINAN ***") + "\n";
-            kitchenReceipt += centerText("ORDERAN DAPUR") + "\n";
+            kitchenReceipt += centerText("KITCHEN ORDER") + "\n";
             kitchenReceipt += "=".repeat(LINE_WIDTH) + "\n";
             kitchenReceipt += `Meja : Meja ${table}\n`;
             kitchenReceipt += `ID   : ${orderId.substring(0, 15)}\n`;
@@ -284,7 +284,7 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
         if (barItems.length > 0) {
             let barReceipt = "";
             if (isReprint) barReceipt += centerText("*** REPRINT / SALINAN ***") + "\n";
-            barReceipt += centerText("ORDERAN MINUMAN") + "\n";
+            barReceipt += centerText("BAR ORDER") + "\n";
             barReceipt += "=".repeat(LINE_WIDTH) + "\n";
             barReceipt += `Meja : Meja ${table}\n`;
             barReceipt += `ID   : ${orderId.substring(0, 15)}\n`;
