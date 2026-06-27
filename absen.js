@@ -1,4 +1,4 @@
-NAMA_PERUSAHAAN/**
+/**
  * MODUL: KIOSK ABSENSI, SINGLE SIGN-ON (SSO), OTP GENERATOR, & PIN CHANGER
  * UPDATE: Integrasi Penuh AI Face Recognition (TensorFlow Add-on)
  */

@@ -1,4 +1,4 @@
-NAMA_PERUSAHAAN/**
+/**
  * MODUL 2: CORE POS, VOUCHER DROPDOWN, ROUNDING, & CART LOGIC
  * UPDATE: Responsive Row-Align Card Layout (No Clipping & Safe Auto-Height)
  */
