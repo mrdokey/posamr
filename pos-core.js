@@ -1,4 +1,4 @@
-NAMA_PERUSAHAAN/**
+NAMA_PERUSAAN/**
  * MODUL 2: CORE POS, VOUCHER DROPDOWN, ROUNDING, & CART LOGIC
  * UPDATE: Responsive Row-Align Card Layout (No Clipping & Safe Auto-Height)
  */
@@ -25,7 +25,7 @@ async function fetchConfigBg() {
         const json = await res.json();
         if(json.success) {
             const nameEl = document.getElementById('login-resto-name');
-            if (nameEl) nameEl.innerText = json.data["NAMA_PERUSAHAAN"] || "RESTO";
+            if (nameEl) nameEl.innerText = json.data["NAMA_PERUSAAN"] || "RESTO";
         }
     } catch(e) {}
 }
@@ -129,7 +129,7 @@ async function initApp() {
 
 function applyConfig() {
     const titleEl = document.getElementById('pos-title');
-    if(configData["NAMA_PERUSAHAAN"] && titleEl) titleEl.innerText = configData["NAMA_PERUSAHAAN"];
+    if(configData["NAMA_PERUSAAN"] && titleEl) titleEl.innerText = configData["NAMA_PERUSAAN"];
 }
 
 function renderDiscounts() {

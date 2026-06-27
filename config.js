@@ -1,4 +1,4 @@
-NAMA_PERUSAHAAN/**
+NAMA_PERUSAAN/**
  * MODUL 1: CONFIG & KEYPAD SESSION
  * UPDATE: Dynamic SaaS License Check (No Hardcoded GAS URL)
  */
