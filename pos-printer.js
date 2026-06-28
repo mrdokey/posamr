@@ -1,7 +1,7 @@
 /**
  * MODUL PRINTER: ENGINE RAWBT WEB INTENT & TEMPLATE STRUK PREMIUM (THE ARIA)
  * Menangani Multi-Printer Routing Tanpa Karakter China (Safe ASCII)
- * UPDATE: Font "Total" Ganda & Tebal (Double-Height & Bold ESC/POS) Seperti Struk Contoh
+ * UPDATE: Font "Total" Ukuran Ganda (Double-Height & Double-Width ESC/POS) Dengan Spasi Kompatibel
  */
 
 let LINE_WIDTH = 32; // Default fallback ke kertas 58mm
@@ -236,7 +236,7 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
                 items.forEach(item => {
                     const itemLeft = `${item.qty} ${item.name.toUpperCase()}`;
                     const itemRight = item.subtotal.toLocaleString('id-ID');
-                    body += formatLeftRight(itemLeft, right = itemRight) + "\n";
+                    body += formatLeftRight(itemLeft, itemRight) + "\n";
                     if(item.notes) body += `  *Note: ${item.notes}\n`;
                 });
                 
@@ -267,12 +267,24 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
                 body += "-".repeat(LINE_WIDTH) + "\n";
                 
                 // =========================================================================
-                // PERBAIKAN VISUAL TOTAL: Tinggi Ganda (Double-Height) & Tebal (Bold)
-                // Menggunakan kombinasi ESC/POS: \x1B\x45\x01\x1D\x21\x01
+                // PERBAIKAN VISUAL TOTAL: Tinggi Ganda, Lebar Ganda (Double-Size) & Tebal (Bold)
+                // Menggunakan kombinasi ESC/POS: \x1B\x45\x01\x1D\x21\x11
+                // Lebar baris efektif dipotong setengah (LINE_WIDTH / 2) agar tidak terjadi wrap line
                 // =========================================================================
                 const totalLabel = "Total";
                 const totalValue = finalTotal.toLocaleString('id-ID');
-                body += "\x1B\x45\x01\x1D\x21\x01" + formatLeftRight(totalLabel, totalValue) + "\x1D\x21\x00\x1B\x45\x00" + "\n";
+                
+                const doubleWidth = Math.floor(LINE_WIDTH / 2);
+                const spacesNeeded = doubleWidth - totalLabel.length - totalValue.length;
+                let totalLineText = "";
+                
+                if (spacesNeeded > 0) {
+                    totalLineText = totalLabel + " ".repeat(spacesNeeded) + totalValue;
+                } else {
+                    totalLineText = totalLabel + "\n" + " ".repeat(doubleWidth - totalValue.length) + totalValue;
+                }
+                
+                body += "\x1B\x45\x01\x1D\x21\x11" + totalLineText + "\x1D\x21\x00\x1B\x45\x00" + "\n";
                 // =========================================================================
                 
                 if (status === "Paid") {
