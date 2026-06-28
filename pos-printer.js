@@ -1,7 +1,7 @@
 /**
  * MODUL PRINTER: ENGINE RAWBT WEB INTENT & TEMPLATE STRUK PREMIUM (THE ARIA)
  * Menangani Multi-Printer Routing Tanpa Karakter China (Safe ASCII)
- * UPDATE: Perbaikan Scope Variable "lang" untuk Deteksi Bahasa Struk Dinamis
+ * UPDATE: Proteksi Type-Casting "String(table)" untuk Menghindari Crash Meja Angka Murni
  */
 
 let LINE_WIDTH = 32; // Default fallback ke kertas 58mm
@@ -185,7 +185,8 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
                 body += centerText(copyLabel) + "\n";
                 body += "=".repeat(LINE_WIDTH) + "\n";
                 
-                body += formatLeftRight(`ID: ${orderId.substring(0, 11)}...`, `${t.table.toUpperCase()}  ${table.toUpperCase()}`) + "\n";
+                // PERBAIKAN: Membungkus variabel table dengan String() agar aman dari tipe data angka murni (number)
+                body += formatLeftRight(`ID: ${orderId.substring(0, 11)}...`, `${t.table.toUpperCase()}  ${String(table).toUpperCase()}`) + "\n";
                 body += formatLeftRight(`${currentDateStr}`, currentTimeStr) + "\n";
                 body += "=".repeat(LINE_WIDTH) + "\n";
                 
