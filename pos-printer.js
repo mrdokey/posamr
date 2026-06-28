@@ -1,7 +1,7 @@
 /**
  * MODUL PRINTER: ENGINE RAWBT WEB INTENT & TEMPLATE STRUK PREMIUM (THE ARIA)
  * Menangani Multi-Printer Routing Tanpa Karakter China (Safe ASCII)
- * UPDATE: Proteksi Type-Casting "String(table)" untuk Menghindari Crash Meja Angka Murni
+ * UPDATE: Rekalkulasi Pembulatan Dinamis (Failsafe Rounding) pada Struk Unpaid Bill
  */
 
 let LINE_WIDTH = 32; // Default fallback ke kertas 58mm
@@ -160,7 +160,7 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
         
         const namaResto = configData["NAMA_PERUSAHAAN"] || "THE ARIA";
         const alamat = configData["ALAMAT"] || "Jl. Pantai Berawa No. 99, Canggu";
-        const footerStruk = configData["FOOTER_STRUK"] || "Terima Kasih Atas Kunjungannya!";
+        let footerStruk = configData["FOOTER_STRUK"] || "Terima Kasih Atas Kunjungannya!";
         
         const currentDateStr = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: '2-digit' });
         const currentTimeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
@@ -171,6 +171,49 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
         // Ambil Kamus Bahasa Aktif & Variabel Penunjuk Bahasa Struk
         const t = getTranslationDictionary();
         const lang = configData["BAHASA_STRUK"] ? configData["BAHASA_STRUK"].toString().toUpperCase().trim() : "ID";
+
+        // AUTO-TRANSLATE FOOTER STRUK JIKA BAHASA ADALAH EN
+        if (lang === "EN" && (footerStruk === "Matur Suksma, Datang Kembali!" || footerStruk === "Terima Kasih Atas Kunjungannya!")) {
+            footerStruk = "Thank You, Please Come Again!";
+        }
+
+        // =========================================================================
+        // REKALKULASI FAILSAFE KHUSUS UNTUK BILL BELUM LUNAS (OPEN/BILL)
+        // Menghindari kalkulasi diskon abnormal bernilai total tagihan (Total menjadi 0)
+        // =========================================================================
+        let finalSubtotal = subtotal;
+        let finalDiscount = discountAmount;
+        let finalService = serviceCharge;
+        let finalTax = tax;
+        let finalTotal = grandTotal;
+        let finalRounding = window.lastRoundingAdjustment || 0; // Backup nilai awal
+
+        if (status !== "Paid" || grandTotal <= 0) {
+            // 1. Kalkulasi ulang subtotal murni dari jumlah item asli
+            finalSubtotal = items.reduce((sum, item) => sum + item.subtotal, 0);
+            
+            // 2. Jika diskon terdeteksi menyamai atau melebihi subtotal (error kalkulasi), set diskon jadi 0
+            if (finalDiscount >= finalSubtotal) {
+                finalDiscount = 0; 
+            }
+            
+            const netSubtotal = Math.max(0, finalSubtotal - finalDiscount);
+            
+            // 3. Kalkulasi ulang Service & Tax
+            const servicePerc = parseFloat(configData["SERVICE_CHARGE"] || 0);
+            finalService = netSubtotal * (servicePerc / 100);
+            
+            const taxPerc = parseFloat(configData["PAJAK_PB1"] || 0);
+            finalTax = (netSubtotal + finalService) * (taxPerc / 100);
+            
+            // 4. Kalkulasi Grand Total Akhir beserta Pembulatan Riil Dinamis
+            const rawTotal = netSubtotal + finalService + finalTax;
+            finalTotal = getRoundedAmount(rawTotal);
+            
+            // Injeksi nilai pembulatan matematis dinamis ke struk reprint
+            finalRounding = finalTotal - rawTotal; 
+        }
+        // =========================================================================
 
         // 1. BILL UTAMA / STRUK LUNAS (KASIR PRINTER)
         if (target === "All" || target === "CustomerCopy" || target === "ArsipCopy" || target === "Kasir" || target === "Cashier") {
@@ -185,7 +228,7 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
                 body += centerText(copyLabel) + "\n";
                 body += "=".repeat(LINE_WIDTH) + "\n";
                 
-                // PERBAIKAN: Membungkus variabel table dengan String() agar aman dari tipe data angka murni (number)
+                // Membungkus variabel table dengan String() agar aman dari tipe data angka murni (number)
                 body += formatLeftRight(`ID: ${orderId.substring(0, 11)}...`, `${t.table.toUpperCase()}  ${String(table).toUpperCase()}`) + "\n";
                 body += formatLeftRight(`${currentDateStr}`, currentTimeStr) + "\n";
                 body += "=".repeat(LINE_WIDTH) + "\n";
@@ -204,24 +247,25 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
                 body += formatLeftRight(`${t.items} : ${totalItemsCount}`, `${t.qty} : ${totalQtyCount}`) + "\n";
                 
                 body += "-".repeat(LINE_WIDTH) + "\n";
-                body += formatLeftRight(t.subtotal, subtotal.toLocaleString('id-ID')) + "\n";
-                if(discountAmount > 0) {
-                    body += formatLeftRight(t.discount, `-${discountAmount.toLocaleString('id-ID')}`) + "\n";
+                body += formatLeftRight(t.subtotal, finalSubtotal.toLocaleString('id-ID')) + "\n";
+                if(finalDiscount > 0) {
+                    body += formatLeftRight(t.discount, `-${finalDiscount.toLocaleString('id-ID')}`) + "\n";
                 }
-                if(serviceCharge > 0) {
-                    body += formatLeftRight("SERVICE CHARGE", serviceCharge.toLocaleString('id-ID')) + "\n";
+                if(finalService > 0) {
+                    body += formatLeftRight("SERVICE CHARGE", finalService.toLocaleString('id-ID')) + "\n";
                 }
-                if(tax > 0) {
-                    body += formatLeftRight("TAX", tax.toLocaleString('id-ID')) + "\n";
+                if(finalTax > 0) {
+                    body += formatLeftRight("TAX", finalTax.toLocaleString('id-ID')) + "\n";
                 }
                 
-                const rounding = window.lastRoundingAdjustment || 0;
+                // Menggunakan variabel pembulatan yang sudah aman (dinamis / lokal)
+                const rounding = finalRounding;
                 if (rounding !== 0) {
                     body += formatLeftRight(t.rounding, (rounding > 0 ? "+" : "") + rounding.toLocaleString('id-ID')) + "\n";
                 }
 
                 body += "-".repeat(LINE_WIDTH) + "\n";
-                body += formatLeftRight("Total", grandTotal.toLocaleString('id-ID')) + "\n";
+                body += formatLeftRight("Total", finalTotal.toLocaleString('id-ID')) + "\n";
                 
                 if (status === "Paid") {
                     if (payMethod.startsWith("Mixed")) {
