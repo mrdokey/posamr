@@ -1,7 +1,7 @@
 /**
  * MODUL PRINTER: ENGINE RAWBT WEB INTENT & TEMPLATE STRUK PREMIUM (THE ARIA)
  * Menangani Multi-Printer Routing Tanpa Karakter China (Safe ASCII)
- * UPDATE: Integrasi Pengaman Failsafe Try-Catch untuk Pelacakan Error Instan
+ * UPDATE: Perbaikan Scope Variable "lang" untuk Deteksi Bahasa Struk Dinamis
  */
 
 let LINE_WIDTH = 32; // Default fallback ke kertas 58mm
@@ -168,8 +168,9 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
         const items = itemsToPrint || cart; 
         let cashierPrinted = false;
         
-        // Ambil Kamus Bahasa Aktif
+        // Ambil Kamus Bahasa Aktif & Variabel Penunjuk Bahasa Struk
         const t = getTranslationDictionary();
+        const lang = configData["BAHASA_STRUK"] ? configData["BAHASA_STRUK"].toString().toUpperCase().trim() : "ID";
 
         // 1. BILL UTAMA / STRUK LUNAS (KASIR PRINTER)
         if (target === "All" || target === "CustomerCopy" || target === "ArsipCopy" || target === "Kasir" || target === "Cashier") {
