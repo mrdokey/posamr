@@ -39,18 +39,18 @@ async function loginKasir() {
         const json = await res.json();
         if(json.success) {
             const allowedRoles = ["admin", "hrd", "manager", "owner"];
-const jobdeskClean = json.jobdesk ? json.jobdesk.toLowerCase().trim() : "";
-const roleClean = json.role ? json.role.toLowerCase().trim() : "";
+            const jobdeskClean = json.jobdesk ? json.jobdesk.toLowerCase().trim() : "";
+            const roleClean = json.role ? json.role.toLowerCase().trim() : "";
 
-// PERBAIKAN: Diubah menjadi "cashier"
-if (jobdeskClean === "cashier" || allowedRoles.includes(roleClean)) { 
-    localStorage.setItem(STORAGE_USER, JSON.stringify(json));
-    window.location.reload();
-} else {
-    alert(`Akses Ditolak! Pelayan/Staff tidak diizinkan masuk ke aplikasi POS Utama.`);
-    clearPin();
-    if (btn) btn.innerText = "Buka Mesin POS";
-}
+            // PERBAIKAN: Diubah menjadi "cashier"
+            if (jobdeskClean === "cashier" || allowedRoles.includes(roleClean)) { 
+                localStorage.setItem(STORAGE_USER, JSON.stringify(json));
+                window.location.reload();
+            } else {
+                alert(`Akses Ditolak! Pelayan/Staff tidak diizinkan masuk ke aplikasi POS Utama.`);
+                clearPin();
+                if (btn) btn.innerText = "Buka Mesin POS";
+            }
         } else {
             alert(json.message);
             clearPin();
@@ -177,9 +177,6 @@ function applyFilters(searchStr = "") {
     }
 }
 
-// ===========================================================================
-// SEKSI TAMPILAN MENU KASIR (FIX: Deskripsi Tampil Penuh / Full Text)
-// ===========================================================================
 function renderMenuHTML(items) {
     const container = document.getElementById('menu-container');
     if (!container) return;
@@ -204,20 +201,13 @@ function renderMenuHTML(items) {
         
         const badgeHtml = isHot ? `<div class="absolute top-2 left-2 bg-rose-600 text-white text-[9px] font-black px-2.5 py-1 rounded-md shadow-md animate-pulse">🔥 HOT</div>` : ``;
 
-        // PERBAIKAN STRUKTUR TEKS:
-        // 1. Menghapus line-clamp agar deskripsi panjang bisa tampil utuh.
-        // 2. Menambahkan "break-words whitespace-normal" agar teks panjang mau membengkok ke bawah dan tidak keluar dari kartu.
         return `
         <div onclick="addToCart('${safeId}', '${safeName}', ${safePrice}, '${safeRoute}')" class="menu-card bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden cursor-pointer hover:border-amber-500 relative transition-all duration-300 h-full active:scale-95">
-            
-            <!-- Area Gambar (Tinggi Terkunci 110px) -->
             <div class="h-[110px] w-full relative shrink-0 overflow-hidden bg-slate-900">
                 <img src="${item.image || fallbackImg}" onerror="this.onerror=null; this.src='${fallbackImg}';" class="w-full h-full object-cover transition-transform duration-700 hover:scale-110">
                 ${badgeHtml}
                 <div class="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-md text-slate-300 text-[9px] font-bold px-2 py-0.5 rounded border border-slate-700">${safeCat}</div>
             </div>
-
-            <!-- Area Teks Detail & Harga (Tampil Penuh / Bebas Teks) -->
             <div class="p-3 flex flex-col justify-between flex-1 bg-slate-800 w-full">
                 <div class="text-left mb-2 w-full">
                     <h3 class="text-xs font-bold text-white break-words whitespace-normal leading-snug w-full">${safeName}</h3>
@@ -225,13 +215,11 @@ function renderMenuHTML(items) {
                 </div>
                 <p class="text-xs font-black text-amber-500 mt-auto tracking-tight text-left">Rp ${safePrice.toLocaleString('id-ID')}</p>
             </div>
-
         </div>
     `}).join('');
     lucide.createIcons();
 }
 
-// --- SEKSI VOUCHER DROPDOWN RENDERING ENGINE ---
 function renderVouchers() {
     const select = document.getElementById('cart-voucher-select');
     if (select) {
@@ -383,7 +371,6 @@ function renderCart() {
     
     const rawTotal = netSubtotal + serviceCharge + tax;
 
-    // KALKULASI PEMBULATAN KASIR
     const roundedTotal = getRoundedAmount(rawTotal);
     window.lastRoundingAdjustment = roundedTotal - rawTotal;
 
