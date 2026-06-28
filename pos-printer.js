@@ -1,7 +1,7 @@
 /**
  * MODUL PRINTER: ENGINE RAWBT WEB INTENT & TEMPLATE STRUK PREMIUM (THE ARIA)
  * Menangani Multi-Printer Routing Tanpa Karakter China (Safe ASCII)
- * UPDATE: Rekalkulasi Pembulatan Dinamis (Failsafe Rounding) pada Struk Unpaid Bill
+ * UPDATE: Font "Total" Ganda & Tebal (Double-Height & Bold ESC/POS) Seperti Struk Contoh
  */
 
 let LINE_WIDTH = 32; // Default fallback ke kertas 58mm
@@ -236,7 +236,7 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
                 items.forEach(item => {
                     const itemLeft = `${item.qty} ${item.name.toUpperCase()}`;
                     const itemRight = item.subtotal.toLocaleString('id-ID');
-                    body += formatLeftRight(itemLeft, itemRight) + "\n";
+                    body += formatLeftRight(itemLeft, right = itemRight) + "\n";
                     if(item.notes) body += `  *Note: ${item.notes}\n`;
                 });
                 
@@ -265,7 +265,15 @@ function executeRoutingPrint(orderId, table, status, payMethod, subtotal, discou
                 }
 
                 body += "-".repeat(LINE_WIDTH) + "\n";
-                body += formatLeftRight("Total", finalTotal.toLocaleString('id-ID')) + "\n";
+                
+                // =========================================================================
+                // PERBAIKAN VISUAL TOTAL: Tinggi Ganda (Double-Height) & Tebal (Bold)
+                // Menggunakan kombinasi ESC/POS: \x1B\x45\x01\x1D\x21\x01
+                // =========================================================================
+                const totalLabel = "Total";
+                const totalValue = finalTotal.toLocaleString('id-ID');
+                body += "\x1B\x45\x01\x1D\x21\x01" + formatLeftRight(totalLabel, totalValue) + "\x1D\x21\x00\x1B\x45\x00" + "\n";
+                // =========================================================================
                 
                 if (status === "Paid") {
                     if (payMethod.startsWith("Mixed")) {
