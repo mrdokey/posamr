@@ -263,34 +263,27 @@
         }
 
         async function loginAdmin() {
-            try {
-                const res = await fetch(GAS_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) 
-                });
-                const json = await res.json();
-                
-                if(json.success) {
-                    // Filter Keamanan: Hanya izinkan level jabatan tinggi
-                    const allowedRoles = ["admin", "hrd", "manager", "owner"];
-                    const roleClean = json.role ? json.role.toLowerCase().trim() : "";
-
-                    if (allowedRoles.includes(roleClean)) {
-                        localStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
-                        window.location.reload();
-                    } else {
-                        alert("Akses Ditolak!\n\nPortal Backoffice ini hanya diperuntukkan bagi level jabatan Manager, HRD, Admin, dan Owner.");
-                        clearPin();
-                    }
-                } else {
-                    alert(json.message || "PIN yang Anda masukkan salah!");
-                    clearPin();
-                }
-            } catch(e) {
-                alert("Koneksi bermasalah saat menghubungi database.");
-                clearPin();
-            }
+    try {
+        const res = await fetch(GAS_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) 
+        });
+        const json = await res.json();
+        
+        if(json.success) {
+            // VERSI TERBUKA (UNTUK TESTING): 
+            // Langsung izinkan masuk tanpa membatasi jabatan tertentu
+            localStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
+            window.location.reload();
+        } else {
+            alert(json.message || "PIN yang Anda masukkan salah!");
+            clearPin();
         }
+    } catch(e) {
+        alert("Koneksi bermasalah saat menghubungi database.");
+        clearPin();
+    }
+}
 
         function logoutAdmin() {
             if (confirm("Keluar dari sesi administrator saat ini?")) {
