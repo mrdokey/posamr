@@ -34,11 +34,15 @@
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
             <input type="text" id="search-input" onkeyup="filterUsers()" placeholder="Cari nama atau No WA..." class="w-full pl-9 pr-4 py-2.5 bg-slate-900 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500">
         </div>
-        <select id="filter-area" onchange="filterUsers()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2.5 outline-none text-xs focus:border-amber-500">
-            <option value="">Semua Cabang (Area)</option>
-            <option value="Renon">Renon</option>
-            <option value="Suci">Suci</option>
-        </select>
+        <!-- Di Filter Bar -->
+<select id="filter-area" onchange="filterUsers()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2.5 outline-none text-xs focus:border-amber-500">
+    <option value="">Memuat Cabang...</option>
+</select>
+
+<!-- Di Modal Form -->
+<select id="form-area" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white">
+    <option value="">Pilih Cabang</option>
+</select>
         <select id="filter-status" onchange="filterUsers()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2.5 outline-none text-xs focus:border-amber-500">
             <option value="">Semua Status Profil</option>
             <option value="Active">Active</option>
@@ -432,6 +436,38 @@
         function editUser(userId) {
             openFormModal(userId);
         }
+        
+        async function loadDynamicAreas() {
+    try {
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "getAvailableAreas" }) });
+        const json = await res.json();
+        if (json.success) {
+            const areas = json.data;
+            const filterSelect = document.getElementById('filter-area');
+            const formSelect = document.getElementById('form-area');
+
+            let options = `<option value="">Semua Cabang (Area)</option>`;
+            let formOptions = ``;
+
+            areas.forEach(area => {
+                options += `<option value="${area}">${area}</option>`;
+                formOptions += `<option value="${area}">${area}</option>`;
+            });
+
+            filterSelect.innerHTML = options;
+            formSelect.innerHTML = formOptions;
+        }
+    } catch (e) { console.error("Gagal memuat daftar cabang SaaS"); }
+}
+
+// Panggil di window.onload
+window.onload = () => {
+    if (GAS_URL) {
+        fetchUsers();
+        loadDynamicAreas(); // <--- PINTU DINAMIS
+    }
+};
+        
     </script>
 </body>
 </html>

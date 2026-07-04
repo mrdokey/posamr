@@ -43,12 +43,9 @@
         </div>
         <div class="flex flex-col">
             <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Cabang (Area)</label>
-            <select id="filter-area" onchange="filterLogs()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2 outline-none text-xs focus:border-emerald-500">
-                <option value="">Semua Cabang (Area)</option>
-                <option value="Renon">Renon</option>
-                <option value="Denpasar">Denpasar</option>
-                <option value="Suci">Suci</option>
-            </select>
+            <select id="filter-area" onchange="filterLogs()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2.5 outline-none text-xs focus:border-emerald-500">
+    <option value="">Memuat Cabang...</option>
+</select>
         </div>
         <div class="flex flex-col">
             <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Validasi GPS</label>
@@ -266,6 +263,28 @@
         function closePhotoModal() {
             document.getElementById('modal-photo').classList.add('hidden-screen');
         }
+        
+        async function loadDynamicAreas() {
+    try {
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "getAvailableAreas" }) });
+        const json = await res.json();
+        if (json.success) {
+            const areas = json.data;
+            let options = `<option value="">Semua Cabang (Area)</option>`;
+            areas.forEach(area => { options += `<option value="${area}">${area}</option>`; });
+            document.getElementById('filter-area').innerHTML = options;
+        }
+    } catch (e) {}
+}
+
+// Panggil di window.onload
+window.onload = () => {
+    if (GAS_URL) {
+        fetchAttendance();
+        loadDynamicAreas();
+    }
+};
+        
     </script>
 </body>
 </html>
