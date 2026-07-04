@@ -29,18 +29,18 @@
         <p class="text-slate-300 text-sm font-semibold tracking-widest animate-bounce">MEMUAT BACKOFFICE ADMIN...</p>
     </div>
 
-    <!-- 2. SCREEN AKTIVASI (Memasukkan URL Deploy GAS secara Dinamis) -->
+    <!-- 2. SCREEN AKTIVASI -->
     <div id="activation-screen" class="hidden-screen fixed inset-0 bg-slate-950 z-[110] flex items-center justify-center p-4 smooth-transition">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl w-full max-w-md p-8 text-center">
             <img src="https://i.ibb.co.com/JW1FFbCz/1780229137561.png" class="w-24 h-24 mx-auto mb-4">
             <h2 class="text-2xl font-bold text-white mb-2">Aktivasi Backoffice</h2>
             <p class="text-xs text-slate-400 mb-6">Masukkan URL API GAS Deploy milik Anda</p>
-            <input type="url" id="api-input" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-4 py-3 bg-slate-950 border-2 border-slate-800 text-white rounded-xl focus:border-amber-500 outline-none mb-4 text-xs text-center smooth-transition">
+            <input type="url" id="api-input" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-4 py-3 bg-slate-950 border-2 border-slate-800 text-white rounded-xl focus:border-amber-500 outline-none mb-4 text-sm text-center smooth-transition">
             <button onclick="activateAdminSystem()" id="btn-activate" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 rounded-xl smooth-transition shadow-lg">Aktifkan Backoffice</button>
         </div>
     </div>
 
-    <!-- 3. SCREEN LOGIN ADMIN (PIN Pad Otorisasi Atasan) -->
+    <!-- 3. SCREEN LOGIN ADMIN -->
     <div id="login-screen" class="hidden-screen fixed inset-0 bg-slate-950 z-[100] flex items-center justify-center p-4 smooth-transition">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center">
             <img src="https://i.ibb.co.com/JW1FFbCz/1780229137561.png" class="w-20 h-20 mx-auto mb-4">
@@ -76,17 +76,16 @@
         </div>
     </div>
 
-    <!-- 4. MAIN DASHBOARD APPLICATION LAYOUT (Tampilan Setelah Login Berhasil) -->
+    <!-- 4. MAIN DASHBOARD APPLICATION LAYOUT -->
     <div id="main-app" class="hidden-screen h-full w-full flex flex-col md:flex-row bg-[#020617] overflow-hidden smooth-transition">
         
         <!-- SIDEBAR KIRI -->
         <aside class="w-full md:w-64 bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 flex flex-row md:flex-col justify-between p-4 shrink-0 z-20">
             <div class="flex flex-row md:flex-col items-center md:items-start gap-4 md:w-full">
                 <div class="flex items-center gap-3">
-    <!-- Menggunakan format LH3 CDN agar bypass proteksi CORS pratinjau Drive -->
-    <img src="https://lh3.googleusercontent.com/d/1ZXs1pIaPk7EjfcGIu5rew4qO9kQXoNlF" class="w-8 h-8 rounded-lg object-cover">
-    <h1 class="text-md font-black text-amber-500 tracking-tight uppercase">AMR Backoffice</h1>
-</div>
+                    <img src="https://lh3.googleusercontent.com/d/1ZXs1pIaPk7EjfcGIu5rew4qO9kQXoNlF" class="w-8 h-8 rounded-lg object-cover">
+                    <h1 class="text-md font-black text-amber-500 tracking-tight uppercase">AMR Backoffice</h1>
+                </div>
 
                 <nav class="hidden md:flex flex-col gap-1.5 w-full mt-6">
                     <button onclick="switchTab('Users')" id="nav-Users" class="nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-400 hover:bg-slate-800 hover:text-white transition">
@@ -125,8 +124,8 @@
                 <button onclick="switchTab('Reports')" id="mob-nav-Reports" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Laporan</button>
             </div>
 
-            <div id="content-area" class="flex-1 overflow-y-auto p-6 space-y-6 text-center flex flex-col justify-center items-center">
-                <!-- Konten dinamis akan dimuat di sini -->
+            <div id="content-area" class="flex-1 overflow-y-auto p-6">
+                <!-- Konten dinamis (termasuk iframe admin-users.html) dimuat di sini -->
             </div>
         </main>
     </div>
@@ -229,7 +228,7 @@
             } catch(e) {}
         }
 
-        // 3. LOGIKA NUMPAD & PIN OTORISASI
+        // 3. LOGIKA NUMPAD & PIN OTORISASI (OPEN LOGIN VERSI TESTING)
         function pressNum(num) {
             if(loginPinValue.length < 4) {
                 loginPinValue += num;
@@ -264,27 +263,25 @@
         }
 
         async function loginAdmin() {
-    try {
-        const res = await fetch(GAS_URL, { 
-            method: 'POST', 
-            body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) 
-        });
-        const json = await res.json();
-        
-        if(json.success) {
-            // VERSI TERBUKA (UNTUK TESTING): 
-            // Langsung izinkan masuk tanpa membatasi jabatan tertentu
-            localStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
-            window.location.reload();
-        } else {
-            alert(json.message || "PIN yang Anda masukkan salah!");
-            clearPin();
+            try {
+                const res = await fetch(GAS_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) 
+                });
+                const json = await res.json();
+                
+                if(json.success) {
+                    localStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
+                    window.location.reload();
+                } else {
+                    alert(json.message || "PIN yang Anda masukkan salah!");
+                    clearPin();
+                }
+            } catch(e) {
+                alert("Koneksi bermasalah saat menghubungi database.");
+                clearPin();
+            }
         }
-    } catch(e) {
-        alert("Koneksi bermasalah saat menghubungi database.");
-        clearPin();
-    }
-}
 
         function logoutAdmin() {
             if (confirm("Keluar dari sesi administrator saat ini?")) {
@@ -300,7 +297,7 @@
             }
         }
 
-        // 4. KONTROL TAB & NAVIGASI
+        // 4. KONTROL TAB & NAVIGASI DINAMIS (DENGAN IFRAME ROUTING)
         function switchTab(tabName) {
             currentTab = tabName;
             
@@ -318,38 +315,35 @@
             const activeMobBtn = document.getElementById(`mob-nav-${tabName}`);
             if (activeMobBtn) activeMobBtn.className = "mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-amber-500 text-slate-950";
 
-            renderTabPlaceholders(tabName);
+            renderContent(tabName);
         }
 
-        // Ganti fungsi renderTabPlaceholders menjadi renderContent di admin.html
-function renderContent(tab) {
-    const area = document.getElementById('content-area');
-    if (!area) return;
+        function renderContent(tab) {
+            const area = document.getElementById('content-area');
+            if (!area) return;
 
-    if (tab === "Users") {
-        // Embed file mandiri admin-users.html ke dalam iframe dinamis
-        area.innerHTML = `<iframe src="admin-users.html" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
-        area.className = "flex-1 overflow-hidden h-full p-4"; // Matikan scroll kontainer agar iframe yang mengontrol scroll
-    } else {
-        renderTabPlaceholders(tab);
-    }
-}
-
-            area.className = "flex-1 overflow-y-auto p-6 flex flex-col justify-center items-center text-center space-y-4";
-            area.innerHTML = `
-                <div class="w-16 h-16 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center justify-center text-amber-500">
-                    <i data-lucide="construction" class="w-8 h-8"></i>
-                </div>
-                <div>
-                    <h3 class="text-lg font-black text-white uppercase tracking-wider">Modul ${tab}</h3>
-                    <p class="text-xs text-slate-400 mt-2 max-w-sm leading-relaxed">
-                        Pengelolaan data master <strong>${tab}</strong> saat ini masih dijalankan secara aktif melalui layanan Backoffice AppSheet Anda.
-                    </p>
-                </div>
-                <div class="text-[10px] bg-slate-900 border border-slate-800 px-4 py-2 rounded-full font-bold text-slate-500 uppercase tracking-widest">
-                    Sesi Aktif: ${adminInfo.name} (${adminInfo.role.toUpperCase()})
-                </div>
-            `;
+            if (tab === "Users") {
+                // Matikan flex centering agar iframe melebar penuh & tidak terpotong
+                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+                area.innerHTML = `<iframe src="admin-users.html" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+            } else {
+                // Berikan style terpusat untuk placeholder tab lain yang belum dialihkan dari AppSheet
+                area.className = "flex-1 overflow-y-auto p-6 flex flex-col justify-center items-center text-center space-y-4";
+                area.innerHTML = `
+                    <div class="w-16 h-16 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center justify-center text-amber-500">
+                        <i data-lucide="construction" class="w-8 h-8"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-black text-white uppercase tracking-wider">Modul ${tab}</h3>
+                        <p class="text-xs text-slate-400 mt-2 max-w-sm leading-relaxed">
+                            Pengelolaan data master <strong>${tab}</strong> saat ini masih dijalankan secara aktif melalui layanan Backoffice AppSheet Anda.
+                        </p>
+                    </div>
+                    <div class="text-[10px] bg-slate-900 border border-slate-800 px-4 py-2 rounded-full font-bold text-slate-500 uppercase tracking-widest">
+                        Sesi Aktif: ${adminInfo.name} (${(adminInfo.role || 'Admin').toUpperCase()})
+                    </div>
+                `;
+            }
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
     </script>
