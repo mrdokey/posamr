@@ -19,7 +19,7 @@
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-4 mb-6">
         <div>
             <h2 class="text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
-                <i data-lucide="users" class="text-amber-500"></i> Manajemen Karyawan
+                <i data-lucide="users" class="text-amber-500"></i> Daftar Karyawan
             </h2>
             <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1">Daftar staf aktif dan jadwal kontrak kerja</p>
         </div>
@@ -47,7 +47,7 @@
         </select>
     </div>
 
-    <!-- TABEL KARYAWAN (RESPONSIVE CARD DAN TABEL) -->
+    <!-- TABEL KARYAWAN -->
     <div class="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -170,8 +170,10 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Foto Profil URL</label>
-                        <input type="text" id="form-foto" placeholder="https://..." class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs">
+                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Foto Profil (Unggah)</label>
+                        <input type="file" id="form-foto-file" accept="image/*" onchange="convertPhotoToBase64()" class="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-600 file:cursor-pointer bg-slate-950 border border-slate-800 rounded-xl py-1">
+                        <input type="hidden" id="form-foto" value="">
+                        <input type="hidden" id="form-foto-base64" value="">
                     </div>
                 </div>
 
@@ -188,20 +190,14 @@
         </div>
     </div>
 
-    <!-- SCRIPT UTAMA KONTROL KARYAWAN -->
     <script>
         const GAS_URL = localStorage.getItem("MRD_API_URL");
         let allUsers = [];
 
         window.onload = () => {
-            if (!GAS_URL) {
-                alert("Sistem POS Utama belum diaktifkan!");
-                return;
-            }
-            fetchUsers();
+            if (GAS_URL) fetchUsers();
         };
 
-        // 1. AMBIL DATA DARI GAS
         async function fetchUsers() {
             const container = document.getElementById('user-table-body');
             try {
@@ -221,7 +217,6 @@
             }
         }
 
-        // 2. RENDERING TABEL
         function renderUsersTable(dataList) {
             const container = document.getElementById('user-table-body');
             if (dataList.length === 0) {
@@ -232,25 +227,15 @@
             container.innerHTML = dataList.map(user => {
                 const safeFoto = user.foto || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=1e293b&color=f59e0b&size=100`;
                 
-                // Status Badge
-                const statusBadge = user.status === "Active" 
-                    ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] px-2 py-0.5 rounded-full font-bold">Active</span>`
-                    : `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[9px] px-2 py-0.5 rounded-full font-bold">Inactive</span>`;
-
-                // Kalkulasi sisa kontrak hari
-                let sisaKontrakText = "-";
-                if (user.endDate) {
+                const sisaKontrakText = user.endDate ? (() => {
                     let endD = new Date(user.endDate);
                     let diffTime = endD - new Date();
                     let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    if (diffDays > 0) {
-                        sisaKontrakText = `<span class="text-amber-500 font-bold">${diffDays} Hari</span> (${user.statusUser})`;
-                    } else {
-                        sisaKontrakText = `<span class="text-rose-500 font-bold">Habis Kontrak</span>`;
-                    }
-                }
+                    return diffDays > 0 
+                        ? `<span class="text-amber-500 font-bold">${diffDays} Hari</span> (${user.statusUser})`
+                        : `<span class="text-rose-500 font-bold">Habis Kontrak</span>`;
+                })() : "-";
 
-                // GPS Badge
                 const gpsBadge = user.geotag === "Active"
                     ? `<span class="text-emerald-500 flex items-center gap-1 font-semibold text-[10px]"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i> Lock Radius</span>`
                     : `<span class="text-slate-500 flex items-center gap-1 font-semibold text-[10px]"><i data-lucide="map" class="w-3.5 h-3.5"></i> Bebas Radius</span>`;
@@ -274,9 +259,7 @@
                         </td>
                         <td class="py-4 px-4 text-left">${sisaKontrakText}</td>
                         <td class="py-4 px-4 text-right">
-                            <div class="flex justify-end gap-1">
-                                <button onclick="editUser('${user.userId}')" class="p-2 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg hover:bg-amber-500 hover:text-slate-950 transition"><i data-lucide="pencil" class="w-4 h-4"></i></button>
-                            </div>
+                            <button onclick="editUser('${user.userId}')" class="p-2 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg hover:bg-amber-500 hover:text-slate-950 transition"><i data-lucide="pencil" class="w-4 h-4"></i></button>
                         </td>
                     </tr>
                 `;
@@ -284,7 +267,44 @@
             lucide.createIcons();
         }
 
-        // 3. LOGIKA FILTER & PENCARIAN
+        function convertPhotoToBase64() {
+            const file = document.getElementById('form-foto-file').files[0];
+            const base64Input = document.getElementById('form-foto-base64');
+            if (file) {
+                if (file.size > 2 * 1024 * 1024) {
+                    alert("Ukuran berkas melebihi batas 2MB!");
+                    document.getElementById('form-foto-file').value = "";
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onloadend = function() {
+                    base64Input.value = reader.result;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                base64Input.value = "";
+            }
+        }
+
+        function autoCalculateEndDate() {
+            const joinDateStr = document.getElementById('form-joindate').value;
+            const contractVal = parseInt(document.getElementById('form-contract').value) || 0;
+            const endDateInput = document.getElementById('form-enddate');
+
+            if (joinDateStr && contractVal > 0) {
+                let joinD = new Date(joinDateStr);
+                joinD.setMonth(joinD.getMonth() + contractVal);
+                joinD.setDate(joinD.getDate() - 1);
+
+                let yyyy = joinD.getFullYear();
+                let mm = String(joinD.getMonth() + 1).padStart(2, '0');
+                let dd = String(joinD.getDate()).padStart(2, '0');
+                endDateInput.value = `${yyyy}-${mm}-${dd}`;
+            } else {
+                endDateInput.value = "";
+            }
+        }
+
         function filterUsers() {
             const query = document.getElementById('search-input').value.toLowerCase();
             const area = document.getElementById('filter-area').value;
@@ -299,35 +319,11 @@
             renderUsersTable(filtered);
         }
 
-        // 4. AUTOKALKULASI TANGGAL HABIS KONTRAK
-        function autoCalculateEndDate() {
-            const joinDateStr = document.getElementById('form-joindate').value;
-            const contractVal = parseInt(document.getElementById('form-contract').value) || 0;
-            const endDateInput = document.getElementById('form-enddate');
-
-            if (joinDateStr && contractVal > 0) {
-                let joinD = new Date(joinDateStr);
-                joinD.setMonth(joinD.getMonth() + contractVal);
-                
-                // Kurangi 1 hari agar akhir kontrak logis
-                joinD.setDate(joinD.getDate() - 1);
-
-                let yyyy = joinD.getFullYear();
-                let mm = String(joinD.getMonth() + 1).padStart(2, '0');
-                let dd = String(joinD.getDate()).padStart(2, '0');
-                endDateInput.value = `${yyyy}-${mm}-${dd}`;
-            } else {
-                endDateInput.value = "";
-            }
-        }
-
-        // 5. MODAL CONTROL
         function openFormModal(userId = null) {
             const modal = document.getElementById('modal-form');
             const title = document.getElementById('modal-title');
             modal.classList.remove('hidden-screen');
 
-            // Reset form
             document.getElementById('form-user-id').value = "";
             document.getElementById('form-name').value = "";
             document.getElementById('form-pin').value = "";
@@ -343,6 +339,8 @@
             document.getElementById('form-status').value = "Active";
             document.getElementById('form-geotag').value = "Active";
             document.getElementById('form-foto').value = "";
+            document.getElementById('form-foto-file').value = "";
+            document.getElementById('form-foto-base64').value = "";
             document.getElementById('form-keterangan').value = "";
 
             if (userId) {
@@ -358,9 +356,9 @@
                     document.getElementById('form-nowa').value = u.noWa;
                     document.getElementById('form-alamat').value = u.alamat;
                     document.getElementById('form-statususer').value = u.statusUser;
-                    document.getElementById('form-joindate').value = parseInputDate(u.joinDate);
+                    document.getElementById('form-joindate').value = u.joinDate;
                     document.getElementById('form-contract').value = u.contract;
-                    document.getElementById('form-enddate').value = parseInputDate(u.endDate);
+                    document.getElementById('form-enddate').value = u.endDate;
                     document.getElementById('form-status').value = u.status;
                     document.getElementById('form-geotag').value = u.geotag;
                     document.getElementById('form-foto').value = u.foto;
@@ -376,14 +374,6 @@
             document.getElementById('modal-form').classList.add('hidden-screen');
         }
 
-        function parseInputDate(dateStr) {
-            if(!dateStr) return "";
-            // Format input date butuh YYYY-MM-DD
-            if (dateStr.indexOf("-") !== -1) return dateStr;
-            return dateStr;
-        }
-
-        // 6. SIMPAN DATA KARYAWAN
         async function submitUserForm() {
             const name = document.getElementById('form-name').value.trim();
             const pin = document.getElementById('form-pin').value.trim();
@@ -391,12 +381,7 @@
             const noWa = document.getElementById('form-nowa').value.trim();
 
             if (!name || !pin || !joinDate || !noWa) {
-                alert("Mohon lengkapi kolom bertanda khusus (Nama, PIN, Tanggal Join, No WA)!");
-                return;
-            }
-
-            if (pin.length !== 4 || isNaN(pin)) {
-                alert("PIN Kiosk wajib berupa 4 digit angka!");
+                alert("Lengkapi kolom Nama, PIN, Tanggal Join, dan No WA!");
                 return;
             }
 
@@ -420,6 +405,7 @@
                 status: document.getElementById('form-status').value,
                 geotag: document.getElementById('form-geotag').value,
                 foto: document.getElementById('form-foto').value.trim(),
+                photoBase64: document.getElementById('form-foto-base64').value,
                 keterangan: document.getElementById('form-keterangan').value.trim()
             };
 
@@ -432,12 +418,12 @@
                 if (json.success) {
                     alert(json.message);
                     closeModal();
-                    fetchUsers(); // Muat ulang tabel
+                    fetchUsers();
                 } else {
                     alert("Gagal: " + json.message);
                 }
             } catch (e) {
-                alert("Koneksi gagal saat mengirim data ke Google Sheets.");
+                alert("Kesalahan pengiriman data ke Apps Script.");
             } finally {
                 saveBtn.innerText = "SIMPAN DATA";
                 saveBtn.disabled = false;

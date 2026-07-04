@@ -8,9 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;900&display=swap" rel="stylesheet">
-    
     <link rel="manifest" href="./manifest-admin.json">
-    
     <style>
         button, input, select { touch-action: manipulation; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #020617; }
@@ -87,10 +85,27 @@
                     <h1 class="text-md font-black text-amber-500 tracking-tight uppercase">AMR Backoffice</h1>
                 </div>
 
-                <nav class="hidden md:flex flex-col gap-1.5 w-full mt-6">
-                    <button onclick="switchTab('Users')" id="nav-Users" class="nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-400 hover:bg-slate-800 hover:text-white transition">
-                        <i data-lucide="users" class="w-4 h-4"></i> <span>Data Karyawan</span>
-                    </button>
+                <nav class="hidden md:flex flex-col gap-2.5 w-full mt-6">
+                    <!-- DROPDOWN GROUP MANAJEMEN HRD -->
+                    <div class="w-full border-b border-slate-800 pb-3">
+                        <button onclick="toggleHrdMenu()" class="w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-between text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="users" class="w-4 h-4 text-amber-500"></i>
+                                <span>Manajemen HRD</span>
+                            </div>
+                            <i data-lucide="chevron-down" id="hrd-chevron" class="w-4 h-4 transition-transform duration-200"></i>
+                        </button>
+                        <div id="hrd-submenu" class="hidden pl-6 mt-1.5 flex flex-col gap-1 w-full">
+                            <button onclick="switchTab('Users')" id="nav-Users" class="nav-btn w-full px-4 py-2.5 rounded-xl text-[11px] font-bold flex items-center gap-2 text-slate-400 hover:bg-slate-850 hover:text-white transition">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> <span>Daftar Karyawan</span>
+                            </button>
+                            <button onclick="switchTab('Attendance')" id="nav-Attendance" class="nav-btn w-full px-4 py-2.5 rounded-xl text-[11px] font-bold flex items-center gap-2 text-slate-400 hover:bg-slate-850 hover:text-white transition">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> <span>Rekap Absensi</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- MENU TOP LEVEL UTAMA LAINNYA -->
                     <button onclick="switchTab('Menu')" id="nav-Menu" class="nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-400 hover:bg-slate-800 hover:text-white transition">
                         <i data-lucide="utensils" class="w-4 h-4"></i> <span>Data Menu</span>
                     </button>
@@ -118,19 +133,17 @@
         <!-- AREA KONTEN UTAMA -->
         <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-950">
             <div class="md:hidden flex gap-2 overflow-x-auto p-4 bg-slate-900 border-b border-slate-800 no-scrollbar">
-                <button onclick="switchTab('Users')" id="mob-nav-Users" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Karyawan</button>
+                <button onclick="switchTab('Users')" id="mob-nav-Users" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Daftar Karyawan</button>
+                <button onclick="switchTab('Attendance')" id="mob-nav-Attendance" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Absensi</button>
                 <button onclick="switchTab('Menu')" id="mob-nav-Menu" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Menu</button>
                 <button onclick="switchTab('Promo')" id="mob-nav-Promo" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Promo</button>
                 <button onclick="switchTab('Reports')" id="mob-nav-Reports" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Laporan</button>
             </div>
 
-            <div id="content-area" class="flex-1 overflow-y-auto p-6">
-                <!-- Konten dinamis (termasuk iframe admin-users.html) dimuat di sini -->
-            </div>
+            <div id="content-area" class="flex-1 overflow-y-auto p-6"></div>
         </main>
     </div>
 
-    <!-- SCRIPT JAVASCRIPT LOGIKA UTAMA -->
     <script>
         const STORAGE_API = "MRD_API_URL";
         const STORAGE_ADMIN = "MRD_ADMIN_SESSION";
@@ -163,7 +176,6 @@
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
-        // 1. CEK STATUS ALUR LISENSI & LOGIN
         function checkAdminState() {
             if (!GAS_URL) {
                 showScreen('activation-screen');
@@ -187,7 +199,6 @@
             }
         }
 
-        // 2. LOGIKA AKTIVASI UTAMA
         async function activateAdminSystem() {
             const input = document.getElementById('api-input').value.trim();
             if(!input) return alert("Masukkan URL API Deploy Anda!");
@@ -196,20 +207,17 @@
             btn.disabled = true;
 
             try {
-                const res = await fetch(input, { 
-                    method: 'POST', 
-                    body: JSON.stringify({ action: 'getConfig' }) 
-                });
+                const res = await fetch(input, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) });
                 const json = await res.json();
                 if(json.success) {
                     localStorage.setItem(STORAGE_API, input);
                     GAS_URL = input;
                     window.location.reload();
                 } else {
-                    throw new Error("Gagal verifikasi struktur database");
+                    throw new Error("Gagal");
                 }
             } catch (e) {
-                alert("Verifikasi Gagal! Pastikan URL Apps Script benar dan sudah di-deploy sebagai 'Anyone'.");
+                alert("Verifikasi Gagal! Periksa parameter deploy GAS Anda.");
                 btn.innerHTML = "Aktifkan Backoffice";
                 btn.disabled = false;
             }
@@ -217,10 +225,7 @@
 
         async function fetchConfigBg() {
             try {
-                const res = await fetch(GAS_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify({ action: 'getConfig' }) 
-                });
+                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) });
                 const json = await res.json();
                 if (json.success) {
                     document.getElementById('login-resto-name').innerText = json.data["NAMA_PERUSAHAAN"] || "AMR ADMIN";
@@ -228,7 +233,6 @@
             } catch(e) {}
         }
 
-        // 3. LOGIKA NUMPAD & PIN OTORISASI (OPEN LOGIN VERSI TESTING)
         function pressNum(num) {
             if(loginPinValue.length < 4) {
                 loginPinValue += num;
@@ -264,51 +268,68 @@
 
         async function loginAdmin() {
             try {
-                const res = await fetch(GAS_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) 
-                });
+                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) });
                 const json = await res.json();
-                
                 if(json.success) {
                     localStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
                     window.location.reload();
                 } else {
-                    alert(json.message || "PIN yang Anda masukkan salah!");
+                    alert(json.message || "PIN Salah!");
                     clearPin();
                 }
             } catch(e) {
-                alert("Koneksi bermasalah saat menghubungi database.");
+                alert("Koneksi gagal.");
                 clearPin();
             }
         }
 
         function logoutAdmin() {
-            if (confirm("Keluar dari sesi administrator saat ini?")) {
+            if (confirm("Keluar dari sesi admin?")) {
                 localStorage.removeItem(STORAGE_ADMIN);
                 window.location.reload();
             }
         }
 
         function resetLicense() {
-            if(confirm("Yakin ingin menghapus Lisensi API dari perangkat ini?")) {
+            if(confirm("Hapus lisensi dan reset cache?")) {
                 localStorage.clear();
                 window.location.reload();
             }
         }
 
-        // 4. KONTROL TAB & NAVIGASI DINAMIS (DENGAN IFRAME ROUTING)
+        // TOGGLE SUB-MENU HRD
+        function toggleHrdMenu() {
+            const submenu = document.getElementById('hrd-submenu');
+            const chevron = document.getElementById('hrd-chevron');
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                chevron.classList.add('rotate-180');
+            } else {
+                submenu.classList.add('hidden');
+                chevron.classList.remove('rotate-180');
+            }
+        }
+
         function switchTab(tabName) {
             currentTab = tabName;
             
-            // Perbarui UI Sidebar (Desktop)
+            // Atur gaya aktif menu utama & sub-menu
             document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.className = "nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-400 hover:bg-slate-800 hover:text-white transition";
+                btn.classList.remove('bg-amber-500', 'text-slate-950', 'bg-slate-800/80');
+                btn.classList.add('text-slate-400');
             });
-            const activeBtn = document.getElementById(`nav-${tabName}`);
-            if (activeBtn) activeBtn.className = "nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 bg-amber-500 text-slate-950 transition";
 
-            // Perbarui UI Header (Mobile)
+            const activeBtn = document.getElementById(`nav-${tabName}`);
+            if (activeBtn) {
+                if (tabName === 'Users' || tabName === 'Attendance') {
+                    activeBtn.classList.add('bg-slate-800/80', 'text-white');
+                    document.getElementById('hrd-submenu').classList.remove('hidden');
+                    document.getElementById('hrd-chevron').classList.add('rotate-180');
+                } else {
+                    activeBtn.classList.add('bg-amber-500', 'text-slate-950');
+                }
+            }
+
             document.querySelectorAll('.mob-nav-btn').forEach(btn => {
                 btn.className = "mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400";
             });
@@ -323,11 +344,12 @@
             if (!area) return;
 
             if (tab === "Users") {
-                // Matikan flex centering agar iframe melebar penuh & tidak terpotong
                 area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
                 area.innerHTML = `<iframe src="admin-users.html" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+            } else if (tab === "Attendance") {
+                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+                area.innerHTML = `<iframe src="admin-attendance.html" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
             } else {
-                // Berikan style terpusat untuk placeholder tab lain yang belum dialihkan dari AppSheet
                 area.className = "flex-1 overflow-y-auto p-6 flex flex-col justify-center items-center text-center space-y-4";
                 area.innerHTML = `
                     <div class="w-16 h-16 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center justify-center text-amber-500">
@@ -338,9 +360,6 @@
                         <p class="text-xs text-slate-400 mt-2 max-w-sm leading-relaxed">
                             Pengelolaan data master <strong>${tab}</strong> saat ini masih dijalankan secara aktif melalui layanan Backoffice AppSheet Anda.
                         </p>
-                    </div>
-                    <div class="text-[10px] bg-slate-900 border border-slate-800 px-4 py-2 rounded-full font-bold text-slate-500 uppercase tracking-widest">
-                        Sesi Aktif: ${adminInfo.name} (${(adminInfo.role || 'Admin').toUpperCase()})
                     </div>
                 `;
             }
