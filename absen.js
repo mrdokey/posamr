@@ -365,25 +365,53 @@ function initGPS() {
 }
 
 // ============================================================================
-// ENGINE AI: TENSORFLOW FACE MATCHING & OVERRIDE CAPTURE
+// ENGINE AI: TENSORFLOW FACE MATCHING & OVERRIDE CAPTURE (LAZY-LOADING METHOD)
 // ============================================================================
 let isFaceRecogEnabled = false; 
 let isAiModelsLoaded = false;
 let referenceFaceDescriptor = null; 
 
+// Fungsi Pembantu untuk Memuat Script Pustaka Secara Dinamis (Lazy-Load)
+function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        if (window.faceapi) {
+            resolve(); // Jika sudah terlanjur termuat, abaikan
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = src;
+        script.defer = true;
+        script.onload = () => {
+            console.log("Pustaka Face-API.js berhasil dimuat secara dinamis.");
+            resolve();
+        };
+        script.onerror = () => reject(new Error("Gagal mengunduh pustaka Face-API dari CDN."));
+        document.head.appendChild(script);
+    });
+}
+
 async function loadAiModels() {
     if (isAiModelsLoaded) return;
+    
+    // Tautkan langsung ke CDN tepercaya agar tidak membebani hosting GitHub Pages Anda
+    const SCRIPT_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js';
     const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+    
     try {
+        // 1. Unduh library Face-API terlebih dahulu ke memori browser secara realtime
+        await loadScript(SCRIPT_URL);
+        
+        // 2. Setelah objek 'faceapi' tersedia secara global, unduh bobot (weights) model AI
         await Promise.all([
             faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL), 
             faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL), 
             faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL) 
         ]);
+        
         isAiModelsLoaded = true;
-        console.log("Model AI Face Recognition siap!");
+        console.log("Model AI Face Recognition siap digunakan!");
     } catch (e) {
-        console.log("Gagal memuat model AI.");
+        console.log("Gagal memproses inisialisasi AI Face Recognition:", e.message);
     }
 }
 

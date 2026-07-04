@@ -9,7 +9,6 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;900&display=swap" rel="stylesheet">
     
-    <!-- Tautkan ke Manifest khusus Admin -->
     <link rel="manifest" href="./manifest-admin.json">
     
     <style>
@@ -18,10 +17,8 @@
         .hidden-screen { display: none !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .smooth-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .menu-card:active { transform: scale(0.95); opacity: 0.8; }
         .fade-out { animation: fadeOut 0.5s forwards; }
         @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
-        #menu-container { transition: opacity 0.3s ease-in-out; }
     </style>
 </head>
 <body class="h-[100dvh] w-screen flex flex-col select-none text-slate-100 overflow-hidden">
@@ -32,24 +29,24 @@
         <p class="text-slate-300 text-sm font-semibold tracking-widest animate-bounce">MEMUAT BACKOFFICE ADMIN...</p>
     </div>
 
-    <!-- 2. SCREEN AKTIVASI (Mencegah blank hitam di komputer baru) -->
+    <!-- 2. SCREEN AKTIVASI (Memasukkan URL Deploy GAS secara Dinamis) -->
     <div id="activation-screen" class="hidden-screen fixed inset-0 bg-slate-950 z-[110] flex items-center justify-center p-4 smooth-transition">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl w-full max-w-md p-8 text-center">
             <img src="https://i.ibb.co.com/JW1FFbCz/1780229137561.png" class="w-24 h-24 mx-auto mb-4">
             <h2 class="text-2xl font-bold text-white mb-2">Aktivasi Backoffice</h2>
-            <p class="text-xs text-slate-400 mb-6">Masukkan URL API dari MRD Solution</p>
-            <input type="url" id="api-input" placeholder="Masukkan URL API..." class="w-full px-4 py-3 bg-slate-950 border-2 border-slate-800 text-white rounded-xl focus:border-amber-500 outline-none mb-4 text-sm text-center smooth-transition">
+            <p class="text-xs text-slate-400 mb-6">Masukkan URL API GAS Deploy milik Anda</p>
+            <input type="url" id="api-input" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-4 py-3 bg-slate-950 border-2 border-slate-800 text-white rounded-xl focus:border-amber-500 outline-none mb-4 text-xs text-center smooth-transition">
             <button onclick="activateAdminSystem()" id="btn-activate" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 rounded-xl smooth-transition shadow-lg">Aktifkan Backoffice</button>
         </div>
     </div>
 
-    <!-- 3. SCREEN LOGIN ADMIN -->
+    <!-- 3. SCREEN LOGIN ADMIN (PIN Pad Otorisasi Atasan) -->
     <div id="login-screen" class="hidden-screen fixed inset-0 bg-slate-950 z-[100] flex items-center justify-center p-4 smooth-transition">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center">
             <img src="https://i.ibb.co.com/JW1FFbCz/1780229137561.png" class="w-20 h-20 mx-auto mb-4">
             <h2 id="login-resto-name" class="text-xl font-black text-amber-500 mb-6 uppercase tracking-widest">AMR ADMIN</h2>
             <h3 class="text-2xl font-bold text-white mb-2">Otorisasi Atasan</h3>
-            <p class="text-xs text-slate-400 mb-6">Masukkan PIN Atasan (Manager/Owner/HRD)</p>
+            <p class="text-xs text-slate-400 mb-6">Masukkan PIN Atasan (Manager/Owner/HRD/Admin)</p>
             
             <div class="flex gap-4 justify-center mb-8">
                 <span class="pin-dot w-4 h-4 rounded-full border-2 border-slate-600 bg-transparent transition-all"></span>
@@ -79,19 +76,19 @@
         </div>
     </div>
 
-    <!-- 4. MAIN DASHBOARD APPLICATION LAYOUT -->
+    <!-- 4. MAIN DASHBOARD APPLICATION LAYOUT (Tampilan Setelah Login Berhasil) -->
     <div id="main-app" class="hidden-screen h-full w-full flex flex-col md:flex-row bg-[#020617] overflow-hidden smooth-transition">
         
-        <!-- SIDEBAR KIRI (DESKTOP) & NAV ATAS (MOBILE) -->
+        <!-- SIDEBAR KIRI -->
         <aside class="w-full md:w-64 bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 flex flex-row md:flex-col justify-between p-4 shrink-0 z-20">
             <div class="flex flex-row md:flex-col items-center md:items-start gap-4 md:w-full">
                 <div class="flex items-center gap-3">
                     <img src="https://i.ibb.co.com/JW1FFbCz/1780229137561.png" class="w-8 h-8 rounded-lg">
-                    <h1 class="text-md font-black text-amber-500 tracking-tight uppercase">AMR SaaS</h1>
+                    <h1 class="text-md font-black text-amber-500 tracking-tight uppercase">AMR Backoffice</h1>
                 </div>
 
                 <nav class="hidden md:flex flex-col gap-1.5 w-full mt-6">
-                    <button onclick="switchTab('Users')" id="nav-Users" class="nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 bg-amber-500 text-slate-950 transition">
+                    <button onclick="switchTab('Users')" id="nav-Users" class="nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-400 hover:bg-slate-800 hover:text-white transition">
                         <i data-lucide="users" class="w-4 h-4"></i> <span>Data Karyawan</span>
                     </button>
                     <button onclick="switchTab('Menu')" id="nav-Menu" class="nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-400 hover:bg-slate-800 hover:text-white transition">
@@ -106,6 +103,7 @@
                 </nav>
             </div>
 
+            <!-- Identitas Admin Logged-In -->
             <div class="flex items-center gap-3 md:w-full md:border-t border-slate-800 md:pt-4">
                 <div class="hidden md:block flex-1 min-w-0 text-left">
                     <p id="admin-name" class="text-xs font-black text-white truncate">-</p>
@@ -117,54 +115,41 @@
             </div>
         </aside>
 
-        <!-- CONTAINER UTAMA KONTEN -->
+        <!-- AREA KONTEN UTAMA -->
         <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-950">
             <div class="md:hidden flex gap-2 overflow-x-auto p-4 bg-slate-900 border-b border-slate-800 no-scrollbar">
-                <button onclick="switchTab('Users')" id="mob-nav-Users" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-amber-500 text-slate-950">Karyawan</button>
+                <button onclick="switchTab('Users')" id="mob-nav-Users" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Karyawan</button>
                 <button onclick="switchTab('Menu')" id="mob-nav-Menu" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Menu</button>
                 <button onclick="switchTab('Promo')" id="mob-nav-Promo" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Promo</button>
                 <button onclick="switchTab('Reports')" id="mob-nav-Reports" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Laporan</button>
             </div>
 
-            <div id="content-area" class="flex-1 overflow-y-auto p-6 space-y-6"></div>
+            <div id="content-area" class="flex-1 overflow-y-auto p-6 space-y-6 text-center flex flex-col justify-center items-center">
+                <!-- Konten dinamis akan dimuat di sini -->
+            </div>
         </main>
     </div>
 
-    <!-- MODAL FORM INPUT: TAMBAH / EDIT DATA -->
-    <div id="modal-form" class="hidden-screen fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 smooth-transition">
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg p-6 shadow-2xl flex flex-col max-h-[90vh]">
-            <div class="flex justify-between items-center mb-4 shrink-0">
-                <h3 id="modal-title" class="text-md font-black text-amber-500 uppercase tracking-wider">-</h3>
-                <button onclick="closeModal('modal-form')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <div id="modal-form-body" class="flex-1 overflow-y-auto space-y-4 pr-1 text-left"></div>
-            <div class="mt-6 pt-4 border-t border-slate-800 flex justify-end gap-2 shrink-0">
-                <button onclick="closeModal('modal-form')" class="px-5 py-2.5 text-xs font-bold text-slate-400 hover:text-white transition">Batal</button>
-                <button id="btn-save-form" class="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-lg transition">SIMPAN DATA</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- JAVASCRIPT LOGIKA KONTROL ADMIN -->
+    <!-- SCRIPT JAVASCRIPT LOGIKA UTAMA -->
     <script>
         const STORAGE_API = "MRD_API_URL";
-        let GAS_URL = localStorage.getItem(STORAGE_API);
         const STORAGE_ADMIN = "MRD_ADMIN_SESSION";
-
-        let currentTab = "Users";
+        
+        let GAS_URL = localStorage.getItem(STORAGE_API);
         let adminInfo = null;
         let loginPinValue = "";
-
-        // Contoh fallback area yang terdaftar di database untuk render ceklis dinamis
-        let availableAreas = ["Renon", "Denpasar", "Suci"]; 
+        let currentTab = "Users";
 
         window.onload = () => {
             setTimeout(() => {
-                document.getElementById('splash-screen').classList.add('fade-out');
-                setTimeout(() => {
-                    document.getElementById('splash-screen').classList.add('hidden-screen');
-                    checkAdminState();
-                }, 500);
+                const splash = document.getElementById('splash-screen');
+                if (splash) {
+                    splash.classList.add('fade-out');
+                    setTimeout(() => {
+                        splash.classList.add('hidden-screen');
+                        checkAdminState();
+                    }, 500);
+                }
             }, 1000);
         };
 
@@ -175,62 +160,75 @@
             });
             const target = document.getElementById(id);
             if (target) target.classList.remove('hidden-screen');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
-        function openModal(id) { 
-            const el = document.getElementById(id);
-            if (el) el.classList.remove('hidden-screen'); 
-        }
-
-        function closeModal(id) { 
-            const el = document.getElementById(id);
-            if (el) el.classList.add('hidden-screen'); 
-        }
-
+        // 1. CEK STATUS ALUR LISENSI & LOGIN
         function checkAdminState() {
             if (!GAS_URL) {
                 showScreen('activation-screen');
-                return;
-            }
-
-            try {
-                adminInfo = JSON.parse(localStorage.getItem(STORAGE_ADMIN));
-            } catch(e) {
-                localStorage.removeItem(STORAGE_ADMIN);
-            }
-
-            if (!adminInfo) {
-                showScreen('login-screen');
-                clearPin();
             } else {
-                showScreen('main-app');
-                document.getElementById('admin-name').innerText = adminInfo.name;
-                document.getElementById('admin-role').innerText = adminInfo.role;
-                switchTab(currentTab);
+                try {
+                    adminInfo = JSON.parse(localStorage.getItem(STORAGE_ADMIN));
+                } catch(e) {
+                    localStorage.removeItem(STORAGE_ADMIN);
+                }
+
+                if (!adminInfo) {
+                    showScreen('login-screen');
+                    fetchConfigBg();
+                    clearPin();
+                } else {
+                    showScreen('main-app');
+                    document.getElementById('admin-name').innerText = adminInfo.name;
+                    document.getElementById('admin-role').innerText = adminInfo.role;
+                    switchTab(currentTab);
+                }
             }
         }
 
+        // 2. LOGIKA AKTIVASI UTAMA
         async function activateAdminSystem() {
             const input = document.getElementById('api-input').value.trim();
-            if(!input) return alert("Masukkan URL!");
+            if(!input) return alert("Masukkan URL API Deploy Anda!");
             const btn = document.getElementById('btn-activate');
-            btn.innerHTML = "Loading...";
-            
+            btn.innerHTML = "Memverifikasi...";
+            btn.disabled = true;
+
             try {
-                const res = await fetch(input, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) });
+                const res = await fetch(input, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ action: 'getConfig' }) 
+                });
                 const json = await res.json();
                 if(json.success) {
                     localStorage.setItem(STORAGE_API, input);
-                    GAS_URL = input; 
+                    GAS_URL = input;
                     window.location.reload();
-                } else throw new Error("Gagal");
+                } else {
+                    throw new Error("Gagal verifikasi struktur database");
+                }
             } catch (e) {
-                alert("URL API tidak valid!");
+                alert("Verifikasi Gagal! Pastikan URL Apps Script benar dan sudah di-deploy sebagai 'Anyone'.");
                 btn.innerHTML = "Aktifkan Backoffice";
+                btn.disabled = false;
             }
         }
 
-        // --- SISTEM NUMPAD PIN ---
+        async function fetchConfigBg() {
+            try {
+                const res = await fetch(GAS_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ action: 'getConfig' }) 
+                });
+                const json = await res.json();
+                if (json.success) {
+                    document.getElementById('login-resto-name').innerText = json.data["NAMA_PERUSAHAAN"] || "AMR ADMIN";
+                }
+            } catch(e) {}
+        }
+
+        // 3. LOGIKA NUMPAD & PIN OTORISASI
         function pressNum(num) {
             if(loginPinValue.length < 4) {
                 loginPinValue += num;
@@ -266,9 +264,14 @@
 
         async function loginAdmin() {
             try {
-                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) });
+                const res = await fetch(GAS_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) 
+                });
                 const json = await res.json();
+                
                 if(json.success) {
+                    // Filter Keamanan: Hanya izinkan level jabatan tinggi
                     const allowedRoles = ["admin", "hrd", "manager", "owner"];
                     const roleClean = json.role ? json.role.toLowerCase().trim() : "";
 
@@ -276,15 +279,15 @@
                         localStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
                         window.location.reload();
                     } else {
-                        alert("Akses Ditolak! Hanya untuk tingkat Jabatan Manager, HRD, dan Owner.");
+                        alert("Akses Ditolak!\n\nPortal Backoffice ini hanya diperuntukkan bagi level jabatan Manager, HRD, Admin, dan Owner.");
                         clearPin();
                     }
                 } else {
-                    alert(json.message || "PIN Salah!");
+                    alert(json.message || "PIN yang Anda masukkan salah!");
                     clearPin();
                 }
             } catch(e) {
-                alert("Koneksi gagal!");
+                alert("Koneksi bermasalah saat menghubungi database.");
                 clearPin();
             }
         }
@@ -296,233 +299,55 @@
             }
         }
 
+        function resetLicense() {
+            if(confirm("Yakin ingin menghapus Lisensi API dari perangkat ini?")) {
+                localStorage.clear();
+                window.location.reload();
+            }
+        }
+
+        // 4. KONTROL TAB & NAVIGASI
         function switchTab(tabName) {
             currentTab = tabName;
             
+            // Perbarui UI Sidebar (Desktop)
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.className = "nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-400 hover:bg-slate-800 hover:text-white transition";
             });
             const activeBtn = document.getElementById(`nav-${tabName}`);
             if (activeBtn) activeBtn.className = "nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 bg-amber-500 text-slate-950 transition";
 
+            // Perbarui UI Header (Mobile)
             document.querySelectorAll('.mob-nav-btn').forEach(btn => {
                 btn.className = "mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400";
             });
             const activeMobBtn = document.getElementById(`mob-nav-${tabName}`);
             if (activeMobBtn) activeMobBtn.className = "mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-amber-500 text-slate-950";
 
-            renderContent(tabName);
+            renderTabPlaceholders(tabName);
         }
 
-        function renderContent(tab) {
+        // Render Tampilan Sementara Sebelum Migrasi AppSheet Diproses
+        function renderTabPlaceholders(tab) {
             const area = document.getElementById('content-area');
             if (!area) return;
 
-            const userRole = adminInfo.role ? adminInfo.role.toLowerCase().trim() : "";
-
-            if (tab === "Users" && userRole === "manager") {
-                area.innerHTML = `<div class="py-20 text-center text-rose-500 font-bold text-xs"><i data-lucide="shield-alert" class="w-12 h-12 mx-auto mb-3"></i>AKSES DITOLAK! Manajemen Karyawan hanya boleh diakses oleh Owner dan HRD.</div>`;
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-                return;
-            }
-            if (tab === "Promo" && (userRole === "hrd" || userRole === "manager")) {
-                area.innerHTML = `<div class="py-20 text-center text-rose-500 font-bold text-xs"><i data-lucide="shield-alert" class="w-12 h-12 mx-auto mb-3"></i>AKSES DITOLAK! Pengaturan Diskon & Voucher hanya boleh dikelola oleh Owner.</div>`;
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-                return;
-            }
-
+            area.className = "flex-1 overflow-y-auto p-6 flex flex-col justify-center items-center text-center space-y-4";
             area.innerHTML = `
-                <div class="flex justify-between items-center shrink-0 border-b border-slate-800 pb-4 animate-slide-up">
-                    <div class="text-left">
-                        <h2 class="text-xl font-black text-white uppercase tracking-wider">${tab} Management</h2>
-                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1">Kelola data ${tab} cabang ${adminInfo.area}</p>
-                    </div>
-                    <button onclick="openFormModal('${tab}')" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black rounded-xl shadow-lg flex items-center gap-1.5 transition">
-                        <i data-lucide="plus" class="w-4 h-4"></i> TAMBAH DATA
-                    </button>
+                <div class="w-16 h-16 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center justify-center text-amber-500">
+                    <i data-lucide="construction" class="w-8 h-8"></i>
                 </div>
-                <div class="py-20 text-center text-slate-600 animate-pulse text-xs">Menarik data dari database Google Sheets...</div>
+                <div>
+                    <h3 class="text-lg font-black text-white uppercase tracking-wider">Modul ${tab}</h3>
+                    <p class="text-xs text-slate-400 mt-2 max-w-sm leading-relaxed">
+                        Pengelolaan data master <strong>${tab}</strong> saat ini masih dijalankan secara aktif melalui layanan Backoffice AppSheet Anda.
+                    </p>
+                </div>
+                <div class="text-[10px] bg-slate-900 border border-slate-800 px-4 py-2 rounded-full font-bold text-slate-500 uppercase tracking-widest">
+                    Sesi Aktif: ${adminInfo.name} (${adminInfo.role.toUpperCase()})
+                </div>
             `;
             if (typeof lucide !== 'undefined') lucide.createIcons();
-        }
-
-        // ==========================================
-        // SISTEM FORM INPUT DAN CEKLIS AREA (ENUMLIST)
-        // ==========================================
-        function openFormModal(tab) {
-            document.getElementById('modal-title').innerText = `Tambah Data ${tab}`;
-            const body = document.getElementById('modal-form-body');
-            
-            // FORM INPUT LENGKAP DETAIL MATCHING GOOGLE SHEETS
-            if (tab === "Users") {
-                body.innerHTML = `
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">UserID (Auto)</label>
-                            <input type="text" id="form-user-id" placeholder="Auto-generated" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-slate-500 rounded-xl outline-none text-xs" readonly>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nama Lengkap</label>
-                            <input type="text" id="form-user-name" placeholder="Nama Karyawan" class="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500 transition">
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-3 gap-3">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Role (Jabatan)</label>
-                            <select id="form-user-role" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2.5 outline-none text-xs text-white focus:border-amber-500">
-                                <option value="Staff">Staff</option>
-                                <option value="Manager">Manager</option>
-                                <option value="HRD">HRD</option>
-                                <option value="Owner">Owner</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Jobdesk</label>
-                            <select id="form-user-jobdesk" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2.5 outline-none text-xs text-white focus:border-amber-500">
-                                <option value="">- Tanpa Jobdesk -</option>
-                                <option value="Kasir">Kasir</option>
-                                <option value="Pelayan">Pelayan</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Area Cabang</label>
-                            <select id="form-user-area" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2.5 outline-none text-xs text-white focus:border-amber-500">
-                                <option value="Renon">Renon</option>
-                                <option value="Denpasar">Denpasar</option>
-                                <option value="Suci">Suci</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">PIN Absen (4 Angka)</label>
-                            <input type="password" id="form-user-pin" maxlength="4" placeholder="••••" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white text-center font-black text-base rounded-xl outline-none focus:border-amber-500 transition">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status Profil</label>
-                            <select id="form-user-status" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2.5 outline-none text-xs text-white focus:border-amber-500">
-                                <option value="Active">Active</option>
-                                <option value="Inactive">Inactive</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">No WhatsApp</label>
-                            <input type="tel" id="form-user-wa" placeholder="08..." class="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500 transition">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Alamat Rumah</label>
-                            <input type="text" id="form-user-alamat" placeholder="Nama Jalan, Kota" class="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500 transition">
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-3 gap-3">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status User</label>
-                            <select id="form-user-statususer" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2.5 outline-none text-xs text-white focus:border-amber-500">
-                                <option value="Permanent">Permanent</option>
-                                <option value="Contract">Contract</option>
-                                <option value="Training">Training</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status Calendar</label>
-                            <select id="form-user-statuscalender" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2.5 outline-none text-xs text-white focus:border-amber-500">
-                                <option value="Synced">Synced</option>
-                                <option value="Unsynced">Unsynced</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Geotag Radius</label>
-                            <select id="form-user-geotag" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2.5 outline-none text-xs text-white focus:border-amber-500">
-                                <option value="Inactive">Inactive</option>
-                                <option value="Active">Active</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-3 gap-3">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Join Date</label>
-                            <input type="date" id="form-user-joindate" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500 transition">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Kontrak (Bulan)</label>
-                            <input type="number" id="form-user-contract" placeholder="6" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500 transition">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">End Contract</label>
-                            <input type="date" id="form-user-enddate" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500 transition">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Deskripsi Tambahan</label>
-                        <textarea id="form-user-keterangan" rows="2" placeholder="Tulis catatan tambahan disini..." class="w-full px-4 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500 transition"></textarea>
-                    </div>
-                `;
-            } else if (tab === "Menu") {
-                // RENDER DAFTAR CEKLIS AREA (ENUMLIST APPSHEET STYLE)
-                const areaCheckboxes = availableAreas.map(areaName => `
-                    <label class="flex items-center gap-2 bg-slate-950/80 px-3 py-2 rounded-xl border border-slate-850 cursor-pointer hover:border-amber-500 transition">
-                        <input type="checkbox" name="form-menu-area" value="${areaName}" class="w-4 h-4 rounded accent-amber-500">
-                        <span class="text-xs font-semibold text-white">${areaName}</span>
-                    </label>
-                `).join('');
-
-                body.innerHTML = `
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">MenuID (Auto)</label>
-                            <input type="text" id="form-menu-id" placeholder="Auto-generated" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-slate-500 rounded-xl outline-none text-xs" readonly>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nama Menu</label>
-                            <input type="text" id="form-menu-name" placeholder="Ayam Goreng" class="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500 transition">
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-3 gap-3">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Kategori</label>
-                            <select id="form-menu-category" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2.5 outline-none text-xs text-white focus:border-amber-500">
-                                <option value="Makanan">Makanan</option>
-                                <option value="Minuman">Minuman</option>
-                                <option value="Snack">Snack</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Harga Jual (Selling Price)</label>
-                            <input type="number" id="form-menu-price" placeholder="45000" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Rute Printer</label>
-                            <select id="form-menu-route" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 outline-none text-xs text-white focus:border-amber-500">
-                                <option value="Kitchen">Dapur (Kitchen)</option>
-                                <option value="Bar">Bar (Drinks)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Deskripsi Hidangan</label>
-                        <textarea id="form-menu-desc" rows="2" placeholder="Penjelasan singkat menu kuliner..." class="w-full px-4 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500 transition"></textarea>
-                    </div>
-                    
-                    <!-- AREA CEKLIS MULTI-CABANG (ENUMLIST) -->
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Aktif di Area (Cabang)</label>
-                        <div class="grid grid-cols-3 gap-2">
-                            ${areaCheckboxes}
-                        </div>
-                        <p class="text-[9px] text-slate-500 mt-1.5 uppercase font-bold tracking-wider">Ceklis area untuk mendaftarkan menu ini pada cabang-cabang tertentu.</p>
-                    </div>
-                `;
-            } else {
-                body.innerHTML = `<p class="text-xs text-slate-500">Form untuk ${tab} sedang dalam proses inisialisasi...</p>`;
-            }
-
-            openFormModalShow();
-        }
-
-        function openFormModalShow() {
-            openModal('modal-form');
         }
     </script>
 </body>

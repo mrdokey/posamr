@@ -1,29 +1,56 @@
-/**
- * DUMMY SERVICE WORKER - DEVELOPMENT MODE
- * (Bypass Cache, Aman dari Crash Skema Non-HTTP)
- */
+// --- REVISI sw.js (Strategi Stale-While-Revalidate untuk PWA Offline) ---
+const CACHE_NAME = 'amr-cache-v2.1';
+const ASSETS_TO_CACHE = [
+  './',
+  './index.html',
+  './pos.html',
+  './order.html',
+  './admin.html',
+  './absen.js',
+  './config.js',
+  './pos-core.js',
+  './pos-checkout.js',
+  './pos-printer.js',
+  './waiter.js',
+  './manifest.json',
+  './manifest-pos.json',
+  './manifest-admin.json'
+];
 
 self.addEventListener('install', (e) => {
-    self.skipWaiting(); 
+  e.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS_TO_CACHE);
+    }).then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (e) => {
-    e.waitUntil(self.clients.claim()); 
+  e.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) return caches.delete(key);
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener('fetch', (e) => {
-    // FILTER UTAMA: Lewati request non-HTTP/HTTPS (seperti chrome-extension, data:, blob:)
-    if (!e.request.url.startsWith('http://') && !e.request.url.startsWith('https://')) {
-        return; // Biarkan browser menangani langsung tanpa intervensi SW
-    }
+  if (!e.request.url.startsWith('http://') && !e.request.url.startsWith('https://')) return;
 
-    e.respondWith(
-        fetch(e.request).catch((err) => {
-            // Fallback aman jika koneksi terputus total
-            return new Response("Sedang offline...", {
-                status: 200,
-                headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-            });
-        })
-    );
+  e.respondWith(
+    caches.match(e.request).then((cachedResponse) => {
+      const fetchPromise = fetch(e.request).then((networkResponse) => {
+        if (networkResponse.status === 200) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, responseToCache));
+        }
+        return networkResponse;
+      }).catch(() => null);
+
+      return cachedResponse || fetchPromise;
+    })
+  );
 });

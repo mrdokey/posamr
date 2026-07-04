@@ -1,6 +1,6 @@
 /**
  * MODUL 3: CHECKOUT, HISTORY, VOID, SPLIT BILL, TWO-STAGE PRINT, & JOINT/DEBT PAYMENT ENGINE
- * UPDATE: New Waiter Order Audio-Visual Notification (Ding Sound), Cash Rounding, & City Ledger
+ * UPDATE: New Waiter Order Audio-Visual Notification (Ding Sound), Cash Rounding, City Ledger, & Waiter Name Badge
  */
 
 // ==========================================
@@ -164,7 +164,7 @@ function updateMobileCartButtonVisibility() {
 }
 
 // ==========================================
-// SEKSI 2: RIWAYAT & MANAJEMEN TAB DRAFT (HISTORY DENGAN TAB PIUTANG DEBT)
+// SEKSI 2: RIWAYAT & MANAJEMEN TAB DRAFT (HISTORY DENGAN DETAIL NAMA WAITER)
 // ==========================================
 async function openHistoryModal() {
     openModal('modal-history');
@@ -235,10 +235,21 @@ async function switchTab(tabName) {
                         `;
                     }
 
+                    // SUNTIKAN: Lencana visual Nama Waiter
+                    let waiterBadge = bill.waiterName ? `
+                        <span class="bg-amber-500/10 text-amber-500 text-[9px] px-2 py-0.5 rounded-md font-bold uppercase border border-amber-500/20 tracking-wider">
+                            ${bill.waiterName}
+                        </span>
+                    ` : '';
+
                     return `
                     <div class="bg-slate-950 border border-slate-800 p-5 rounded-2xl flex justify-between items-center shadow-md animate-slide-up">
                         <div>
-                            <h4 class="font-black text-white text-lg flex items-center gap-2">${bill.tableNo} <span class="bg-slate-800 text-[10px] px-2 py-0.5 rounded-full font-normal text-slate-400">${bill.time}</span></h4>
+                            <h4 class="font-black text-white text-lg flex items-center gap-2">
+                                ${bill.tableNo} 
+                                <span class="bg-slate-800 text-[10px] px-2 py-0.5 rounded-full font-normal text-slate-400">${bill.time}</span>
+                                ${waiterBadge}
+                            </h4>
                             <p class="text-xs text-slate-500 mt-1">ID: ${bill.orderId} | Total: <span class="text-amber-500 font-bold">Rp ${bill.totalAmount.toLocaleString('id-ID')}</span></p>
                         </div>
                         <div class="flex items-center gap-2">
@@ -508,6 +519,9 @@ function moveItemToSplit(index) {
     renderSplitUI();
 }
 
+// ==========================================
+// SEKSI 4: PEMISAHAN TAGIHAN (SPLIT BILL ENGINE)
+// ==========================================
 function moveItemToOriginal(index) {
     const item = splitTargetItems[index];
     if (item.qty <= 0) return;
