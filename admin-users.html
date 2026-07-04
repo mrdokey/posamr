@@ -34,10 +34,11 @@
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
             <input type="text" id="search-input" onkeyup="filterUsers()" placeholder="Cari nama atau No WA..." class="w-full pl-9 pr-4 py-2.5 bg-slate-900 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500">
         </div>
-        <!-- Di Filter Bar -->
-<select id="filter-area" onchange="filterUsers()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2.5 outline-none text-xs focus:border-amber-500">
-    <option value="">Memuat Cabang...</option>
-</select>
+        
+        <!-- Dropdown Cabang Dinamis (SaaS) -->
+        <select id="filter-area" onchange="filterUsers()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2.5 outline-none text-xs focus:border-amber-500">
+            <option value="">Memuat Cabang...</option>
+        </select>
 
         <select id="filter-status" onchange="filterUsers()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2.5 outline-none text-xs focus:border-amber-500">
             <option value="">Semua Status Profil</option>
@@ -93,7 +94,7 @@
                 <div class="grid grid-cols-3 gap-3">
                     <div>
                         <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Jabatan (Role)</label>
-                         id="form-role" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white">
+                        <select id="form-role" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white">
                             <option value="Staff">Staff</option>
                             <option value="Manager">Manager</option>
                             <option value="HRD">HRD</option>
@@ -104,18 +105,17 @@
                         <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Jobdesk Kerja</label>
                         <select id="form-jobdesk" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white">
                             <option value="Waiter">Waiter</option>
-                            <option value="Kasir">Casheer</option>
+                            <option value="Kasir">Kasir</option>
                             <option value="Back office">Back office</option>
                             <option value="Manager">Manager</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Cabang Kerja (Area)</label>
-                        <!-- Di Filter Bar -->
-<!-- Di Modal Form -->
-<select id="form-area" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white">
-    <option value="">Pilih Cabang</option>
-</select>
+                        <!-- Dropdown Cabang Form Dinamis (SaaS) -->
+                        <select id="form-area" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white">
+                            <option value="">Memuat cabang...</option>
+                        </select>
                     </div>
                 </div>
 
@@ -193,8 +193,12 @@
         const GAS_URL = localStorage.getItem("MRD_API_URL");
         let allUsers = [];
 
+        // SATU SINKRONISASI WINDOW ONLOAD (Failsafe)
         window.onload = () => {
-            if (GAS_URL) fetchUsers();
+            if (GAS_URL) {
+                fetchUsers();
+                loadDynamicAreas();
+            }
         };
 
         async function fetchUsers() {
@@ -328,7 +332,7 @@
             document.getElementById('form-pin').value = "";
             document.getElementById('form-role').value = "Staff";
             document.getElementById('form-jobdesk').value = "Waiter";
-            document.getElementById('form-area').value = "Renon";
+            document.getElementById('form-area').value = "";
             document.getElementById('form-nowa').value = "";
             document.getElementById('form-alamat').value = "";
             document.getElementById('form-statususer').value = "Contract";
@@ -434,36 +438,29 @@
         }
         
         async function loadDynamicAreas() {
-    try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "getAvailableAreas" }) });
-        const json = await res.json();
-        if (json.success) {
-            const areas = json.data;
-            const filterSelect = document.getElementById('filter-area');
-            const formSelect = document.getElementById('form-area');
+            try {
+                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "getAvailableAreas" }) });
+                const json = await res.json();
+                if (json.success) {
+                    const areas = json.data;
+                    const filterSelect = document.getElementById('filter-area');
+                    const formSelect = document.getElementById('form-area');
 
-            let options = `<option value="">Semua Cabang (Area)</option>`;
-            let formOptions = ``;
+                    let options = `<option value="">Semua Cabang (Area)</option>`;
+                    let formOptions = `<option value="">Pilih Cabang</option>`;
 
-            areas.forEach(area => {
-                options += `<option value="${area}">${area}</option>`;
-                formOptions += `<option value="${area}">${area}</option>`;
-            });
+                    areas.forEach(area => {
+                        options += `<option value="${area}">${area}</option>`;
+                        formOptions += `<option value="${area}">${area}</option>`;
+                    });
 
-            filterSelect.innerHTML = options;
-            formSelect.innerHTML = formOptions;
+                    filterSelect.innerHTML = options;
+                    formSelect.innerHTML = formOptions;
+                }
+            } catch (e) { 
+                console.error("Gagal memuat daftar cabang SaaS"); 
+            }
         }
-    } catch (e) { console.error("Gagal memuat daftar cabang SaaS"); }
-}
-
-// Panggil di window.onload
-window.onload = () => {
-    if (GAS_URL) {
-        fetchUsers();
-        loadDynamicAreas(); // <--- PINTU DINAMIS
-    }
-};
-        
     </script>
 </body>
 </html>
