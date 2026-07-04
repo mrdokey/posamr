@@ -83,9 +83,10 @@
         <aside class="w-full md:w-64 bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 flex flex-row md:flex-col justify-between p-4 shrink-0 z-20">
             <div class="flex flex-row md:flex-col items-center md:items-start gap-4 md:w-full">
                 <div class="flex items-center gap-3">
-                    <img src="https://i.ibb.co.com/JW1FFbCz/1780229137561.png" class="w-8 h-8 rounded-lg">
-                    <h1 class="text-md font-black text-amber-500 tracking-tight uppercase">AMR Backoffice</h1>
-                </div>
+    <!-- Menggunakan format LH3 CDN agar bypass proteksi CORS pratinjau Drive -->
+    <img src="https://lh3.googleusercontent.com/d/1ZXs1pIaPk7EjfcGIu5rew4qO9kQXoNlF" class="w-8 h-8 rounded-lg object-cover">
+    <h1 class="text-md font-black text-amber-500 tracking-tight uppercase">AMR Backoffice</h1>
+</div>
 
                 <nav class="hidden md:flex flex-col gap-1.5 w-full mt-6">
                     <button onclick="switchTab('Users')" id="nav-Users" class="nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-400 hover:bg-slate-800 hover:text-white transition">
@@ -320,10 +321,19 @@
             renderTabPlaceholders(tabName);
         }
 
-        // Render Tampilan Sementara Sebelum Migrasi AppSheet Diproses
-        function renderTabPlaceholders(tab) {
-            const area = document.getElementById('content-area');
-            if (!area) return;
+        // Ganti fungsi renderTabPlaceholders menjadi renderContent di admin.html
+function renderContent(tab) {
+    const area = document.getElementById('content-area');
+    if (!area) return;
+
+    if (tab === "Users") {
+        // Embed file mandiri admin-users.html ke dalam iframe dinamis
+        area.innerHTML = `<iframe src="admin-users.html" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+        area.className = "flex-1 overflow-hidden h-full p-4"; // Matikan scroll kontainer agar iframe yang mengontrol scroll
+    } else {
+        renderTabPlaceholders(tab);
+    }
+}
 
             area.className = "flex-1 overflow-y-auto p-6 flex flex-col justify-center items-center text-center space-y-4";
             area.innerHTML = `
