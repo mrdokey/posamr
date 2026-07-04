@@ -12,7 +12,7 @@
         .hidden-screen { display: none !important; }
     </style>
 </head>
-<body class="text-slate-100 p-2 overflow-y-auto h-full">
+<body class="text-slate-100 p-2 overflow-y-auto h-full animate-fade-in">
 
     <!-- HEADER -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-4 mb-6">
@@ -23,35 +23,52 @@
             <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1">Laporan harian kehadiran dan durasi kerja staf</p>
         </div>
         <div class="flex gap-2 w-full sm:w-auto">
-            <button onclick="exportToExcel()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-slate-950 font-black text-xs rounded-xl flex items-center justify-center gap-1.5 transition">
-                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> TARIK DATA EXCEL
+            <button onclick="exportToExcel()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-slate-950 font-black text-xs rounded-xl flex items-center justify-center gap-1.5 transition shadow-lg shadow-emerald-600/10">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> EKSPOR EXCEL (RANGE)
             </button>
-            <button onclick="fetchAttendance()" class="px-4 py-2.5 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5">
+            <button onclick="fetchAttendance()" class="px-4 py-2.5 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5" title="Segarkan Data">
                 <i data-lucide="refresh-cw" class="w-4 h-4"></i>
             </button>
         </div>
     </div>
 
-    <!-- FILTER BAR -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <div class="relative">
-            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
-            <input type="text" id="search-input" onkeyup="filterLogs()" placeholder="Cari nama karyawan..." class="w-full pl-9 pr-4 py-2.5 bg-slate-900 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-emerald-500">
+    <!-- FILTER BAR (5 KOLOM RESPONSIF) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 mb-6 items-end">
+        <div class="flex flex-col">
+            <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Pencarian Staf</label>
+            <div class="relative">
+                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                <input type="text" id="search-input" onkeyup="filterLogs()" placeholder="Cari nama atau ID..." class="w-full pl-9 pr-4 py-2 bg-slate-900 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-emerald-500">
+            </div>
         </div>
-        <select id="filter-area" onchange="filterLogs()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2.5 outline-none text-xs focus:border-emerald-500">
-            <option value="">Semua Cabang (Area)</option>
-            <option value="Renon">Renon</option>
-            <option value="Suci">Suci</option>
-        </select>
-        <select id="filter-lokasi" onchange="filterLogs()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2.5 outline-none text-xs focus:border-emerald-500">
-            <option value="">Semua Lokasi GPS</option>
-            <option value="In Radius">In Radius (Aman)</option>
-            <option value="Out of Radius">Out of Radius</option>
-        </select>
-        <input type="date" id="filter-date" onchange="filterLogs()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2 outline-none text-xs focus:border-emerald-500">
+        <div class="flex flex-col">
+            <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Cabang (Area)</label>
+            <select id="filter-area" onchange="filterLogs()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2 outline-none text-xs focus:border-emerald-500">
+                <option value="">Semua Cabang (Area)</option>
+                <option value="Renon">Renon</option>
+                <option value="Denpasar">Denpasar</option>
+                <option value="Suci">Suci</option>
+            </select>
+        </div>
+        <div class="flex flex-col">
+            <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Validasi GPS</label>
+            <select id="filter-lokasi" onchange="filterLogs()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2 outline-none text-xs focus:border-emerald-500">
+                <option value="">Semua Lokasi GPS</option>
+                <option value="In Radius">In Radius (Aman)</option>
+                <option value="Out of Radius">Out of Radius</option>
+            </select>
+        </div>
+        <div class="flex flex-col">
+            <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Dari Tanggal</label>
+            <input type="date" id="filter-start-date" onchange="filterLogs()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-1.5 outline-none text-xs focus:border-emerald-500">
+        </div>
+        <div class="flex flex-col">
+            <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Sampai Tanggal</label>
+            <input type="date" id="filter-end-date" onchange="filterLogs()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-1.5 outline-none text-xs focus:border-emerald-500">
+        </div>
     </div>
 
-    <!-- TABEL LOG REKAP -->
+    <!-- TABEL LOG REKAP (KINI DENGAN KOLOM KETERANGAN) -->
     <div class="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -63,11 +80,12 @@
                         <th class="py-4 px-4 font-black">Jam Pulang (OUT)</th>
                         <th class="py-4 px-4 font-black">Total Jam / Shift</th>
                         <th class="py-4 px-4 font-black">Validasi GPS</th>
+                        <th class="py-4 px-4 font-black">Keterangan / Alasan</th>
                     </tr>
                 </thead>
                 <tbody id="attendance-body" class="divide-y divide-slate-850 text-xs">
                     <tr>
-                        <td colspan="6" class="py-12 text-center text-slate-500 animate-pulse font-semibold">Mengambil log kehadiran dari database...</td>
+                        <td colspan="7" class="py-12 text-center text-slate-500 animate-pulse font-semibold">Mengambil log kehadiran dari database...</td>
                     </tr>
                 </tbody>
             </table>
@@ -105,17 +123,17 @@
                     filteredLogs = allLogs;
                     renderLogsTable(filteredLogs);
                 } else {
-                    container.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-rose-500 font-bold">Gagal: ${attJson.message}</td></tr>`;
+                    container.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-rose-500 font-bold">Gagal: ${attJson.message}</td></tr>`;
                 }
             } catch (err) {
-                container.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-rose-500 font-bold">Gagal memproses rekap absensi. Hubungkan backend getAttendanceLogs terlebih dahulu!</td></tr>`;
+                container.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-rose-500 font-bold">Gagal memproses rekap absensi. Periksa kembali backend GAS Anda!</td></tr>`;
             }
         }
 
         function renderLogsTable(dataList) {
             const container = document.getElementById('attendance-body');
             if (dataList.length === 0) {
-                container.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-600 font-semibold">Tidak ada log absensi yang cocok</td></tr>`;
+                container.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-600 font-semibold">Tidak ada log absensi yang cocok</td></tr>`;
                 return;
             }
 
@@ -132,6 +150,13 @@
                     ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] px-2 py-0.5 rounded-full font-bold">In Radius</span>`
                     : `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[9px] px-2 py-0.5 rounded-full font-bold">Out of Radius</span>`;
 
+                // Logika pewarnaan keterangan/alasan pulang cepat agar mencolok
+                const cleanKeterangan = log.keterangan || "-";
+                const isIzin = cleanKeterangan.includes("[IZIN]") || cleanKeterangan.includes("Pulang Cepat");
+                const keteranganDisplay = isIzin 
+                    ? `<span class="text-amber-500 font-bold">${cleanKeterangan}</span>`
+                    : `<span class="text-slate-300">${cleanKeterangan}</span>`;
+
                 return `
                     <tr class="hover:bg-slate-900/40 transition">
                         <td class="py-4 px-4 font-semibold text-slate-300">${log.date}</td>
@@ -146,30 +171,52 @@
                             <p class="text-[9px] text-slate-500 font-bold mt-0.5">${log.statusShift}</p>
                         </td>
                         <td class="py-4 px-4">${gpsStatusBadge}</td>
+                        <td class="py-4 px-4 max-w-xs truncate" title="${cleanKeterangan}">${keteranganDisplay}</td>
                     </tr>
                 `;
             }).join('');
             lucide.createIcons();
         }
 
+        // FILTER PINTAR MENDUKUNG JANGKAUAN DUA TANGGAL (DATE RANGE)
         function filterLogs() {
             const query = document.getElementById('search-input').value.toLowerCase();
             const area = document.getElementById('filter-area').value;
             const lokasi = document.getElementById('filter-lokasi').value;
-            const dateStr = document.getElementById('filter-date').value;
+            const startDateStr = document.getElementById('filter-start-date').value;
+            const endDateStr = document.getElementById('filter-end-date').value;
 
             filteredLogs = allLogs.filter(log => {
                 const matchQuery = log.userName.toLowerCase().includes(query) || log.userId.includes(query);
-                const matchArea = area === "" || log.statusShift.toLowerCase().includes(area.toLowerCase()) || (log.area && log.area.toLowerCase().includes(area.toLowerCase()));
+                
+                const matchArea = area === "" || 
+                    (log.statusShift && log.statusShift.toLowerCase().includes(area.toLowerCase())) || 
+                    (log.area && log.area.toLowerCase().includes(area.toLowerCase()));
+                
                 const matchLokasi = lokasi === "" || log.statusLokasi === lokasi;
-                const matchDate = dateStr === "" || log.date === dateStr;
+                
+                // Kalkulasi keaktifan filter rentang hari
+                let matchDate = true;
+                if (log.date) {
+                    const logTime = new Date(log.date).getTime();
+                    
+                    if (startDateStr) {
+                        const startTime = new Date(startDateStr).getTime();
+                        if (logTime < startTime) matchDate = false;
+                    }
+                    if (endDateStr) {
+                        const endTime = new Date(endDateStr).getTime();
+                        if (logTime > endTime) matchDate = false;
+                    }
+                }
+                
                 return matchQuery && matchArea && matchLokasi && matchDate;
             });
             renderLogsTable(filteredLogs);
         }
 
         // =========================================================================
-        // EKSPOR DATA KE MS EXCEL (FORMAT CSV EXCEL UTF-8 DENGAN BATAS TITIK KOMA)
+        // EKSPOR EXCEL RANGE DENGAN TAUTAN FOTO GOOGLE DRIVE (CLICKABLE HYPERLINK)
         // =========================================================================
         function exportToExcel() {
             if (filteredLogs.length === 0) {
@@ -177,9 +224,9 @@
                 return;
             }
             
-            // Tambahkan BOM untuk dukungan Excel membaca format UTF-8 Indonesia secara utuh
+            // Menggunakan format CSV Semicolon (Titik Koma) ber-BOM agar otomatis rapi tanpa pecah kolom di Excel Indonesia
             let csv = "\uFEFF"; 
-            csv += "Tanggal;ID Karyawan;Nama Karyawan;Jam Masuk (IN);Jam Pulang (OUT);Durasi Kerja;Shift Kerja;Status Geotag;Keterangan\n";
+            csv += "Tanggal;ID Karyawan;Nama Karyawan;Jam Masuk (IN);Foto Masuk (URL);Jam Pulang (OUT);Foto Pulang (URL);Durasi Kerja;Shift Kerja;Status Geotag;Keterangan / Alasan\n";
             
             filteredLogs.forEach(log => {
                 csv += [
@@ -187,11 +234,13 @@
                     log.userId,
                     log.userName.replace(/;/g, ' '),
                     log.timeIn,
+                    log.photoIn || "-", // Tautan URL Foto Masuk
                     log.timeOut || "-",
+                    log.photoOut || "-", // Tautan URL Foto Pulang
                     log.duration || "-",
                     log.statusShift,
                     log.statusLokasi,
-                    log.keterangan.replace(/;/g, ' ')
+                    log.keterangan.replace(/;/g, ' ').replace(/\n/g, ' ')
                 ].join(";") + "\n";
             });
             
@@ -199,9 +248,9 @@
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
             
-            // Berikan penamaan berkas dengan format tanggal ekspor otomatis
-            const dateFmt = new Date().toISOString().slice(0, 10);
-            link.setAttribute("download", `Rekap_Absensi_AMR_${dateFmt}.csv`);
+            const startStr = document.getElementById('filter-start-date').value || "Mulai";
+            const endStr = document.getElementById('filter-end-date').value || "Selesai";
+            link.setAttribute("download", `Rekap_Absensi_AMR_${startStr}_to_${endStr}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
