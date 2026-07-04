@@ -115,11 +115,15 @@
                     </div>
                     <div>
                         <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Cabang Kerja (Area)</label>
-                        <select id="form-area" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white">
-                            <option value="Renon">Renon</option>
-                            <option value="Denpasar">Denpasar</option>
-                            <option value="Suci">Suci</option>
-                        </select>
+                        <!-- Di Filter Bar -->
+<select id="filter-area" onchange="filterUsers()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2.5 outline-none text-xs focus:border-amber-500">
+    <option value="">Memuat Cabang...</option>
+</select>
+
+<!-- Di Modal Form -->
+<select id="form-area" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white">
+    <option value="">Pilih Cabang</option>
+</select>
                     </div>
                 </div>
 
