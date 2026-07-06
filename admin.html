@@ -2,689 +2,646 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Management Backoffice</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SaaS Backoffice Admin AMR</title>
+    <link rel="icon" type="image/png" href="https://i.ibb.co.com/JW1FFbCz/1780229137561.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;950&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="manifest" href="./manifest-admin.json">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: transparent; }
+        button, input, select { touch-action: manipulation; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #020617; }
         .hidden-screen { display: none !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .smooth-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .fade-out { animation: fadeOut 0.5s forwards; }
+        @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
 
         /* =========================================================================
-         * OVERRIDE TEMA TERANG PREMIUM UNTUK IFRAME ANAK (LIGHT MODE)
+         * OVERRIDE TEMA TERANG SAAS (LIGHT MODE)
          * ========================================================================= */
         body.light-mode {
             background-color: #f8fafc;
             color: #0f172a;
         }
-        body.light-mode .text-white {
-            color: #0f172a !important;
+        body.light-mode #splash-screen {
+            background-color: #f1f5f9;
         }
-        body.light-mode .text-slate-300 {
-            color: #334155 !important;
+        body.light-mode #activation-screen,
+        body.light-mode #login-screen {
+            background-color: #e2e8f0;
         }
-        body.light-mode .text-slate-400 {
-            color: #475569 !important;
+        body.light-mode #activation-screen > div,
+        body.light-mode #login-screen > div {
+            background-color: #ffffff;
+            border-color: #cbd5e1;
+            color: #0f172a;
         }
-        body.light-mode .text-slate-500 {
-            color: #64748b !important;
+        body.light-mode #activation-screen h2,
+        body.light-mode #login-screen h3,
+        body.light-mode #activation-screen p,
+        body.light-mode #login-screen p {
+            color: #1e293b;
         }
-        body.light-mode .bg-slate-900,
-        body.light-mode .bg-slate-900\/40,
-        body.light-mode .bg-slate-900\/60 {
-            background-color: #ffffff !important;
-            border-color: #cbd5e1 !important;
+        body.light-mode #api-input {
+            background-color: #f8fafc;
+            border-color: #cbd5e1;
+            color: #0f172a;
         }
-        body.light-mode .border-slate-800,
-        body.light-mode .border-slate-850 {
-            border-color: #cbd5e1 !important;
+        body.light-mode #main-app {
+            background-color: #f8fafc;
         }
-        body.light-mode table th {
-            background-color: #f1f5f9 !important;
-            color: #475569 !important;
-            border-bottom-color: #cbd5e1 !important;
+        body.light-mode aside {
+            background-color: #ffffff;
+            border-color: #cbd5e1;
         }
-        body.light-mode table td {
-            color: #1e293b !important;
-            border-bottom-color: #f1f5f9 !important;
+        body.light-mode main {
+            background-color: #f8fafc;
         }
-        body.light-mode tr:hover {
-            background-color: #f8fafc !important;
+        body.light-mode .nav-btn:hover {
+            background-color: #f1f5f9;
+            color: #0f172a;
         }
-        body.light-mode input,
-        body.light-mode select,
-        body.light-mode textarea {
-            background-color: #ffffff !important;
-            border-color: #cbd5e1 !important;
-            color: #0f172a !important;
+        body.light-mode .nav-btn:not(.bg-slate-800\/80):not(.bg-amber-500) {
+            color: #475569;
         }
-        body.light-mode input::placeholder {
-            color: #94a3b8 !important;
+        body.light-mode #admin-name {
+            color: #0f172a;
         }
-        body.light-mode .bg-slate-950,
-        body.light-mode .bg-slate-950\/40 {
-            background-color: #f1f5f9 !important;
-            border-color: #cbd5e1 !important;
+        body.light-mode .submenu-container button {
+            color: #475569;
         }
-        body.light-mode #modal-form > div {
-            background-color: #ffffff !important;
-            border-color: #cbd5e1 !important;
-            color: #0f172a !important;
+        body.light-mode .submenu-container button:hover {
+            background-color: #f1f5f9;
         }
-        body.light-mode #admin-auth-section {
-            background-color: #f1f5f9 !important;
-            border-color: #cbd5e1 !important;
+        body.light-mode .pin-dot {
+            border-color: #94a3b8;
+        }
+        body.light-mode .bg-slate-800 {
+            background-color: #e2e8f0;
+            color: #0f172a;
+        }
+        body.light-mode .bg-slate-800:hover {
+            background-color: #cbd5e1;
+        }
+        body.light-mode .bg-slate-900 {
+            background-color: #ffffff;
+            border-color: #cbd5e1;
+        }
+        body.light-mode .mob-nav-btn {
+            background-color: #e2e8f0;
+            color: #475569;
+        }
+        body.light-mode .mob-nav-btn.bg-amber-500 {
+            background-color: #f59e0b;
+            color: #0f172a;
         }
     </style>
 </head>
-<body class="text-slate-100 p-2 overflow-y-auto h-full">
+<body class="h-[100dvh] w-screen flex flex-col select-none text-slate-100 overflow-hidden">
 
+    <!-- EKSEKUSI TEMA AWAL SEBELUM HALAMAN SELESAI RENDERING -->
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('theme') === 'light') {
-            document.body.classList.add('light-mode');
+        const storedTheme = localStorage.getItem("MRD_ADMIN_THEME") || "dark";
+        if (storedTheme === "light") {
+            document.body.classList.add("light-mode");
         }
     </script>
 
-    <!-- HEADER DATA KARYAWAN -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-4 mb-6">
-        <div>
-            <h2 class="text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
-                <i data-lucide="users" class="text-amber-500"></i> Daftar Karyawan
-            </h2>
-            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1">Daftar staf aktif dan jadwal kontrak kerja</p>
-        </div>
-        <button onclick="openFormModal()" class="w-full sm:w-auto px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black rounded-xl shadow-lg flex items-center justify-center gap-1.5 transition">
-            <i data-lucide="plus" class="w-4 h-4"></i> TAMBAH KARYAWAN
-        </button>
+    <!-- 1. SPLASH SCREEN -->
+    <div id="splash-screen" class="fixed inset-0 bg-[#020617] z-[150] flex flex-col items-center justify-center smooth-transition">
+        <img src="https://i.ibb.co.com/gMmSSTgq/IMG-20260606-WA0000.jpg" alt="Loading" class="w-48 animate-pulse mb-4">
+        <p class="text-slate-300 text-sm font-semibold tracking-widest animate-bounce">MEMUAT BACKOFFICE ADMIN...</p>
     </div>
 
-    <!-- FILTER BAR -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-        <div class="relative">
-            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
-            <input type="text" id="search-input" onkeyup="filterUsers()" placeholder="Cari nama atau No WA..." class="w-full pl-9 pr-4 py-2.5 bg-slate-900 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500">
+    <!-- 2. SCREEN AKTIVASI -->
+    <div id="activation-screen" class="hidden-screen fixed inset-0 bg-slate-950 z-[110] flex items-center justify-center p-4 smooth-transition">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl w-full max-w-md p-8 text-center">
+            <img src="https://i.ibb.co.com/gMmSSTgq/IMG-20260606-WA0000.jpg" class="w-24 h-24 mx-auto mb-4">
+            <h2 class="text-2xl font-bold text-white mb-2">Aktivasi Backoffice</h2>
+            <p class="text-xs text-slate-400 mb-6">Masukkan URL API GAS Deploy milik Anda</p>
+            <input type="url" id="api-input" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-4 py-3 bg-slate-950 border-2 border-slate-800 text-white rounded-xl focus:border-amber-500 outline-none mb-4 text-sm text-center smooth-transition">
+            <button onclick="activateAdminSystem()" id="btn-activate" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 rounded-xl smooth-transition shadow-lg">Aktifkan Backoffice</button>
         </div>
+    </div>
+
+    <!-- 3. SCREEN LOGIN ADMIN -->
+    <div id="login-screen" class="hidden-screen fixed inset-0 bg-slate-950 z-[100] flex items-center justify-center p-4 smooth-transition">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center">
+            <img src="https://i.ibb.co.com/JW1FFbCz/1780229137561.png" class="w-20 h-20 mx-auto mb-4">
+            <h2 id="login-resto-name" class="text-xl font-black text-amber-500 mb-6 uppercase tracking-widest">AMR ADMIN</h2>
+            <h3 class="text-2xl font-bold text-white mb-2">Otorisasi Atasan</h3>
+            <p class="text-xs text-slate-400 mb-6">Masukkan PIN Atasan (Manager/Owner/HRD/Admin)</p>
+            
+            <div class="flex gap-4 justify-center mb-8">
+                <span class="pin-dot w-4 h-4 rounded-full border-2 border-slate-600 bg-transparent transition-all"></span>
+                <span class="pin-dot w-4 h-4 rounded-full border-2 border-slate-600 bg-transparent transition-all"></span>
+                <span class="pin-dot w-4 h-4 rounded-full border-2 border-slate-600 bg-transparent transition-all"></span>
+                <span class="pin-dot w-4 h-4 rounded-full border-2 border-slate-600 bg-transparent transition-all"></span>
+            </div>
+
+            <input type="password" id="login-pin" class="hidden-screen">
+
+            <div class="grid grid-cols-3 gap-4 w-full max-w-xs mx-auto mb-4 text-white">
+                <button onclick="pressNum('1')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">1</button>
+                <button onclick="pressNum('2')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">2</button>
+                <button onclick="pressNum('3')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">3</button>
+                <button onclick="pressNum('4')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">4</button>
+                <button onclick="pressNum('5')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">5</button>
+                <button onclick="pressNum('6')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">6</button>
+                <button onclick="pressNum('7')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">7</button>
+                <button onclick="pressNum('8')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">8</button>
+                <button onclick="pressNum('9')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">9</button>
+                <button onclick="clearPin()" class="h-16 rounded-2xl bg-red-950/40 text-red-500 font-bold text-sm active:scale-95 smooth-transition">CLEAR</button>
+                <button onclick="pressNum('0')" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-xl active:scale-95 smooth-transition">0</button>
+                <button onclick="backspacePin()" class="h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 font-bold text-lg active:scale-95 smooth-transition flex items-center justify-center text-amber-500"><i data-lucide="delete" class="w-6 h-6"></i></button>
+            </div>
+            
+            <button onclick="resetLicense()" class="text-[10px] text-red-500 mt-6 hover:underline uppercase font-bold tracking-wider">Hapus Sesi & Reset</button>
+        </div>
+    </div>
+
+    <!-- 4. MAIN DASHBOARD APPLICATION LAYOUT -->
+    <div id="main-app" class="hidden-screen h-full w-full flex flex-col md:flex-row bg-[#020617] overflow-hidden smooth-transition">
         
-        <select id="filter-area" onchange="filterUsers()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2.5 outline-none text-xs focus:border-amber-500">
-            <option value="">Memuat Cabang...</option>
-        </select>
-
-        <select id="filter-status" onchange="filterUsers()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2.5 outline-none text-xs focus:border-amber-500">
-            <option value="">Semua Status Profil</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-        </select>
-    </div>
-
-    <!-- TABEL KARYAWAN -->
-    <div class="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="border-b border-slate-800 text-[10px] text-slate-400 uppercase tracking-widest bg-slate-950/40">
-                        <th class="py-4 px-4 font-black">Profil Karyawan</th>
-                        <th class="py-4 px-4 font-black">Sesi Kerja (Jobdesk)</th>
-                        <th class="py-4 px-4 font-black">Sistem Absen (PIN/GPS)</th>
-                        <th class="py-4 px-4 font-black">Sisa Kontrak</th>
-                        <th class="py-4 px-4 font-black text-right">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody id="user-table-body" class="divide-y divide-slate-850 text-xs">
-                    <tr>
-                        <td colspan="5" class="py-12 text-center text-slate-500 animate-pulse font-semibold">Mengambil data dari Google Sheets...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- MODAL FORM TAMBAH / EDIT KARYAWAN -->
-    <div id="modal-form" class="hidden-screen fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg p-6 shadow-2xl flex flex-col max-h-[90vh]">
-            <div class="flex justify-between items-center mb-4 shrink-0 border-b border-slate-800 pb-3">
-                <h3 id="modal-title" class="text-sm font-black text-amber-500 uppercase tracking-wider">Tambah Karyawan Baru</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            
-            <div class="flex-1 overflow-y-auto space-y-4 pr-1 text-left">
-                <input type="hidden" id="form-user-id">
-                
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nama Lengkap</label>
-                        <input type="text" id="form-name" placeholder="Nama Karyawan" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500">
-                    </div>
-                    <div>
-                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">PIN Kiosk (4 Angka)</label>
-                        <input type="password" id="form-pin" maxlength="4" placeholder="••••" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-center text-white rounded-xl outline-none text-xs focus:border-amber-500 font-bold">
-                    </div>
+        <!-- SIDEBAR KIRI -->
+        <aside class="w-full md:w-64 bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 flex flex-row md:flex-col justify-between p-4 shrink-0 z-20">
+            <div class="flex flex-row md:flex-col items-center md:items-start gap-4 md:w-full">
+                <div class="flex items-center gap-3">
+                    <img src="https://lh3.googleusercontent.com/d/1ZXs1pIaPk7EjfcGIu5rew4qO9kQXoNlF" class="w-8 h-8 rounded-lg object-cover">
+                    <h1 class="text-md font-black text-amber-500 tracking-tight uppercase">AMR Backoffice</h1>
                 </div>
 
-                <div class="grid grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Jabatan (Role)</label>
-                        <select id="form-role" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white">
-                            <option value="Staff">Staff</option>
-                            <option value="Manager">Manager</option>
-                            <option value="HRD">HRD</option>
-                            <option value="Owner">Owner</option>
-                            <option value="administrator">administrator</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Jobdesk Kerja (Multi-Select)</label>
-                        <div class="grid grid-cols-2 gap-1.5 bg-slate-950 border border-slate-850 p-2.5 rounded-xl">
-                            <label class="flex items-center gap-1.5 text-[10px] text-slate-300 font-bold cursor-pointer">
-                                <input type="checkbox" name="form-jobdesk" value="Waiter" class="rounded accent-amber-500 w-3.5 h-3.5"> Waiter
-                            </label>
-                            <label class="flex items-center gap-1.5 text-[10px] text-slate-300 font-bold cursor-pointer">
-                                <input type="checkbox" name="form-jobdesk" value="Kasir" class="rounded accent-amber-500 w-3.5 h-3.5"> Kasir
-                            </label>
-                            <label class="flex items-center gap-1.5 text-[10px] text-slate-300 font-bold cursor-pointer">
-                                <input type="checkbox" name="form-jobdesk" value="Back office" class="rounded accent-amber-500 w-3.5 h-3.5"> Back office
-                            </label>
-                            <label class="flex items-center gap-1.5 text-[10px] text-slate-300 font-bold cursor-pointer">
-                                <input type="checkbox" name="form-jobdesk" value="Manager" class="rounded accent-amber-500 w-3.5 h-3.5"> Manager
-                            </label>
+                <nav class="hidden md:flex flex-col gap-2.5 w-full mt-6">
+                    <!-- SUB-MENU GROUP 1: MANAJEMEN HRD -->
+                    <div id="group-hrd" class="w-full border-b border-slate-800 pb-3">
+                        <button onclick="toggleHrdMenu()" class="w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-between text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="users" class="w-4 h-4 text-amber-500"></i>
+                                <span>Manajemen HRD</span>
+                            </div>
+                            <i data-lucide="chevron-down" id="hrd-chevron" class="w-4 h-4 transition-transform duration-200"></i>
+                        </button>
+                        <div id="hrd-submenu" class="hidden pl-6 mt-1.5 flex flex-col gap-1 w-full submenu-container">
+                            <button onclick="switchTab('Users')" id="nav-Users" class="nav-btn w-full px-4 py-2.5 rounded-xl text-[11px] font-bold flex items-center gap-2 text-slate-400 hover:bg-slate-850 hover:text-white transition">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> <span>Daftar Karyawan</span>
+                            </button>
+                            <button onclick="switchTab('Attendance')" id="nav-Attendance" class="nav-btn w-full px-4 py-2.5 rounded-xl text-[11px] font-bold flex items-center gap-2 text-slate-400 hover:bg-slate-850 hover:text-white transition">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> <span>Rekap Absensi</span>
+                            </button>
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Cabang Kerja (Area)</label>
-                        <select id="form-area" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white">
-                            <option value="">Memuat cabang...</option>
-                        </select>
-                    </div>
-                </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">No WhatsApp</label>
-                        <input type="tel" id="form-nowa" placeholder="08..." class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs">
-                    </div>
-                    <div>
-                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Alamat Rumah</label>
-                        <input type="text" id="form-alamat" placeholder="Nama Jalan, Kota" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs">
-                    </div>
-                </div>
+                    <!-- MENU UTAMA TOP-LEVEL -->
+                    <button onclick="switchTab('Menu')" id="nav-Menu" class="nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                        <i data-lucide="utensils" class="w-4 h-4 text-indigo-400"></i> <span>Data Menu</span>
+                    </button>
+                    <button onclick="switchTab('Promo')" id="nav-Promo" class="nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                        <i data-lucide="ticket" class="w-4 h-4 text-rose-400"></i> <span>Diskon & Voucher</span>
+                    </button>
 
-                <div class="grid grid-cols-3 gap-3 bg-slate-950 p-3.5 border border-slate-850 rounded-2xl">
-                    <div>
-                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Status Karyawan</label>
-                        <select id="form-statususer" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white">
-                            <option value="Contract">Contract</option>
-                            <option value="Permanent">Permanent</option>
-                            <option value="Training">Training</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Mulai Bekerja</label>
-                        <input type="date" id="form-joindate" onchange="autoCalculateEndDate()" class="w-full px-2 py-1.5 bg-slate-900 border border-slate-800 text-white rounded-xl outline-none text-[10px]">
-                    </div>
-                    <div>
-                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Durasi (Bulan)</label>
-                        <input type="number" id="form-contract" placeholder="12" onkeyup="autoCalculateEndDate()" onchange="autoCalculateEndDate()" class="w-full px-2 py-1.5 bg-slate-900 border border-slate-800 text-white rounded-xl outline-none text-xs">
-                    </div>
-                    <div class="col-span-3 mt-2">
-                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Berakhir Kontrak (Kalkulasi Otomatis)</label>
-                        <input type="date" id="form-enddate" class="w-full px-3 py-2 bg-slate-900 border border-slate-850 text-slate-400 rounded-xl outline-none text-xs" readonly>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Status Profil</label>
-                        <select id="form-status" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white">
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Kunci GPS (Geotag)</label>
-                        <select id="form-geotag" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white">
-                            <option value="Active">Active (Wajib Radius)</option>
-                            <option value="Inactive">Inactive (Bebas Radius)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Foto Profil (Unggah)</label>
-                        <input type="file" id="form-foto-file" accept="image/*" onchange="convertPhotoToBase64()" class="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-600 file:cursor-pointer bg-slate-950 border border-slate-800 rounded-xl py-1">
-                        <input type="hidden" id="form-foto" value="">
-                        <input type="hidden" id="form-foto-base64" value="">
-                    </div>
-                </div>
-
-                <!-- =========================================================================
-                 * SAAS ACL: SEKSI PENGATURAN OTORISASI AKSES BACKOFFICE (KHUSUS ADMINISTRATOR)
-                 * ========================================================================= -->
-                <div id="admin-auth-section" class="hidden-screen bg-slate-950 p-4 border border-slate-850 rounded-2xl space-y-3.5">
-                    <p class="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1.5"><i data-lucide="shield-check" class="w-4 h-4 animate-pulse"></i> Otorisasi Akses Backoffice (Admin Only)</p>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Izin Login Backoffice</label>
-                            <select id="form-admin-access" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white">
-                                <option value="OFF">OFF (Tolak Sesi)</option>
-                                <option value="ON">ON (Izinkan Sesi)</option>
-                            </select>
+                    <!-- DROPDOWN GROUP LAPORAN PENJUALAN -->
+                    <div id="group-reports" class="w-full border-t border-b border-slate-800 py-2">
+                        <button onclick="toggleReportMenu()" class="w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-between text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-500"></i>
+                                <span>Laporan Penjualan</span>
+                            </div>
+                            <i data-lucide="chevron-down" id="report-chevron" class="w-4 h-4 transition-transform duration-200"></i>
+                        </button>
+                        <div id="report-submenu" class="hidden pl-6 mt-1 flex flex-col gap-1 w-full submenu-container">
+                            <button onclick="switchTab('ProdSales')" id="nav-ProdSales" class="nav-btn w-full px-4 py-2.5 rounded-xl text-[11px] font-bold flex items-center gap-2 text-slate-400 hover:bg-slate-850 hover:text-white transition">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> <span>Penjualan Item</span>
+                            </button>
+                            <button onclick="switchTab('AuditSales')" id="nav-AuditSales" class="nav-btn w-full px-4 py-2.5 rounded-xl text-[11px] font-bold flex items-center gap-2 text-slate-400 hover:bg-slate-850 hover:text-white transition">
+                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> <span>Rekonsiliasi & Audit</span>
+                            </button>
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Daftar Modul yang Boleh Dibuka</label>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                            <label class="flex items-center gap-1.5 text-[10px] text-slate-300 font-bold cursor-pointer">
-                                <input type="checkbox" name="form-allowed-tabs" value="Users" class="rounded accent-amber-500 w-3.5 h-3.5"> Karyawan
-                            </label>
-                            <label class="flex items-center gap-1.5 text-[10px] text-slate-300 font-bold cursor-pointer">
-                                <input type="checkbox" name="form-allowed-tabs" value="Attendance" class="rounded accent-amber-500 w-3.5 h-3.5"> Absensi
-                            </label>
-                            <label class="flex items-center gap-1.5 text-[10px] text-slate-300 font-bold cursor-pointer">
-                                <input type="checkbox" name="form-allowed-tabs" value="Menu" class="rounded accent-amber-500 w-3.5 h-3.5"> Data Menu
-                            </label>
-                            <label class="flex items-center gap-1.5 text-[10px] text-slate-300 font-bold cursor-pointer">
-                                <input type="checkbox" name="form-allowed-tabs" value="Promo" class="rounded accent-amber-500 w-3.5 h-3.5"> Diskon & Voucher
-                            </label>
-                            <label class="flex items-center gap-1.5 text-[10px] text-slate-300 font-bold cursor-pointer">
-                                <input type="checkbox" name="form-allowed-tabs" value="ProdSales" class="rounded accent-amber-500 w-3.5 h-3.5"> Laporan Produk
-                            </label>
-                            <label class="flex items-center gap-1.5 text-[10px] text-slate-300 font-bold cursor-pointer">
-                                <input type="checkbox" name="form-allowed-tabs" value="AuditSales" class="rounded accent-amber-500 w-3.5 h-3.5"> Audit & Keuangan
-                            </label>
-                            <label class="flex items-center gap-1.5 text-[10px] text-slate-300 font-bold cursor-pointer">
-                                <input type="checkbox" name="form-allowed-tabs" value="Config" class="rounded accent-amber-500 w-3.5 h-3.5"> Pengaturan Sistem
-                            </label>
-                        </div>
-                    </div>
-                </div>
 
-                <div>
-                    <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Keterangan / Deskripsi Karyawan</label>
-                    <textarea id="form-keterangan" rows="2" placeholder="Manager Operasional..." class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs"></textarea>
+                    <button onclick="switchTab('Config')" id="nav-Config" class="nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                        <i data-lucide="settings" class="w-4 h-4 text-slate-400"></i> <span>Pengaturan Sistem</span>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Identitas Admin Logged-In & Tombol Kontrol Bawah -->
+            <div class="flex items-center justify-between gap-3 md:w-full md:border-t border-slate-800 md:pt-4">
+                <div class="hidden md:block flex-1 min-w-0 text-left">
+                    <p id="admin-name" class="text-xs font-black text-white truncate">-</p>
+                    <p id="admin-role" class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">-</p>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <button id="btn-install-pwa" onclick="triggerPwaInstall()" class="hidden-screen p-2 bg-emerald-500/10 text-emerald-400 rounded-lg hover:bg-emerald-400 hover:text-slate-950 transition" title="Instal Aplikasi Desktop">
+                        <i data-lucide="download" class="w-4 h-4 animate-bounce"></i>
+                    </button>
+                    <button onclick="toggleTheme()" class="p-2 bg-slate-800 hover:bg-slate-700 text-amber-500 rounded-lg transition" title="Ubah Tema">
+                        <i id="theme-icon" data-lucide="sun" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="logoutAdmin()" class="p-2 bg-rose-500/10 text-rose-500 rounded-lg hover:bg-rose-500/20 transition" title="Logout Sesi Admin">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    </button>
                 </div>
             </div>
-            
-            <div class="mt-4 pt-3 border-t border-slate-800 flex justify-end gap-2 shrink-0">
-                <button onclick="closeModal()" class="px-5 py-2 text-xs font-bold text-slate-400 hover:text-white transition">Batal</button>
-                <button onclick="submitUserForm()" id="btn-save" class="px-6 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-lg transition">SIMPAN DATA</button>
+        </aside>
+
+        <!-- AREA KONTEN UTAMA -->
+        <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-950">
+            <div class="md:hidden flex gap-2 overflow-x-auto p-4 bg-slate-900 border-b border-slate-800 no-scrollbar">
+                <button onclick="switchTab('Users')" id="mob-nav-Users" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Karyawan</button>
+                <button onclick="switchTab('Attendance')" id="mob-nav-Attendance" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Absensi</button>
+                <button onclick="switchTab('Menu')" id="mob-nav-Menu" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Menu</button>
+                <button onclick="switchTab('Promo')" id="mob-nav-Promo" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Promo</button>
+                <button onclick="switchTab('ProdSales')" id="mob-nav-ProdSales" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Laporan Produk</button>
+                <button onclick="switchTab('AuditSales')" id="mob-nav-AuditSales" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Audit</button>
+                <button onclick="switchTab('Config')" id="mob-nav-Config" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Pengaturan</button>
             </div>
-        </div>
+
+            <div id="content-area" class="flex-1 overflow-y-auto p-6"></div>
+        </main>
     </div>
 
     <script>
-        const GAS_URL = localStorage.getItem("MRD_API_URL");
-        const adminSession = JSON.parse(localStorage.getItem("MRD_ADMIN_SESSION"));
-        const loggedInRole = adminSession && adminSession.role ? adminSession.role.toLowerCase().trim() : "";
-        let allUsers = [];
+        const STORAGE_API = "MRD_API_URL";
+        const STORAGE_ADMIN = "MRD_ADMIN_SESSION";
+        
+        let GAS_URL = localStorage.getItem(STORAGE_API);
+        let adminInfo = null;
+        let loginPinValue = "";
+        let currentTab = "Users";
+        window.appVersion = Date.now(); 
 
         window.onload = () => {
-            if (GAS_URL) {
-                fetchUsers();
-                loadDynamicAreas();
-            }
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                if (splash) {
+                    splash.classList.add('fade-out');
+                    setTimeout(() => {
+                        splash.classList.add('hidden-screen');
+                        checkAdminState();
+                        updateThemeIcon(); 
+                    }, 500);
+                }
+            }, 1000);
         };
 
-        // PARSER DATA METADATA OTORISASI SAAS ACL
-        function parseKeterangan(keteranganStr) {
-            let adminAccess = "OFF";
-            let allowedTabs = [];
-            let cleanKeterangan = keteranganStr || "";
-
-            if (keteranganStr) {
-                const accessMatch = keteranganStr.match(/\[ADMIN_ACCESS:(ON|OFF)\]/);
-                if (accessMatch) adminAccess = accessMatch[1];
-
-                const tabsMatch = keteranganStr.match(/\[ALLOWED_TABS:([^\]]+)\]/);
-                if (tabsMatch) allowedTabs = tabsMatch[1].split(",");
-                
-                cleanKeterangan = keteranganStr.replace(/\[ADMIN_ACCESS:(ON|OFF)\]/, "").replace(/\[ALLOWED_TABS:([^\]]+)\]/, "").trim();
-                if (cleanKeterangan.endsWith("|")) cleanKeterangan = cleanKeterangan.slice(0, -1).trim();
-            }
-            return { adminAccess, allowedTabs, cleanKeterangan };
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => console.error(err));
+            });
         }
 
-        async function fetchUsers() {
-            const container = document.getElementById('user-table-body');
-            try {
-                const res = await fetch(GAS_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify({ action: "getUsers" }) 
-                });
-                const json = await res.json();
-                if (json.success) {
-                    // FILTER SAAS: Sembunyikan akun sistem USR-0000 dari tabel & form kelola
-                    allUsers = json.data.filter(user => user.userId !== "USR-0000");
-                    renderUsersTable(allUsers);
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const installBtn = document.getElementById('btn-install-pwa');
+            if (installBtn) installBtn.classList.remove('hidden-screen');
+        });
+
+        async function triggerPwaInstall() {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            const installBtn = document.getElementById('btn-install-pwa');
+            if (installBtn) installBtn.classList.add('hidden-screen');
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const isLight = body.classList.toggle('light-mode');
+            localStorage.setItem("MRD_ADMIN_THEME", isLight ? "light" : "dark");
+            updateThemeIcon();
+            renderContent(currentTab);
+        }
+
+        function updateThemeIcon() {
+            const icon = document.getElementById('theme-icon');
+            if (!icon) return;
+            const isLight = document.body.classList.contains('light-mode');
+            icon.setAttribute('data-lucide', isLight ? 'moon' : 'sun');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function showScreen(id) {
+            ['activation-screen', 'login-screen', 'main-app'].forEach(el => {
+                const screen = document.getElementById(el);
+                if (screen) screen.classList.add('hidden-screen');
+            });
+            const target = document.getElementById(id);
+            if (target) target.classList.remove('hidden-screen');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function checkAdminState() {
+            if (!GAS_URL) {
+                showScreen('activation-screen');
+            } else {
+                try {
+                    adminInfo = JSON.parse(localStorage.getItem(STORAGE_ADMIN));
+                } catch(e) {
+                    localStorage.removeItem(STORAGE_ADMIN);
+                }
+
+                if (!adminInfo || adminInfo.adminAccess === undefined) {
+                    localStorage.removeItem(STORAGE_ADMIN);
+                    showScreen('login-screen');
+                    fetchConfigBg();
+                    clearPin();
                 } else {
-                    container.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-rose-500 font-bold">Error: ${json.message}</td></tr>`;
+                    showScreen('main-app');
+                    document.getElementById('admin-name').innerText = adminInfo.name;
+                    document.getElementById('admin-role').innerText = adminInfo.role;
+                    
+                    enforceSidebarPermissions();
+                    
+                    // JAMINAN KEAMANAN: Alihkan tab bawaan jika akses ke "Users" dilarang
+                    const role = (adminInfo.role || "").toLowerCase().trim();
+                    if (role !== "administrator") {
+                        const adminAccess = adminInfo.adminAccess;
+                        const allowedTabs = adminInfo.allowedTabs ? adminInfo.allowedTabs.split(",").map(t => t.trim()) : [];
+                        
+                        if (adminAccess !== "1" && adminAccess !== 1) {
+                            alert("Akses Ditolak!\n\nAkun Anda telah dinonaktifkan dari akses Backoffice.");
+                            logoutAdmin();
+                            return;
+                        }
+                        if (!allowedTabs.includes("Users") && allowedTabs.length > 0) {
+                            currentTab = allowedTabs[0]; 
+                        }
+                    }
+                    
+                    switchTab(currentTab);
+                }
+            }
+        }
+
+        function enforceSidebarPermissions() {
+            const role = (adminInfo.role || "").toLowerCase().trim();
+            if (role === "administrator") return; // Bypass penuh untuk admin dewa (USR-0000)
+
+            // MEMBACA KOLOM DATABASE RIIL (TANPA PARSER REGEX)
+            const allowedTabs = adminInfo.allowedTabs ? adminInfo.allowedTabs.split(",").map(t => t.trim()) : [];
+            const adminAccess = adminInfo.adminAccess;
+
+            const tabs = ["Users", "Attendance", "Menu", "Promo", "Config"];
+            tabs.forEach(tab => {
+                const navBtn = document.getElementById(`nav-${tab}`);
+                const mobBtn = document.getElementById(`mob-nav-${tab}`);
+                const hasAccess = (adminAccess === "1" || adminAccess === 1) && allowedTabs.includes(tab);
+
+                if (!hasAccess) {
+                    if (navBtn) navBtn.classList.add('hidden-screen');
+                    if (mobBtn) mobBtn.classList.add('hidden-screen');
+                } else {
+                    if (navBtn) navBtn.classList.remove('hidden-screen');
+                    if (mobBtn) mobBtn.classList.remove('hidden-screen');
+                }
+            });
+
+            const reportTabs = ["ProdSales", "AuditSales"];
+            let hasReportsAccess = false;
+            reportTabs.forEach(tab => {
+                const navBtn = document.getElementById(`nav-${tab}`);
+                const mobBtn = document.getElementById(`mob-nav-${tab}`);
+                const hasAccess = (adminAccess === "1" || adminAccess === 1) && allowedTabs.includes(tab);
+                if (hasAccess) hasReportsAccess = true;
+
+                if (!hasAccess) {
+                    if (navBtn) navBtn.classList.add('hidden-screen');
+                    if (mobBtn) mobBtn.classList.add('hidden-screen');
+                } else {
+                    if (navBtn) navBtn.classList.remove('hidden-screen');
+                    if (mobBtn) mobBtn.classList.remove('hidden-screen');
+                }
+            });
+
+            const hasHrdAccess = allowedTabs.includes("Users") || allowedTabs.includes("Attendance");
+            const hrdGroup = document.getElementById('group-hrd');
+            if (!hasHrdAccess && hrdGroup) hrdGroup.classList.add('hidden-screen');
+
+            const reportGroup = document.getElementById('group-reports');
+            if (!hasReportsAccess && reportGroup) reportGroup.classList.add('hidden-screen');
+        }
+
+        async function activateAdminSystem() {
+            const input = document.getElementById('api-input').value.trim();
+            if(!input) return alert("Masukkan URL API Deploy Anda!");
+            const btn = document.getElementById('btn-activate');
+            btn.innerHTML = "Memverifikasi...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(input, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) });
+                const json = await res.json();
+                if(json.success) {
+                    localStorage.setItem(STORAGE_API, input);
+                    GAS_URL = input;
+                    window.location.reload();
+                } else {
+                    throw new Error("Gagal");
                 }
             } catch (e) {
-                container.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-rose-500 font-bold">Koneksi putus ke database!</td></tr>`;
+                alert("Verifikasi Gagal!");
+                btn.innerHTML = "Aktifkan Backoffice";
+                btn.disabled = false;
             }
         }
 
-        function renderUsersTable(dataList) {
-            const container = document.getElementById('user-table-body');
-            if (dataList.length === 0) {
-                container.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-600 font-semibold">Karyawan tidak ditemukan</td></tr>`;
-                return;
-            }
-
-            // Inisialisasi wadah pengumpul data habis kontrak untuk dilaunch ke popup induk
-            let expiringEmployees = [];
-
-            container.innerHTML = dataList.map(user => {
-                const safeFoto = user.foto || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=1e293b&color=f59e0b&size=100`;
-
-                // Logika Pelacakan Masa Habis Kontrak Asinkron untuk PWA Alarm
-                let diffDays = -999;
-                const sisaKontrakText = user.endDate ? (() => {
-                    let endD = new Date(user.endDate);
-                    let diffTime = endD - new Date();
-                    diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        async function fetchConfigBg() {
+            try {
+                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) });
+                const json = await res.json();
+                if (json.success) {
+                    document.getElementById('login-resto-name').innerText = json.data["NAMA_PERUSAHAAN"] || "AMR ADMIN";
                     
-                    return diffDays > 0 
-                        ? `<span class="text-amber-500 font-bold">${diffDays} Hari</span> (${user.statusUser})`
-                        : `<span class="text-rose-500 font-bold">Habis Kontrak</span>`;
-                })() : "-";
-
-                // Daftarkan staf ke antrean popup jika sisa kontrak <= 30 hari & status karyawan aktif
-                if (user.endDate && diffDays <= 30 && user.status === "Active") {
-                    expiringEmployees.push({
-                        userId: user.userId,
-                        name: user.name,
-                        daysLeft: diffDays,
-                        statusUser: user.statusUser
-                    });
+                    if (json.data["VERSION_BUSTER"]) {
+                        window.appVersion = json.data["VERSION_BUSTER"].toString().trim();
+                    }
                 }
+            } catch(e) {}
+        }
 
-                const gpsBadge = user.geotag === "Active"
-                    ? `<span class="text-emerald-500 flex items-center gap-1 font-semibold text-[10px]"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i> Lock Radius</span>`
-                    : `<span class="text-slate-500 flex items-center gap-1 font-semibold text-[10px]"><i data-lucide="map" class="w-3.5 h-3.5"></i> Bebas Radius</span>`;
-
-                return `
-                    <tr class="hover:bg-slate-900/40 transition">
-                        <td class="py-4 px-4 flex items-center gap-3">
-                            <img src="${safeFoto}" class="w-10 h-10 rounded-xl object-cover border border-slate-800 shrink-0">
-                            <div class="text-left min-w-0">
-                                <h4 class="font-bold text-white text-xs sm:text-sm capitalize truncate max-w-[120px]">${user.name}</h4>
-                                <p class="text-[9px] text-slate-500 font-semibold tracking-wider uppercase mt-0.5">ID: ${user.userId} | ${user.role}</p>
-                            </div>
-                        </td>
-                        <td class="py-4 px-4 text-left">
-                            <p class="font-bold text-white uppercase text-[11px]">${user.jobdesk || "-"}</p>
-                            <p class="text-[9px] text-slate-500 font-bold mt-0.5"><i data-lucide="map" class="w-3 h-3 inline"></i> ${user.area}</p>
-                        </td>
-                        <td class="py-4 px-4 text-left">
-                            <p class="font-bold text-slate-300">PIN: ${user.pin}</p>
-                            <div class="mt-1">${gpsBadge}</div>
-                        </td>
-                        <td class="py-4 px-4 text-left">${sisaKontrakText}</td>
-                        <td class="py-4 px-4 text-right">
-                            <button onclick="editUser('${user.userId}')" class="p-2 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg hover:bg-amber-500 hover:text-slate-950 transition"><i data-lucide="pencil" class="w-4 h-4"></i></button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-            lucide.createIcons();
-
-            // KIRIM SINYAL ANTREAN ABSENSI KRITIS KE HALAMAN INDUK ADMIN.HTML (SANGAT BERSIH & AMAN)
-            if (expiringEmployees.length > 0 && window.parent && typeof window.parent.triggerContractWarning === 'function') {
-                window.parent.triggerContractWarning(expiringEmployees);
+        function pressNum(num) {
+            if(loginPinValue.length < 4) {
+                loginPinValue += num;
+                updateLoginDots();
+                if(loginPinValue.length === 4) setTimeout(loginAdmin, 300);
             }
         }
 
-        function convertPhotoToBase64() {
-            const file = document.getElementById('form-foto-file').files[0];
-            const base64Input = document.getElementById('form-foto-base64');
-            if (file) {
-                if (file.size > 2 * 1024 * 1024) {
-                    alert("Ukuran berkas melebihi batas 2MB!");
-                    document.getElementById('form-foto-file').value = "";
-                    return;
+        function backspacePin() {
+            if(loginPinValue.length > 0) {
+                loginPinValue = loginPinValue.slice(0, -1);
+                updateLoginDots();
+            }
+        }
+
+        function clearPin() {
+            loginPinValue = "";
+            updateLoginDots();
+        }
+
+        function updateLoginDots() {
+            const dots = document.querySelectorAll('.pin-dot');
+            dots.forEach((dot, idx) => {
+                if(idx < loginPinValue.length) { 
+                    dot.classList.add('bg-amber-500', 'border-amber-500'); 
+                    dot.classList.remove('bg-transparent', 'border-slate-600'); 
+                } else { 
+                    dot.classList.remove('bg-amber-500', 'border-amber-500'); 
+                    dot.classList.add('bg-transparent', 'border-slate-600'); 
                 }
-                const reader = new FileReader();
-                reader.onloadend = function() {
-                    base64Input.value = reader.result;
-                };
-                reader.readAsDataURL(file);
-            } else {
-                base64Input.value = "";
-            }
-        }
-
-        function autoCalculateEndDate() {
-            const joinDateStr = document.getElementById('form-joindate').value;
-            const contractVal = parseInt(document.getElementById('form-contract').value) || 0;
-            const endDateInput = document.getElementById('form-enddate');
-
-            if (joinDateStr && contractVal > 0) {
-                let joinD = new Date(joinDateStr);
-                joinD.setMonth(joinD.getMonth() + contractVal);
-                joinD.setDate(joinD.getDate() - 1);
-
-                let yyyy = joinD.getFullYear();
-                let mm = String(joinD.getMonth() + 1).padStart(2, '0');
-                let dd = String(joinD.getDate()).padStart(2, '0');
-                endDateInput.value = `${yyyy}-${mm}-${dd}`;
-            } else {
-                endDateInput.value = "";
-            }
-        }
-
-        function filterUsers() {
-            const query = document.getElementById('search-input').value.toLowerCase();
-            const area = document.getElementById('filter-area').value;
-            const status = document.getElementById('filter-status').value;
-
-            let filtered = allUsers.filter(u => {
-                const matchQuery = u.name.toLowerCase().includes(query) || u.noWa.includes(query);
-                const matchArea = area === "" || u.area === area;
-                const matchStatus = status === "" || u.status === status;
-                return matchQuery && matchArea && matchStatus;
             });
-            renderUsersTable(filtered);
         }
 
-        function openFormModal(userId = null) {
-            const modal = document.getElementById('modal-form');
-            const title = document.getElementById('modal-title');
-            modal.classList.remove('hidden-screen');
+        async function loginAdmin() {
+            try {
+                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) });
+                const json = await res.json();
+                if(json.success) {
+                    const roleClean = json.role ? json.role.toLowerCase().trim() : "";
+                    
+                    if (roleClean === "administrator") {
+                        localStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
+                        window.location.reload();
+                        return;
+                    }
 
-            // Kontrol seksi otorisasi jika yang login adalah administrator
-            const authSection = document.getElementById('admin-auth-section');
-            if (loggedInRole === "administrator") {
-                authSection.classList.remove('hidden-screen');
-            } else {
-                authSection.classList.add('hidden-screen');
+                    // MEMBACA KOLOM DATABASE RIIL (TANPA REGEX)
+                    if (json.adminAccess === "1" || json.adminAccess === 1) {
+                        localStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
+                        window.location.reload();
+                    } else {
+                        alert("Akses Ditolak!\n\nAkun Anda tidak memiliki izin otorisasi untuk mengakses Backoffice.");
+                        clearPin();
+                    }
+                } else {
+                    alert(json.message || "PIN Salah!");
+                    clearPin();
+                }
+            } catch(e) {
+                alert("Koneksi gagal.");
+                clearPin();
             }
+        }
 
-            document.getElementById('form-user-id').value = "";
-            document.getElementById('form-name').value = "";
-            document.getElementById('form-pin').value = "";
-            document.getElementById('form-role').value = "Staff";
-            document.getElementById('form-area').value = "";
-            document.getElementById('form-nowa').value = "";
-            document.getElementById('form-alamat').value = "";
-            document.getElementById('form-statususer').value = "Contract";
-            document.getElementById('form-joindate').value = "";
-            document.getElementById('form-contract').value = "";
-            document.getElementById('form-enddate').value = "";
-            document.getElementById('form-status').value = "Active";
-            document.getElementById('form-geotag').value = "Active";
-            document.getElementById('form-foto').value = "";
-            document.getElementById('form-foto-file').value = "";
-            document.getElementById('form-foto-base64').value = "";
-            document.getElementById('form-keterangan').value = "";
+        function logoutAdmin() {
+            if (confirm("Keluar dari sesi admin?")) {
+                localStorage.removeItem(STORAGE_ADMIN);
+                window.location.reload();
+            }
+        }
+
+        function resetLicense() {
+            if(confirm("Hapus lisensi dan reset cache?")) {
+                localStorage.clear();
+                window.location.reload();
+            }
+        }
+
+        function toggleHrdMenu() {
+            const submenu = document.getElementById('hrd-submenu');
+            const chevron = document.getElementById('hrd-chevron');
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                chevron.classList.add('rotate-180');
+            } else {
+                submenu.classList.add('hidden');
+                chevron.classList.remove('rotate-180');
+            }
+        }
+
+        function toggleReportMenu() {
+            const submenu = document.getElementById('report-submenu');
+            const chevron = document.getElementById('report-chevron');
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                chevron.classList.add('rotate-180');
+            } else {
+                submenu.classList.add('hidden');
+                chevron.classList.remove('rotate-180');
+            }
+        }
+
+        function switchTab(tabName) {
+            currentTab = tabName;
             
-            // Reset input otorisasi backoffice
-            document.getElementById('form-admin-access').value = "OFF";
-            document.querySelectorAll('input[name="form-allowed-tabs"]').forEach(cb => cb.checked = false);
-            // Reset Ceklis Jobdesk
-            document.querySelectorAll('input[name="form-jobdesk"]').forEach(cb => cb.checked = false);
-
-            if (userId) {
-                title.innerText = "Edit Data Karyawan";
-                const u = allUsers.find(x => x.userId === userId);
-                if (u) {
-                    document.getElementById('form-user-id').value = u.userId;
-                    document.getElementById('form-name').value = u.name;
-                    document.getElementById('form-pin').value = u.pin;
-                    document.getElementById('form-role').value = u.role;
-                    document.getElementById('form-area').value = u.area;
-                    document.getElementById('form-nowa').value = u.noWa;
-                    document.getElementById('form-alamat').value = u.alamat;
-                    document.getElementById('form-statususer').value = u.statusUser;
-                    document.getElementById('form-joindate').value = u.joinDate;
-                    document.getElementById('form-contract').value = u.contract;
-                    document.getElementById('form-enddate').value = u.endDate;
-                    document.getElementById('form-status').value = u.status;
-                    document.getElementById('form-geotag').value = u.geotag;
-                    document.getElementById('form-foto').value = u.foto;
-                    
-                    // MEMBACA KOLOM DATABASE RIIL SECARA LANGSUNG
-                    document.getElementById('form-keterangan').value = u.keterangan || "";
-                    document.getElementById('form-admin-access').value = u.adminAccess === "1" ? "ON" : "OFF";
-
-                    // Nyalakan ceklis modul yang boleh dibuka (SaaS ACL)
-                    if (u.allowedTabs) {
-                        const activeTabs = u.allowedTabs.split(",").map(t => t.trim());
-                        activeTabs.forEach(tab => {
-                            const cb = document.querySelector(`input[name="form-allowed-tabs"][value="${tab}"]`);
-                            if (cb) cb.checked = true;
-                        });
-                    }
-
-                    // Nyalakan Ceklis Jobdesk (SaaS EnumList)
-                    if (u.jobdesk) {
-                        const jds = u.jobdesk.split(",").map(item => item.trim());
-                        jds.forEach(jd => {
-                            const cb = document.querySelector(`input[name="form-jobdesk"][value="${jd}"]`);
-                            if (cb) cb.checked = true;
-                        });
-                    }
-                }
-            } else {
-                title.innerText = "Tambah Karyawan Baru";
-            }
-            lucide.createIcons();
-        }
-
-        function closeModal() {
-            document.getElementById('modal-form').classList.add('hidden-screen');
-        }
-
-        async function submitUserForm() {
-            const name = document.getElementById('form-name').value.trim();
-            const pin = document.getElementById('form-pin').value.trim();
-            const joinDate = document.getElementById('form-joindate').value;
-            const noWa = document.getElementById('form-nowa').value.trim();
-            let rawKeterangan = document.getElementById('form-keterangan').value.trim();
-
-            // Kumpulkan nilai kotak centang jobdesk (EnumList)
-            const selectedJobdesks = [];
-            document.querySelectorAll('input[name="form-jobdesk"]:checked').forEach(cb => {
-                selectedJobdesks.push(cb.value);
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-amber-500', 'text-slate-950', 'bg-slate-800/80');
+                btn.classList.add('text-slate-400');
             });
-            const jobdeskValue = selectedJobdesks.join(", ");
 
-            if (!name || !pin || !joinDate || !noWa || selectedJobdesks.length === 0) {
-                alert("Lengkapi kolom Nama, PIN, Tanggal Join, No WA, dan pilih minimal 1 Jobdesk!");
-                return;
-            }
-
-            const saveBtn = document.getElementById('btn-save');
-            saveBtn.innerText = "Mengirim...";
-            saveBtn.disabled = true;
-
-            // Kumpulkan data otorisasi jika login sebagai administrator (DATABASE RIIL)
-            let adminAccessValue = "0";
-            let allowedTabsList = [];
-            if (loggedInRole === "administrator") {
-                adminAccessValue = document.getElementById('form-admin-access').value === "ON" ? "1" : "0";
-                document.querySelectorAll('input[name="form-allowed-tabs"]:checked').forEach(cb => {
-                    allowedTabsList.push(cb.value);
-                });
-            } else {
-                // Jika bukan administrator, pertahankan nilai otorisasi lama agar tidak hilang
-                const oldUser = allUsers.find(x => x.userId === document.getElementById('form-user-id').value);
-                if (oldUser) {
-                    adminAccessValue = oldUser.adminAccess || "0";
-                    allowedTabsList = oldUser.allowedTabs ? oldUser.allowedTabs.split(",") : [];
-                }
-            }
-
-            const userData = {
-                userId: document.getElementById('form-user-id').value,
-                name: name,
-                pin: pin,
-                role: document.getElementById('form-role').value,
-                jobdesk: jobdeskValue,
-                area: document.getElementById('form-area').value,
-                noWa: noWa,
-                alamat: document.getElementById('form-alamat').value.trim(),
-                statusUser: document.getElementById('form-statususer').value,
-                joinDate: joinDate,
-                contract: parseInt(document.getElementById('form-contract').value) || "",
-                endDate: document.getElementById('form-enddate').value,
-                status: document.getElementById('form-status').value,
-                geotag: document.getElementById('form-geotag').value,
-                foto: document.getElementById('form-foto').value.trim(),
-                photoBase64: document.getElementById('form-foto-base64').value,
-                // PENYIMPANAN KE KOLOM BARU SPREADSHEET (MURNI TANPA REGEX)
-                keterangan: document.getElementById('form-keterangan').value.trim(),
-                adminAccess: adminAccessValue, // Disimpan ke kolom 'AdminAccess' (1 atau 0)
-                allowedTabs: allowedTabsList.join(",") // Disimpan ke kolom 'AllowedTabs'
-            };
-
-            try {
-                const res = await fetch(GAS_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: "saveUser", data: { userData: userData } })
-                });
-                const json = await res.json();
-                if (json.success) {
-                    alert(json.message);
-                    closeModal();
-                    fetchUsers();
+            const activeBtn = document.getElementById(`nav-${tabName}`);
+            if (activeBtn) {
+                if (tabName === 'Users' || tabName === 'Attendance') {
+                    activeBtn.classList.add('bg-slate-800/80', 'text-white');
+                    document.getElementById('hrd-submenu').classList.remove('hidden');
+                    document.getElementById('hrd-chevron').classList.add('rotate-180');
+                } else if (tabName === 'ProdSales' || tabName === 'AuditSales') {
+                    activeBtn.classList.add('bg-slate-800/80', 'text-white');
+                    document.getElementById('report-submenu').classList.remove('hidden');
+                    document.getElementById('report-chevron').classList.add('rotate-180');
                 } else {
-                    alert("Gagal: " + json.message);
+                    activeBtn.classList.add('bg-amber-500', 'text-slate-950');
                 }
-            } catch (e) {
-                alert("Kesalahan pengiriman data ke Apps Script.");
-            } finally {
-                saveBtn.innerText = "SIMPAN DATA";
-                saveBtn.disabled = false;
             }
+
+            document.querySelectorAll('.mob-nav-btn').forEach(btn => {
+                btn.className = "mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400";
+            });
+            const activeMobBtn = document.getElementById(`mob-nav-${tabName}`);
+            if (activeMobBtn) activeMobBtn.className = "mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-amber-500 text-slate-950";
+
+            renderContent(tabName);
         }
 
-        function editUser(userId) {
-            openFormModal(userId);
-        }
-        
-        async function loadDynamicAreas() {
-            try {
-                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "getAvailableAreas" }) });
-                const json = await res.json();
-                if (json.success) {
-                    const areas = json.data;
-                    const filterSelect = document.getElementById('filter-area');
-                    const formSelect = document.getElementById('form-area');
+        function renderContent(tab) {
+            const area = document.getElementById('content-area');
+            if (!area) return;
 
-                    let options = `<option value="">Semua Cabang (Area)</option>`;
-                    let formOptions = `<option value="">Pilih Cabang</option>`;
+            // SaaS Dynamic Cache Buster
+            const buster = window.appVersion || Date.now();
+            const themeParam = document.body.classList.contains('light-mode') ? `?theme=light&v=${buster}` : `?v=${buster}`;
 
-                    areas.forEach(area => {
-                        options += `<option value="${area}">${area}</option>`;
-                        formOptions += `<option value="${area}">${area}</option>`;
-                    });
-
-                    filterSelect.innerHTML = options;
-                    formSelect.innerHTML = formOptions;
-                }
-            } catch (e) { 
-                console.error("Gagal memuat daftar cabang SaaS"); 
+            if (tab === "Users") {
+                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+                area.innerHTML = `<iframe src="admin-users.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+            } else if (tab === "Attendance") {
+                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+                area.innerHTML = `<iframe src="admin-attendance.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+            } else if (tab === "Menu") {
+                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+                area.innerHTML = `<iframe src="admin-menu.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+            } else if (tab === "Promo") {
+                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+                area.innerHTML = `<iframe src="admin-promo.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+            } else if (tab === "Config") {
+                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+                area.innerHTML = `<iframe src="admin-config.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+            } else if (tab === "ProdSales") {
+                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+                area.innerHTML = `<iframe src="admin-reports-product.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+            } else if (tab === "AuditSales") {
+                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+                area.innerHTML = `<iframe src="admin-reports-audit.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+            } else {
+                area.className = "flex-1 overflow-y-auto p-6 flex flex-col justify-center items-center text-center space-y-4";
+                area.innerHTML = `
+                    <div class="w-16 h-16 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center justify-center text-amber-500">
+                        <i data-lucide="construction" class="w-8 h-8"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-black text-white uppercase tracking-wider">Modul ${tab}</h3>
+                        <p class="text-xs text-slate-400 mt-2 max-w-sm leading-relaxed">
+                            Pengelolaan data master <strong>${tab}</strong> saat ini masih dijalankan secara aktif melalui layanan Backoffice AppSheet Anda.
+                        </p>
+                    </div>
+                `;
             }
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
     </script>
 </body>
