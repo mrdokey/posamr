@@ -19,11 +19,13 @@ jobs:
       - name: Install Rust Stable
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install Tauri CLI
-        run: npm install -g @tauri-apps/cli@v1
+      # Menginstal pustaka lokal dari package.json (sangat stabil)
+      - name: Install Local Dependencies
+        run: npm install
 
+      # Menjalankan kompilasi aman tanpa bundler
       - name: Build Standalone Exe (No Bundle)
-        run: tauri build --no-bundle
+        run: npm run tauri build -- --no-bundle
 
       # Unggah hasil rakitan .exe langsung ke halaman Actions Artifacts Anda
       - name: Upload Standalone Exe
