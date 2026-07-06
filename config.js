@@ -171,3 +171,59 @@ function resetLicense() {
         window.location.reload();
     }
 }
+
+// =========================================================================
+// SAAS WHITE-LABEL: GLOBAL WINDOW.ALERT INTERCEPTOR (THE ARIA THEME)
+// Mengganti alert bawaan browser menjadi modal AMR tanpa merusak logika JS lain
+// =========================================================================
+(function() {
+    // Simpan fungsi alert asli bawaan browser sebagai cadangan keselamatan
+    const nativeBrowserAlert = window.alert;
+
+    window.alert = function(message) {
+        // Jika dokumen bodi belum siap sepenuhnya, gunakan alert asli browser
+        if (!document.body) {
+            nativeBrowserAlert(message);
+            return;
+        }
+
+        // Cari apakah kontainer modal kustom AMR sudah ada di halaman
+        let amrModal = document.getElementById('amr-custom-alert');
+        
+        if (!amrModal) {
+            // Buat kontainer modal kustom secara dinamis (bebas dari sentuhan edit HTML)
+            amrModal = document.createElement('div');
+            amrModal.id = 'amr-custom-alert';
+            amrModal.className = 'fixed inset-0 bg-black/85 z-[9999] flex items-center justify-center p-6 smooth-transition hidden-screen';
+            
+            // Render struktur modal dengan gaya gelap premium berlogo AMR
+            amrModal.innerHTML = `
+                <div class="bg-slate-900 border-2 border-amber-500/20 rounded-3xl w-full max-w-xs p-6 shadow-2xl text-center scale-95 transition-all duration-300">
+                    <div class="w-16 h-16 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <img src="https://lh3.googleusercontent.com/d/1ZXs1pIaPk7EjfcGIu5rew4qO9kQXoNlF" class="w-8 h-8 rounded object-cover" onerror="this.style.display='none';">
+                    </div>
+                    <h3 class="text-xs font-black text-amber-500 uppercase tracking-widest mb-2">Pemberitahuan</h3>
+                    <p id="amr-alert-text" class="text-xs text-slate-300 leading-relaxed mb-6 whitespace-pre-line"></p>
+                    <button id="amr-alert-ok-btn" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs transition active:scale-95 shadow-lg shadow-amber-500/10">OKE</button>
+                </div>
+            `;
+            document.body.appendChild(amrModal);
+
+            // Pasang event listener pada tombol OKE untuk menutup modal
+            document.getElementById('amr-alert-ok-btn').addEventListener('click', function() {
+                const modalElement = document.getElementById('amr-custom-alert');
+                modalElement.classList.add('hidden-screen');
+                modalElement.firstElementChild.classList.add('scale-95');
+            });
+        }
+
+        // Masukkan isi pesan teks ke dalam modal
+        document.getElementById('amr-alert-text').innerText = message;
+
+        // Tampilkan modal kustom AMR ke layar kasir dengan efek scale-up yang sangat halus
+        amrModal.classList.remove('hidden-screen');
+        setTimeout(() => {
+            amrModal.firstElementChild.classList.remove('scale-95');
+        }, 10);
+    };
+})();
