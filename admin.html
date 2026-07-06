@@ -225,23 +225,29 @@
                 </nav>
             </div>
 
-            <!-- Identitas Admin Logged-In & Tombol Kontrol Bawah -->
-            <div class="flex items-center justify-between gap-3 md:w-full md:border-t border-slate-800 md:pt-4">
-                <div class="hidden md:block flex-1 min-w-0 text-left">
-                    <p id="admin-name" class="text-xs font-black text-white truncate">-</p>
-                    <p id="admin-role" class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">-</p>
-                </div>
-                <div class="flex items-center gap-2">
-    <!-- TOMBOL INSTAL PWA (HIDDEN SECARA BAWAAN) -->
-    <button id="btn-install-pwa" onclick="triggerPwaInstall()" class="hidden-screen p-2 bg-emerald-500/10 text-emerald-400 rounded-lg hover:bg-emerald-400 hover:text-slate-950 transition" title="Instal Aplikasi Desktop">
-        <i data-lucide="download" class="w-4 h-4 animate-bounce"></i>
-    </button>
-    <button onclick="toggleTheme()" class="p-2 bg-slate-800 hover:bg-slate-700 text-amber-500 rounded-lg transition" title="Ubah Tema">
-        <i id="theme-icon" data-lucide="sun" class="w-4 h-4"></i>
-    </button>
-    <button onclick="logoutAdmin()" class="p-2 bg-rose-500/10 text-rose-500 rounded-lg hover:bg-rose-500/20 transition" title="Logout Sesi Admin">
-        <i data-lucide="log-out" class="w-4 h-4"></i>
-    </button>
+            <!-- Identitas Admin Logged-In & Tombol Kontrol Bawah (SINKRONISASI UTUH) -->
+<div class="flex items-center justify-between gap-3 md:w-full md:border-t border-slate-800 md:pt-4">
+    <!-- Frame Identitas Profil (Menampilkan Nama & Jabatan yang Login) -->
+    <div class="hidden md:block flex-1 min-w-0 text-left">
+        <p id="admin-name" class="text-xs font-black text-white truncate">-</p>
+        <p id="admin-role" class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">-</p>
+    </div>
+    
+    <!-- Frame Tombol Kontrol -->
+    <div class="flex items-center gap-1.5 shrink-0">
+        <!-- TOMBOL INSTAL PWA (HIDDEN SECARA BAWAAN) -->
+        <button id="btn-install-pwa" onclick="triggerPwaInstall()" class="hidden-screen p-2 bg-emerald-500/10 text-emerald-400 rounded-lg hover:bg-emerald-400 hover:text-slate-950 transition" title="Instal Aplikasi Desktop">
+            <i data-lucide="download" class="w-4 h-4 animate-bounce"></i>
+        </button>
+        <!-- TOMBOL GANTI TEMA -->
+        <button onclick="toggleTheme()" class="p-2 bg-slate-800 hover:bg-slate-700 text-amber-500 rounded-lg transition" title="Ubah Tema">
+            <i id="theme-icon" data-lucide="sun" class="w-4 h-4"></i>
+        </button>
+        <!-- TOMBOL LOGOUT -->
+        <button onclick="logoutAdmin()" class="p-2 bg-rose-500/10 text-rose-500 rounded-lg hover:bg-rose-500/20 transition" title="Logout Sesi Admin">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+        </button>
+    </div>
 </div>
             </div>
         </aside>

@@ -14,7 +14,8 @@
       "all": true
     },
     "bundle": {
-      "active": false
+      "active": false,
+      "identifier": "com.amrpos.mrdsolution"
     },
     "security": {
       "csp": null
