@@ -1,19 +1,15 @@
-name: Build Desktop Exe (Cloud Compiler)
+name: Build Desktop Exe (No-Bundle)
 on:
   push:
     branches:
       - main # Memicu perakitan setiap kali Anda push ke branch main
 
 jobs:
-  publish:
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [windows-latest] # Merakit biner khusus Windows .exe
-
-    runs-on: ${{ matrix.platform }}
+  build:
+    runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -23,14 +19,15 @@ jobs:
       - name: Install Rust Stable
         uses: dtolnay/rust-toolchain@stable
 
-      # Menggunakan Tauri Action Resmi untuk merakit biner otomatis di Cloud
-      - name: Build Tauri Desktop App
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install Tauri CLI
+        run: npm install -g @tauri-apps/cli@v1
+
+      - name: Build Standalone Exe (No Bundle)
+        run: tauri build --no-bundle
+
+      # Unggah hasil rakitan .exe langsung ke halaman Actions Artifacts Anda
+      - name: Upload Standalone Exe
+        uses: actions/upload-artifact@v3
         with:
-          tagName: v__VERSION__ # Membuat tag versi otomatis
-          releaseName: "AMR Backoffice Admin v__VERSION__"
-          releaseBody: "Hasil kompilasi otomatis dari Cloud GitHub Actions."
-          releaseDraft: true
-          prerelease: false
+          name: AMR-Admin-Windows-Exe
+          path: src-tauri/target/release/AMR_Admin.exe
