@@ -61,6 +61,7 @@
         <select id="filter-category" onchange="filterMenu()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2.5 outline-none text-xs focus:border-amber-500">
             <option value="">Memuat Kategori...</option>
         </select>
+        <!-- Dropdown Cabang Dinamis (SaaS) -->
         <select id="filter-area" onchange="filterMenu()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2.5 outline-none text-xs focus:border-amber-500">
             <option value="">Memuat Cabang...</option>
         </select>
@@ -87,21 +88,31 @@
             <div class="flex-1 overflow-y-auto space-y-4 pr-1 text-left">
                 <input type="hidden" id="form-menu-id">
                 
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 gap-3">
                     <div>
                         <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nama Menu/Hidangan</label>
-                        <input type="text" id="form-name" placeholder="Nama Data Menu" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500">
-                    </div>
-                    <div>
-                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Harga Jual (Rp)</label>
-                        <input type="number" id="form-price" placeholder="45000" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500 font-bold">
+                        <input type="text" id="form-name" placeholder="Nama Hidangan" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500">
                     </div>
                 </div>
 
+                <!-- SEKSI HARGA HPP VS HARGA JUAL (REVISI 1) -->
+                <div class="grid grid-cols-2 gap-3 bg-slate-950/40 p-3 border border-slate-850 rounded-2xl">
+                    <div>
+                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Harga Pokok (HPP) (Rp)</label>
+                        <input type="number" id="form-hpp" placeholder="Murni HPP" class="w-full px-3 py-2 bg-slate-900 border border-slate-800 text-slate-400 rounded-xl outline-none text-xs focus:border-amber-500 font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Harga Jual (Rp)</label>
+                        <input type="number" id="form-price" placeholder="Murni Jual" class="w-full px-3 py-2 bg-slate-900 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500 font-bold">
+                    </div>
+                </div>
+
+                <!-- CASCADING DROP-DOWNS DINAMIS (REVISI 2 & 3) -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Kategori Utama</label>
                         <select id="form-category" onchange="handleCategoryChange()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white focus:border-amber-500">
+                            <!-- Diisi 100% dinamis dari database -->
                         </select>
                         <input type="text" id="form-category-new" onkeyup="updateSubCategoryDropdown()" placeholder="Tulis Kategori baru..." class="hidden-screen mt-2 w-full px-3 py-2 bg-slate-950 border-2 border-emerald-500/30 text-white rounded-xl outline-none text-xs focus:border-emerald-500">
                     </div>
@@ -109,6 +120,7 @@
                     <div>
                         <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Sub-Kategori</label>
                         <select id="form-subcategory-select" onchange="toggleCustomSubCategoryInput()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white focus:border-amber-500">
+                            <!-- Diisi 100% dinamis dari database -->
                         </select>
                         <input type="text" id="form-subcategory-new" placeholder="Tulis Sub-Kategori baru..." class="hidden-screen mt-2 w-full px-3 py-2 bg-slate-950 border-2 border-emerald-500/30 text-white rounded-xl outline-none text-xs focus:border-emerald-500">
                     </div>
@@ -149,7 +161,7 @@
 
                 <div>
                     <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Deskripsi / Penjelasan Menu</label>
-                    <textarea id="form-description" rows="2" placeholder="Sajikan hangat dengan taburan bawang goreng..." class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs"></textarea>
+                    <textarea id="form-description" rows="2" placeholder="Deskripsi lengkap data menu..." class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs"></textarea>
                 </div>
             </div>
             
@@ -170,7 +182,7 @@
             <p class="text-xs text-slate-400 mb-4 leading-relaxed">Penghapusan menu kuliner dari daftar aktif memerlukan verifikasi OTP Manager.</p>
             
             <input type="hidden" id="delete-menu-id">
-            <input type="password" id="delete-menu-otp" maxlength="4" placeholder="••••" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-amber-500 text-center text-2xl tracking-[0.5em] rounded-xl outline-none font-bold mb-4 focus:border-rose-500">
+            <input type="password" id="delete-menu-otp" maxlength="4" placeholder="••••" class="w-full px-4 py-3 bg-slate-950 border-2 border-slate-800 text-amber-500 text-center text-2xl tracking-[0.5em] rounded-xl outline-none font-bold mb-4 focus:border-rose-500">
             
             <div class="flex gap-3">
                 <button onclick="closeDeleteMenuModal()" class="flex-1 py-2.5 text-slate-400 font-bold text-xs hover:text-white">Batal</button>
@@ -228,7 +240,7 @@
 
                 const routeBadge = item.route === "Kitchen"
                     ? `<span class="text-amber-500 flex items-center gap-1 text-[10px] font-semibold"><i data-lucide="chef-hat" class="w-3.5 h-3.5"></i> Kitchen</span>`
-                    : `<span class="text-indigo-400 flex items-center gap-1 text-[10px] font-semibold"><i data-lucide="wine" class="w-3.5 h-3.5"></i> Bar (Drinks)</span>`;
+                    : `<span class="text-indigo-400 flex items-center gap-1 text-[10px] font-semibold"><i data-lucide="glass-water" class="w-3.5 h-3.5"></i> Bar (Drinks)</span>`;
 
                 const areaBadges = item.area 
                     ? item.area.split(',').map(a => `<span class="bg-slate-900 border border-slate-800 text-slate-400 text-[9px] px-1.5 py-0.5 rounded font-bold">${a.trim()}</span>`).join(' ')
@@ -311,8 +323,11 @@
             }
         }
 
+        // =========================================================================
+        // REVISI 2: GENERATOR FILTER KATEGORI UTAMA DINAMIS (SAAS STANDARD)
+        // =========================================================================
         function renderDynamicCategoryFilters() {
-            let uniqueCats = new Set([""]); 
+            let uniqueCats = new Set(); 
             allMenus.forEach(item => {
                 if (item.category && item.category.trim() !== "") {
                     uniqueCats.add(item.category.trim());
@@ -326,6 +341,9 @@
             document.getElementById('filter-category').innerHTML = optionsHtml;
         }
 
+        // =========================================================================
+        // REVISI 2 & 3: GENERATOR KATEGORI & SUB-KATEGORI DINAMIS (FORM MODAL)
+        // =========================================================================
         function initCategoryAndSubCategoryDropdowns(selectedCat = "", selectedSub = "") {
             const catSelect = document.getElementById('form-category');
             const newCatInput = document.getElementById('form-category-new');
@@ -333,12 +351,20 @@
             newCatInput.classList.add('hidden-screen');
             newCatInput.value = "";
 
-            let uniqueCats = new Set([""]);
+            // Menyisir seluruh kategori unik di database Menu klien (Zero Hardcoded)
+            let uniqueCats = new Set();
             allMenus.forEach(item => {
                 if (item.category && item.category.trim() !== "") {
                     uniqueCats.add(item.category.trim());
                 }
             });
+
+            // Fallback bawaan jika database klien masih kosong baru
+            if (uniqueCats.size === 0) {
+                uniqueCats.add("Makanan");
+                uniqueCats.add("Minuman");
+                uniqueCats.add("Snack");
+            }
 
             let optionsHtml = ``;
             Array.from(uniqueCats).sort().forEach(cat => {
@@ -381,6 +407,7 @@
 
             const subSelect = document.getElementById('form-subcategory-select');
             
+            // Menyisir seluruh sub-kategori unik yang di bawah kategori utama terpilih
             let uniqueSubs = new Set();
             allMenus.forEach(item => {
                 if (item.category === activeCategory && item.subCategory && item.subCategory.trim() !== "") {
@@ -565,9 +592,6 @@
             openFormModal(menuId);
         }
 
-        // ==========================================
-        // LOGIKA BARU: OTORISASI SOFT-DELETE MENU HIDANGAN
-        // ==========================================
         function requestDeleteMenu(menuId) {
             const modal = document.getElementById('modal-delete-menu');
             if (modal) {
@@ -596,7 +620,6 @@
             btn.disabled = true;
 
             try {
-                // Verifikasi OTP menggunakan fungsi pengawas yang sudah teruji di GAS
                 const res = await fetch(GAS_URL, {
                     method: 'POST',
                     body: JSON.stringify({ action: "verifyVoidManager", data: { managerPin: otp } })
@@ -615,7 +638,6 @@
                         return;
                     }
 
-                    // Jika sukses, panggil aksi soft-delete archiveMenu di GAS
                     const deleteRes = await fetch(GAS_URL, {
                         method: 'POST',
                         body: JSON.stringify({ 
@@ -628,7 +650,7 @@
                     if (deleteJson.success) {
                         alert(deleteJson.message);
                         closeDeleteMenuModal();
-                        fetchAdminMenu(); // Refresh data grid
+                        fetchAdminMenu(); 
                     } else {
                         alert("Gagal: " + deleteJson.message);
                     }
