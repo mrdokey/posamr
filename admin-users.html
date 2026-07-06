@@ -319,6 +319,7 @@
         const loggedInRole = adminSession && adminSession.role ? adminSession.role.toLowerCase().trim() : "";
         let allUsers = [];
 
+        // 1. SINKRONISASI WINDOW ONLOAD
         window.onload = () => {
             if (GAS_URL) {
                 fetchUsers();
@@ -326,25 +327,7 @@
             }
         };
 
-        // PARSER DATA METADATA OTORISASI SAAS ACL
-        function parseKeterangan(keteranganStr) {
-            let adminAccess = "OFF";
-            let allowedTabs = [];
-            let cleanKeterangan = keteranganStr || "";
-
-            if (keteranganStr) {
-                const accessMatch = keteranganStr.match(/\[ADMIN_ACCESS:(ON|OFF)\]/);
-                if (accessMatch) adminAccess = accessMatch[1];
-
-                const tabsMatch = keteranganStr.match(/\[ALLOWED_TABS:([^\]]+)\]/);
-                if (tabsMatch) allowedTabs = tabsMatch[1].split(",");
-                
-                cleanKeterangan = keteranganStr.replace(/\[ADMIN_ACCESS:(ON|OFF)\]/, "").replace(/\[ALLOWED_TABS:([^\]]+)\]/, "").trim();
-                if (cleanKeterangan.endsWith("|")) cleanKeterangan = cleanKeterangan.slice(0, -1).trim();
-            }
-            return { adminAccess, allowedTabs, cleanKeterangan };
-        }
-
+        // 2. MEMBACA DATA KARYAWAN DARI GAS
         async function fetchUsers() {
             const container = document.getElementById('user-table-body');
             try {
@@ -354,7 +337,7 @@
                 });
                 const json = await res.json();
                 if (json.success) {
-                    // FILTER SAAS: Sembunyikan akun sistem USR-0000 dari tabel & form kelola
+                    // FILTER SAAS: Sembunyikan akun sistem USR-0000 dari daftar karyawan
                     allUsers = json.data.filter(user => user.userId !== "USR-0000");
                     renderUsersTable(allUsers);
                 } else {
@@ -365,6 +348,7 @@
             }
         }
 
+        // 3. RENDERING TABEL KARYAWAN
         function renderUsersTable(dataList) {
             const container = document.getElementById('user-table-body');
             if (dataList.length === 0) {
@@ -374,7 +358,6 @@
 
             container.innerHTML = dataList.map(user => {
                 const safeFoto = user.foto || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=1e293b&color=f59e0b&size=100`;
-                const parsed = parseKeterangan(user.keterangan);
 
                 const sisaKontrakText = user.endDate ? (() => {
                     let endD = new Date(user.endDate);
@@ -468,6 +451,7 @@
             renderUsersTable(filtered);
         }
 
+        // 4. LOGIKA PEMUTAKHIRAN MODAL FORM (DATABASE STANDARD)
         function openFormModal(userId = null) {
             const modal = document.getElementById('modal-form');
             const title = document.getElementById('modal-title');
@@ -499,7 +483,7 @@
             document.getElementById('form-foto-base64').value = "";
             document.getElementById('form-keterangan').value = "";
             
-            // Reset input otorisasi
+            // Reset input otorisasi backoffice
             document.getElementById('form-admin-access').value = "OFF";
             document.querySelectorAll('input[name="form-allowed-tabs"]').forEach(cb => cb.checked = false);
             // Reset Ceklis Jobdesk
@@ -509,8 +493,6 @@
                 title.innerText = "Edit Data Karyawan";
                 const u = allUsers.find(x => x.userId === userId);
                 if (u) {
-                    const parsed = parseKeterangan(u.keterangan);
-
                     document.getElementById('form-user-id').value = u.userId;
                     document.getElementById('form-name').value = u.name;
                     document.getElementById('form-pin').value = u.pin;
@@ -526,17 +508,20 @@
                     document.getElementById('form-geotag').value = u.geotag;
                     document.getElementById('form-foto').value = u.foto;
                     
-                    // Muat nilai keterangan yang bersih & nilai otorisasi
-                    document.getElementById('form-keterangan').value = parsed.cleanKeterangan;
-                    document.getElementById('form-admin-access').value = parsed.adminAccess;
+                    // MEMBACA KOLOM DATABASE RIIL SECARA LANGSUNG
+                    document.getElementById('form-keterangan').value = u.keterangan || "";
+                    document.getElementById('form-admin-access').value = u.adminAccess === "1" ? "ON" : "OFF";
 
-                    // Nyalakan ceklis modul yang boleh dibuka
-                    parsed.allowedTabs.forEach(tab => {
-                        const cb = document.querySelector(`input[name="form-allowed-tabs"][value="${tab}"]`);
-                        if (cb) cb.checked = true;
-                    });
+                    // Nyalakan ceklis modul yang boleh dibuka (SaaS ACL)
+                    if (u.allowedTabs) {
+                        const activeTabs = u.allowedTabs.split(",").map(t => t.trim());
+                        activeTabs.forEach(tab => {
+                            const cb = document.querySelector(`input[name="form-allowed-tabs"][value="${tab}"]`);
+                            if (cb) cb.checked = true;
+                        });
+                    }
 
-                    // Nyalakan Ceklis Berdasarkan Nilai Terpisah Koma (SaaS EnumList)
+                    // Nyalakan Ceklis Jobdesk (SaaS EnumList)
                     if (u.jobdesk) {
                         const jds = u.jobdesk.split(",").map(item => item.trim());
                         jds.forEach(jd => {
@@ -555,12 +540,12 @@
             document.getElementById('modal-form').classList.add('hidden-screen');
         }
 
+        // 5. PENGIRIMAN DATA FORM BARU (STANDARD DATABASE)
         async function submitUserForm() {
             const name = document.getElementById('form-name').value.trim();
             const pin = document.getElementById('form-pin').value.trim();
             const joinDate = document.getElementById('form-joindate').value;
             const noWa = document.getElementById('form-nowa').value.trim();
-            let rawKeterangan = document.getElementById('form-keterangan').value.trim();
 
             // Kumpulkan nilai kotak centang jobdesk (EnumList)
             const selectedJobdesks = [];
@@ -578,11 +563,11 @@
             saveBtn.innerText = "Mengirim...";
             saveBtn.disabled = true;
 
-            // Kumpulkan data otorisasi jika login sebagai administrator
-            let adminAccessValue = "OFF";
+            // Kumpulkan data otorisasi jika login sebagai administrator (DATABASE RIIL)
+            let adminAccessValue = "0";
             let allowedTabsList = [];
             if (loggedInRole === "administrator") {
-                adminAccessValue = document.getElementById('form-admin-access').value;
+                adminAccessValue = document.getElementById('form-admin-access').value === "ON" ? "1" : "0";
                 document.querySelectorAll('input[name="form-allowed-tabs"]:checked').forEach(cb => {
                     allowedTabsList.push(cb.value);
                 });
@@ -590,18 +575,9 @@
                 // Jika bukan administrator, pertahankan nilai otorisasi lama agar tidak hilang
                 const oldUser = allUsers.find(x => x.userId === document.getElementById('form-user-id').value);
                 if (oldUser) {
-                    const parsed = parseKeterangan(oldUser.keterangan);
-                    adminAccessValue = parsed.adminAccess;
-                    allowedTabsList = parsed.allowedTabs;
-                    rawKeterangan = parsed.cleanKeterangan;
+                    adminAccessValue = oldUser.adminAccess || "0";
+                    allowedTabsList = oldUser.allowedTabs ? oldUser.allowedTabs.split(",") : [];
                 }
-            }
-
-            // Integrasikan parameter otorisasi ke dalam string kolom Keterangan secara asinkron
-            let finalKeterangan = rawKeterangan;
-            if (adminAccessValue === "ON" || allowedTabsList.length > 0) {
-                finalKeterangan = `${rawKeterangan} | [ADMIN_ACCESS:${adminAccessValue}] [ALLOWED_TABS:${allowedTabsList.join(",")}]`.trim();
-                if (finalKeterangan.startsWith("|")) finalKeterangan = finalKeterangan.slice(1).trim();
             }
 
             const userData = {
@@ -621,7 +597,10 @@
                 geotag: document.getElementById('form-geotag').value,
                 foto: document.getElementById('form-foto').value.trim(),
                 photoBase64: document.getElementById('form-foto-base64').value,
-                keterangan: finalKeterangan
+                // PENYIMPANAN KE KOLOM BARU SPREADSHEET (MURNI TANPA REGEX)
+                keterangan: document.getElementById('form-keterangan').value.trim(),
+                adminAccess: adminAccessValue, // Disimpan ke kolom 'AdminAccess' (1 atau 0)
+                allowedTabs: allowedTabsList.join(",") // Disimpan ke kolom 'AllowedTabs'
             };
 
             try {

@@ -514,35 +514,35 @@
         }
 
         async function loginAdmin() {
-            try {
-                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) });
-                const json = await res.json();
-                if(json.success) {
-                    const roleClean = json.role ? json.role.toLowerCase().trim() : "";
-                    
-                    if (roleClean === "administrator") {
-                        localStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
-                        window.location.reload();
-                        return;
-                    }
+    try {
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) });
+        const json = await res.json();
+        if(json.success) {
+            const roleClean = json.role ? json.role.toLowerCase().trim() : "";
+            
+            if (roleClean === "administrator") {
+                localStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
+                window.location.reload();
+                return;
+            }
 
-                    const parsed = parseKeterangan(json.keterangan || "");
-                    if (parsed.adminAccess === "ON") {
-                        localStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
-                        window.location.reload();
-                    } else {
-                        alert("Akses Ditolak!\n\nAkun Anda tidak memiliki izin otorisasi untuk mengakses Backoffice.");
-                        clearPin();
-                    }
-                } else {
-                    alert(json.message || "PIN Salah!");
-                    clearPin();
-                }
-            } catch(e) {
-                alert("Koneksi gagal.");
+            // Jauh lebih bersih tanpa Regex! Cukup cek angka 1 (ON) atau 0 (OFF)
+            if (json.adminAccess === "1") {
+                localStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
+                window.location.reload();
+            } else {
+                alert("Akses Ditolak!\n\nAkun Anda tidak memiliki izin untuk mengakses Backoffice.");
                 clearPin();
             }
+        } else {
+            alert(json.message || "PIN Salah!");
+            clearPin();
         }
+    } catch(e) {
+        alert("Koneksi gagal.");
+        clearPin();
+    }
+}
 
         function logoutAdmin() {
             if (confirm("Keluar dari sesi admin?")) {
