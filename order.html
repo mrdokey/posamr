@@ -6,15 +6,12 @@
     <title>Order Waiter AMR</title>
     <link rel="icon" type="image/png" href="https://i.ibb.co.com/JW1FFbCz/1780229137561.png">
     
-    <!-- Integrasi Manifest & Service Worker Mandiri untuk HP Waiter (Portrait) -->
     <link rel="manifest" href="./manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        /* KUNCI ANTI-ZOOM DI HP Waiter */
         button, input, select { touch-action: manipulation; }
-        
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f172a; overflow: hidden; }
         .hidden-screen { display: none !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -34,7 +31,7 @@
 </head>
 <body class="h-[100dvh] w-screen flex flex-col select-none text-slate-100">
 
-    <!-- FLOATING BANNER: PENGINGAT ABSEN PULANG (SHIFT ALARM UNTUK WAITER HP) -->
+    <!-- FLOATING BANNER: PENGINGAT ABSEN PULANG -->
     <div id="waiter-shift-alarm-banner" class="hidden-screen fixed top-0 left-0 right-0 z-50 bg-rose-600 border-b border-rose-500 text-white py-2 px-4 shadow-xl flex justify-between items-center">
         <p class="text-[10px] font-black tracking-tight flex items-center gap-1.5 uppercase">
             <i data-lucide="alarm-clock" class="w-4 h-4 animate-bounce"></i>
@@ -120,6 +117,11 @@
             </div>
         </div>
 
+        <!-- SUB-CATEGORY CHIPS BAR (SaaS Cascade - Portrait Mode) -->
+        <div id="sub-category-bar" class="hidden bg-slate-950 px-4 py-2 border-b border-slate-800 shrink-0 flex gap-2 overflow-x-auto no-scrollbar smooth-transition">
+            <!-- Diisi dinamis oleh waiter.js -->
+        </div>
+
         <!-- Menu Grid -->
         <div id="menu-container" class="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4 auto-rows-max pb-24">
             <div class="animate-pulse bg-slate-800 h-32 rounded-xl"></div>
@@ -184,6 +186,6 @@
         </div>
     </div>
 
-    <script src="waiter.js?v=99"></script>
+    <script src="waiter.js?v=105"></script>
 </body>
 </html>

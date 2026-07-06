@@ -1,12 +1,11 @@
 /**
- * MODUL 2: CORE POS, VOUCHER DROPDOWN, ROUNDING, & CART LOGIC
+ * MODUL 2: CORE POS, VOUCHER DROPDOWN, ROUNDING, CART LOGIC, & CASCADING SUB-CATEGORY
  * UPDATE: Responsive Row-Align Card Layout (No Clipping & Safe Auto-Height)
  */
 
-// --- HELPER: KALKULASI PEMBULATAN DINAMIS KASIR ---
 function getRoundedAmount(amount) {
     const arah = (configData["PEMBULATAN_ARAH"] || "NONE").toUpperCase().trim(); 
-    const nominal = parseInt(configData["PEMBULATAN_NOMINAL"] || "1000") || 1000;
+    const nominal = parseInt(configData["PEMBULAN_NOMINAL"] || "1000") || 1000;
     
     if (arah === "UP") {
         return Math.ceil(amount / nominal) * nominal;
@@ -38,11 +37,10 @@ async function loginKasir() {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) });
         const json = await res.json();
         if(json.success) {
-            const allowedRoles = ["admin", "hrd", "manager", "owner"];
+            const allowedRoles = ["admin", "hrd", "manager", "owner", "administrator"];
             const jobdeskClean = json.jobdesk ? json.jobdesk.toLowerCase().trim() : "";
             const roleClean = json.role ? json.role.toLowerCase().trim() : "";
 
-            // PERBAIKAN: Diubah menjadi "cashier"
             if (jobdeskClean === "cashier" || allowedRoles.includes(roleClean)) { 
                 localStorage.setItem(STORAGE_USER, JSON.stringify(json));
                 window.location.reload();
@@ -135,15 +133,21 @@ function applyConfig() {
 function renderDiscounts() {
     const select = document.getElementById('cart-discount-select');
     if (select) {
-        select.innerHTML = discountData.map(d => {
+        select.innerHTML = `<option value="0" data-id="DISC-00">Tanpa Discount (0%)</option>` + 
+        discountData.map(d => {
             let displayPerc = d.percentage < 1 ? (d.percentage * 100) : d.percentage;
             return `<option value="${d.percentage}" data-id="${d.id}">${d.name} (${displayPerc}%)</option>`;
         }).join('');
     }
 }
 
+// ==========================================
+// CASCADING FILTER KATEGORI UTAMA & SUB-KATEGORI (LANDSCAPE)
+// ==========================================
 function filterMenu(cat, btnElement = null) {
     currentCategory = cat;
+    currentSubCategory = 'Semua'; // Reset sub-kategori saat kategori utama berganti
+
     if (btnElement) {
         document.querySelectorAll('.cat-btn').forEach(b => {
             b.classList.remove('bg-amber-500', 'text-slate-900', 'shadow-md');
@@ -152,6 +156,66 @@ function filterMenu(cat, btnElement = null) {
         btnElement.classList.remove('bg-slate-800', 'text-slate-300', 'hover:bg-slate-700');
         btnElement.classList.add('bg-amber-500', 'text-slate-900', 'shadow-md');
     }
+
+    renderSubCategoryChips();
+    applyFilters();
+}
+
+function renderSubCategoryChips() {
+    const bar = document.getElementById('sub-category-bar');
+    if (!bar) return;
+
+    if (currentCategory === 'Semua') {
+        bar.classList.add('hidden');
+        bar.innerHTML = "";
+        return;
+    }
+
+    // Cari sub-kategori unik dari menu yang masuk kategori utama terpilih
+    let uniqueSubs = new Set();
+    menuData.forEach(item => {
+        if (item.category === currentCategory && item.subCategory && item.subCategory.trim() !== "") {
+            uniqueSubs.add(item.subCategory.trim());
+        }
+    });
+
+    if (uniqueSubs.size === 0) {
+        bar.classList.add('hidden');
+        bar.innerHTML = "";
+        return;
+    }
+
+    bar.classList.remove('hidden');
+
+    let chipsHtml = `
+        <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest mr-2">Sub-Menu:</span>
+        <button onclick="filterSubMenu('Semua', this)" id="btn-sub-Semua" class="sub-chip bg-amber-500 text-slate-950 px-4 py-1.5 rounded-xl text-xs font-black whitespace-nowrap transition-all">
+            SEMUA
+        </button>
+    `;
+
+    Array.from(uniqueSubs).sort().forEach(sub => {
+        chipsHtml += `
+            <button onclick="filterSubMenu('${sub}', this)" id="btn-sub-${sub.replace(/\s+/g, '_')}" class="sub-chip bg-slate-800 text-slate-400 px-4 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all hover:text-white">
+                ${sub.toUpperCase()}
+            </button>
+        `;
+    });
+
+    bar.innerHTML = chipsHtml;
+}
+
+function filterSubMenu(subCat, btnElement) {
+    currentSubCategory = subCat;
+
+    document.querySelectorAll('.sub-chip').forEach(b => {
+        b.className = "sub-chip bg-slate-800 text-slate-400 px-4 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all hover:text-white";
+    });
+
+    if (btnElement) {
+        btnElement.className = "sub-chip bg-amber-500 text-slate-950 px-4 py-1.5 rounded-xl text-xs font-black whitespace-nowrap transition-all";
+    }
+
     applyFilters();
 }
 
@@ -160,13 +224,22 @@ function searchMenu(val) { applyFilters(val.toLowerCase()); }
 function applyFilters(searchStr = "") {
     const keyword = searchStr || document.getElementById('search-menu').value.toLowerCase();
     filteredData = menuData;
-    if(currentCategory !== 'Semua') { filteredData = filteredData.filter(m => (m.category || "").trim() === currentCategory); }
-    if(keyword !== "") {
+    
+    if (currentCategory !== 'Semua') { 
+        filteredData = filteredData.filter(m => (m.category || "").trim() === currentCategory); 
+    }
+
+    if (currentSubCategory !== 'Semua') {
+        filteredData = filteredData.filter(m => (m.subCategory || "").trim() === currentSubCategory);
+    }
+    
+    if (keyword !== "") {
         filteredData = filteredData.filter(m => 
             m.name.toLowerCase().includes(keyword) || 
             (m.description && m.description.toLowerCase().includes(keyword))
         );
     }
+    
     const container = document.getElementById('menu-container');
     if (container) {
         container.style.opacity = '0';
@@ -188,7 +261,7 @@ function renderMenuHTML(items) {
     }
 
     container.innerHTML = items.map(item => {
-        const safeId = String(item.id || '').replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        const safeId = String(item.id || '').replace(/'/g, "\\'").replace(/'/g, "\\'").replace(/"/g, "&quot;");
         const safeName = String(item.name || 'Menu').replace(/'/g, "\\'").replace(/"/g, "&quot;");
         const safeRoute = String(item.route || 'Kitchen').replace(/'/g, "\\'").replace(/"/g, "&quot;");
         const safeDesc = String(item.description || '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -202,7 +275,7 @@ function renderMenuHTML(items) {
         const badgeHtml = isHot ? `<div class="absolute top-2 left-2 bg-rose-600 text-white text-[9px] font-black px-2.5 py-1 rounded-md shadow-md animate-pulse">🔥 HOT</div>` : ``;
 
         return `
-        <div onclick="addToCart('${safeId}', '${safeName}', ${safePrice}, '${safeRoute}')" class="menu-card bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden cursor-pointer hover:border-amber-500 relative transition-all duration-300 h-full active:scale-95">
+        <div onclick="addToCart('${safeId}', '${safeName}', ${safePrice}, '${safeRoute}')" class="menu-card bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden cursor-pointer hover:border-amber-500 relative transition-all duration-300 h-full active:scale-95 text-slate-100">
             <div class="h-[110px] w-full relative shrink-0 overflow-hidden bg-slate-900">
                 <img src="${item.image || fallbackImg}" onerror="this.onerror=null; this.src='${fallbackImg}';" class="w-full h-full object-cover transition-transform duration-700 hover:scale-110">
                 ${badgeHtml}
@@ -393,7 +466,7 @@ function renderCart() {
     }
 
     container.innerHTML = cart.map((item, idx) => `
-        <div class="bg-slate-800 p-3.5 rounded-2xl border border-slate-700 shadow-sm relative animate-slide-up">
+        <div class="bg-slate-800 p-3.5 rounded-2xl border border-slate-700 shadow-sm relative animate-slide-up text-slate-100">
             <div class="flex justify-between items-start mb-2">
                 <div class="pr-2 text-left">
                     <h4 class="text-xs font-bold text-white leading-tight">${item.name}</h4>

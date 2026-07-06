@@ -11,9 +11,83 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: transparent; }
         .hidden-screen { display: none !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+
+        /* =========================================================================
+         * OVERRIDE TEMA TERANG PREMIUM UNTUK IFRAME ANAK (LIGHT MODE)
+         * ========================================================================= */
+        body.light-mode {
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+        body.light-mode .text-white {
+            color: #0f172a !important;
+        }
+        body.light-mode .text-slate-300 {
+            color: #334155 !important;
+        }
+        body.light-mode .text-slate-400 {
+            color: #475569 !important;
+        }
+        body.light-mode .text-slate-500 {
+            color: #64748b !important;
+        }
+        body.light-mode .bg-slate-900,
+        body.light-mode .bg-slate-900\/40,
+        body.light-mode .bg-slate-900\/60 {
+            background-color: #ffffff !important;
+            border-color: #cbd5e1 !important;
+        }
+        body.light-mode .border-slate-800,
+        body.light-mode .border-slate-850 {
+            border-color: #cbd5e1 !important;
+        }
+        body.light-mode table th {
+            background-color: #f1f5f9 !important;
+            color: #475569 !important;
+            border-bottom-color: #cbd5e1 !important;
+        }
+        body.light-mode table td {
+            color: #1e293b !important;
+            border-bottom-color: #f1f5f9 !important;
+        }
+        body.light-mode tr:hover {
+            background-color: #f8fafc !important;
+        }
+        body.light-mode input,
+        body.light-mode select,
+        body.light-mode textarea {
+            background-color: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #0f172a !important;
+        }
+        body.light-mode input::placeholder {
+            color: #94a3b8 !important;
+        }
+        body.light-mode .bg-slate-950,
+        body.light-mode .bg-slate-950\/40 {
+            background-color: #f1f5f9 !important;
+            border-color: #cbd5e1 !important;
+        }
+        body.light-mode #modal-form > div {
+            background-color: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #0f172a !important;
+        }
+        body.light-mode #form-area-container {
+            background-color: #f1f5f9 !important;
+            border-color: #cbd5e1 !important;
+        }
     </style>
 </head>
 <body class="text-slate-100 p-2 overflow-y-auto h-full animate-fade-in">
+
+    <!-- DETEKSI WARISAN TEMA INDUK SAAS -->
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('theme') === 'light') {
+            document.body.classList.add('light-mode');
+        }
+    </script>
 
     <!-- HEADER -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-4 mb-6">
@@ -78,15 +152,29 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-3">
+                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Kategori</label>
-                        <select id="form-category" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white">
+                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Kategori Utama</label>
+                        <select id="form-category" onchange="updateSubCategoryDropdown()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white focus:border-amber-500">
                             <option value="Makanan">Makanan</option>
                             <option value="Minuman">Minuman</option>
                             <option value="Snack">Snack</option>
                         </select>
                     </div>
+                    
+                    <!-- DROPDOWN SUB-KATEGORI DEPENDENT -->
+                    <div>
+                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Sub-Kategori</label>
+                        <select id="form-subcategory-select" onchange="toggleCustomSubCategoryInput()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white focus:border-amber-500">
+                            <!-- Diisi dinamis oleh fungsi JavaScript -->
+                        </select>
+                        
+                        <!-- Input Teks Baru jika pilih '+ Tambah Kategori Baru' -->
+                        <input type="text" id="form-subcategory-new" placeholder="Tulis Sub-Kategori baru..." class="hidden-screen mt-2 w-full px-3 py-2 bg-slate-950 border-2 border-emerald-500/30 text-white rounded-xl outline-none text-xs focus:border-emerald-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Rute Cetak Printer</label>
                         <select id="form-route" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white">
@@ -107,7 +195,6 @@
                 <div>
                     <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2.5">Aktif di Cabang (SaaS Area Group)</label>
                     <div id="form-area-container" class="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-950 border border-slate-850 p-3 rounded-2xl">
-                        <!-- Kotak ceklis di-render otomatis dari konfigurasi area Google Sheets -->
                         <span class="text-xs text-slate-600 animate-pulse font-semibold col-span-full text-center">Memuat area...</span>
                     </div>
                 </div>
@@ -193,6 +280,8 @@
                     ? item.area.split(',').map(a => `<span class="bg-slate-900 border border-slate-800 text-slate-400 text-[9px] px-1.5 py-0.5 rounded font-bold">${a.trim()}</span>`).join(' ')
                     : `<span class="text-slate-600 text-[9px] font-bold">Semua Cabang</span>`;
 
+                const cleanSubCategory = item.subCategory ? `<span class="text-slate-500 font-semibold text-[10px] block mt-1">Sub: ${item.subCategory}</span>` : '';
+
                 return `
                     <div class="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden flex flex-col hover:border-amber-500/50 transition duration-300">
                         <!-- Thumbnail Frame -->
@@ -206,6 +295,7 @@
                         <div class="p-3 flex-1 flex flex-col justify-between text-left">
                             <div>
                                 <h3 class="font-bold text-white text-sm truncate uppercase tracking-tight" title="${item.name}">${item.name}</h3>
+                                ${cleanSubCategory}
                                 <p class="text-[10px] text-slate-500 mt-1 line-clamp-2 h-7 leading-relaxed">${item.description || "Tidak ada deskripsi hidangan."}</p>
                                 <div class="flex items-center justify-between border-t border-slate-800/80 mt-3 pt-2">
                                     ${routeBadge}
@@ -271,6 +361,62 @@
             }
         }
 
+        // =========================================================================
+        // LOGIKA BARU: CASCADING DEPENDENT DROP-DOWN UNTUK SUB-KATEGORI DINAMIS
+        // =========================================================================
+        function updateSubCategoryDropdown(selectedSubValue = "") {
+            const category = document.getElementById('form-category').value;
+            const subSelect = document.getElementById('form-subcategory-select');
+            
+            // Cari seluruh sub-kategori unik dari database berdasarkan kategori yang sedang dipilih
+            let uniqueSubs = new Set();
+            allMenus.forEach(item => {
+                if (item.category === category && item.subCategory && item.subCategory.trim() !== "") {
+                    uniqueSubs.add(item.subCategory.trim());
+                }
+            });
+
+            let optionsHtml = `<option value="">- Tanpa Sub-Kategori -</option>`;
+            Array.from(uniqueSubs).sort().forEach(sub => {
+                optionsHtml += `<option value="${sub}">${sub}</option>`;
+            });
+            
+            // Tambahkan tombol spesial untuk pendaftaran sub-kategori baru
+            optionsHtml += `<option value="ADD_NEW" class="text-emerald-400 font-bold">+ Tambah Sub-Kategori Baru</option>`;
+            
+            subSelect.innerHTML = optionsHtml;
+
+            // Jika sedang mode edit, pasang kembali nilainya secara otomatis
+            if (selectedSubValue !== "") {
+                if (uniqueSubs.has(selectedSubValue)) {
+                    subSelect.value = selectedSubValue;
+                } else if (selectedSubValue.trim() !== "") {
+                    // Jika sub-kategori lama tidak ada di daftar saat ini, paksa tampilkan mode input teks baru
+                    subSelect.value = "ADD_NEW";
+                    const newTxtInput = document.getElementById('form-subcategory-new');
+                    newTxtInput.classList.remove('hidden-screen');
+                    newTxtInput.value = selectedSubValue;
+                }
+            } else {
+                // Sembunyikan input teks baru jika ganti kategori secara normal
+                document.getElementById('form-subcategory-new').classList.add('hidden-screen');
+                document.getElementById('form-subcategory-new').value = "";
+            }
+        }
+
+        function toggleCustomSubCategoryInput() {
+            const selectVal = document.getElementById('form-subcategory-select').value;
+            const newTxtInput = document.getElementById('form-subcategory-new');
+            
+            if (selectVal === "ADD_NEW") {
+                newTxtInput.classList.remove('hidden-screen');
+                newTxtInput.focus();
+            } else {
+                newTxtInput.classList.add('hidden-screen');
+                newTxtInput.value = "";
+            }
+        }
+
         // 5. PENANGAN KONVERTER FOTO FISIK MENJADI BASE64
         function convertImageToBase64() {
             const file = document.getElementById('form-image-file').files[0];
@@ -308,6 +454,8 @@
             document.getElementById('form-image-file').value = "";
             document.getElementById('form-image-base64').value = "";
             document.getElementById('form-description').value = "";
+            document.getElementById('form-subcategory-new').classList.add('hidden-screen');
+            document.getElementById('form-subcategory-new').value = "";
 
             // Reset centang checkboxes
             document.querySelectorAll('input[name="form-menu-area"]').forEach(cb => cb.checked = false);
@@ -325,6 +473,9 @@
                     document.getElementById('form-image').value = item.image;
                     document.getElementById('form-description').value = item.description;
 
+                    // Inisiasi dropdown sub-kategori berdasarkan sub-kategori hidangan yang diedit
+                    updateSubCategoryDropdown(item.subCategory);
+
                     // Nyalakan ceklis cabang berdasarkan string terpisah koma
                     if (item.area) {
                         const activeAreas = item.area.split(',').map(a => a.trim());
@@ -336,6 +487,7 @@
                 }
             } else {
                 title.innerText = "Tambah Menu Hidangan Baru";
+                updateSubCategoryDropdown(); // Muat daftar sub-kategori kosong/bawaan
             }
             lucide.createIcons();
         }
@@ -351,6 +503,11 @@
             const category = document.getElementById('form-category').value;
             const route = document.getElementById('form-route').value;
             const status = document.getElementById('form-status').value;
+
+            // Logika Penyusunan Sub-Kategori Dinamis (SaaS Cascade)
+            const subSelect = document.getElementById('form-subcategory-select').value;
+            const subNew = document.getElementById('form-subcategory-new').value.trim();
+            const finalSubCategoryValue = subSelect === "ADD_NEW" ? subNew : subSelect;
 
             // Kumpulkan daftar area tercentang
             let selectedAreas = [];
@@ -373,9 +530,10 @@
                 name: name,
                 price: price,
                 category: category,
+                subCategory: finalSubCategoryValue, // <--- Kirim nilai sub-kategori dinamis ("Coffee" atau "Tea", dll)
                 route: route,
                 status: status,
-                area: areaValue, // "Renon, Denpasar"
+                area: areaValue, 
                 image: document.getElementById('form-image').value,
                 imageBase64: document.getElementById('form-image-base64').value,
                 description: document.getElementById('form-description').value.trim()

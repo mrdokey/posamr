@@ -1,11 +1,10 @@
 /**
- * MODUL 4: WAITER/Waiterss ENGINE (FULL RESPONSIVE & DRAFT ORDER)
- * UPDATE: SaaS Multi-Client Dynamic Token & Waiter Shift Alarm (Eco Banner)
+ * MODUL 4: WAITER/Waitress ENGINE (FULL RESPONSIVE & DRAFT ORDER)
+ * UPDATE: SaaS Multi-Client Dynamic Token, Waiter Shift Alarm, & Cascading Sub-Category
  */
 
 lucide.createIcons();
 
-// KUNCI AMAN SAAS: Mengambil URL API Lisensi secara dinamis dari memori perangkat
 const STORAGE_API = "MRD_API_URL";
 let GAS_URL = localStorage.getItem(STORAGE_API);
 
@@ -24,6 +23,7 @@ let menuData = [];
 let filteredData = []; 
 let cart = [];
 let currentCategory = 'Semua';
+let currentSubCategory = 'Semua';
 
 let loginPinValue = "";
 
@@ -80,9 +80,8 @@ window.onload = () => {
 };
 
 function checkState() {
-    // PROTEKSI UTAMA SAAS: Jika Lisensi Kosong, paksa alihkan HP ke Kiosk Absen untuk aktivasi
     if (!GAS_URL) {
-        alert("Sistem PWA Waiterss Belum Aktif!\n\nHarap lakukan aktivasi berlisensi terlebih dahulu melalui Kiosk Absensi di Tablet Utama.");
+        alert("Sistem PWA Waitress Belum Aktif!\n\nHarap lakukan aktivasi berlisensi terlebih dahulu melalui Kiosk Absensi.");
         window.location.href = "index.html";
         return;
     }
@@ -118,7 +117,7 @@ function showScreen(id) {
 }
 
 function resetLicense() {
-    if(confirm("Yakin reset cache dan data login Waiterss?")) {
+    if(confirm("Yakin reset cache dan data login Waitress?")) {
         localStorage.clear();
         window.location.reload();
     }
@@ -138,7 +137,7 @@ async function fetchConfigBg() {
 async function loginWaiter() {
     if(loginPinValue.length < 4) return;
     const statusText = document.getElementById('login-status');
-    statusText.innerText = "Memeriksa Akses Waiterss...";
+    statusText.innerText = "Memeriksa Akses Waitress...";
     
     try {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) });
@@ -150,14 +149,14 @@ async function loginWaiter() {
             const roleClean = json.role ? json.role.toLowerCase().trim() : "";
 
             if (jobdeskClean === "cashier") {
-    alert("Akses Ditolak! Anda adalah Cashier. Silakan login di Mesin POS Utama.");
-    clearPin();
-    statusText.innerText = "";
-} else if (jobdeskClean === "waiter" || allowedRoles.includes(roleClean)) {
+                alert("Akses Ditolak! Anda adalah Cashier. Silakan login di Mesin POS Utama.");
+                clearPin();
+                statusText.innerText = "";
+            } else if (jobdeskClean === "waiter" || allowedRoles.includes(roleClean)) {
                 localStorage.setItem(STORAGE_USER, JSON.stringify(json));
                 window.location.reload();
             } else {
-                alert("Akses Ditolak! Aplikasi ini khusus Waiterss.");
+                alert("Akses Ditolak! Aplikasi ini khusus Waitress.");
                 clearPin();
                 statusText.innerText = "";
             }
@@ -210,7 +209,6 @@ async function initApp() {
         }
     } catch (e) { console.log("Sedang Offline"); }
 
-    // Jalankan sistem pengingat otomatis Absen Pulang (Shift Alarm)
     checkWaiterShiftAlarm();
 }
 
@@ -219,8 +217,13 @@ function applyConfig() {
     if(configData["NAMA_PERUSAHAAN"] && titleEl) titleEl.innerText = configData["NAMA_PERUSAHAAN"] + " ORDER";
 }
 
+// ==========================================
+// CASCADING FILTER KATEGORI UTAMA & SUB-KATEGORI (PORTRAIT)
+// ==========================================
 function filterMenu(cat, btnElement = null) {
     currentCategory = cat;
+    currentSubCategory = 'Semua'; // Reset sub-kategori saat kategori utama berganti
+    
     if (btnElement) {
         document.querySelectorAll('.cat-btn').forEach(b => {
             b.classList.remove('bg-amber-500', 'text-slate-900', 'shadow-md');
@@ -229,6 +232,65 @@ function filterMenu(cat, btnElement = null) {
         btnElement.classList.remove('bg-slate-800', 'text-slate-300', 'hover:bg-slate-700');
         btnElement.classList.add('bg-amber-500', 'text-slate-900', 'shadow-md');
     }
+
+    renderSubCategoryChips();
+    applyFilters();
+}
+
+function renderSubCategoryChips() {
+    const bar = document.getElementById('sub-category-bar');
+    if (!bar) return;
+
+    if (currentCategory === 'Semua') {
+        bar.classList.add('hidden');
+        bar.innerHTML = "";
+        return;
+    }
+
+    // Cari sub-kategori unik dari menu yang masuk kategori utama terpilih
+    let uniqueSubs = new Set();
+    menuData.forEach(item => {
+        if (item.category === currentCategory && item.subCategory && item.subCategory.trim() !== "") {
+            uniqueSubs.add(item.subCategory.trim());
+        }
+    });
+
+    if (uniqueSubs.size === 0) {
+        bar.classList.add('hidden');
+        bar.innerHTML = "";
+        return;
+    }
+
+    bar.classList.remove('hidden');
+
+    let chipsHtml = `
+        <button onclick="filterSubMenu('Semua', this)" id="btn-sub-Semua" class="sub-chip bg-amber-500 text-slate-950 px-4 py-1.5 rounded-full text-[10px] font-black whitespace-nowrap transition-all">
+            SEMUA
+        </button>
+    `;
+
+    Array.from(uniqueSubs).sort().forEach(sub => {
+        chipsHtml += `
+            <button onclick="filterSubMenu('${sub}', this)" id="btn-sub-${sub.replace(/\s+/g, '_')}" class="sub-chip bg-slate-800 text-slate-400 px-4 py-1.5 rounded-full text-[10px] font-bold whitespace-nowrap transition-all hover:text-white">
+                ${sub.toUpperCase()}
+            </button>
+        `;
+    });
+
+    bar.innerHTML = chipsHtml;
+}
+
+function filterSubMenu(subCat, btnElement) {
+    currentSubCategory = subCat;
+
+    document.querySelectorAll('.sub-chip').forEach(b => {
+        b.className = "sub-chip bg-slate-800 text-slate-400 px-4 py-1.5 rounded-full text-[10px] font-bold whitespace-nowrap transition-all hover:text-white";
+    });
+
+    if (btnElement) {
+        btnElement.className = "sub-chip bg-amber-500 text-slate-950 px-4 py-1.5 rounded-full text-[10px] font-black whitespace-nowrap transition-all";
+    }
+
     applyFilters();
 }
 
@@ -238,11 +300,15 @@ function applyFilters(searchStr = "") {
     const keyword = searchStr || document.getElementById('search-menu').value.toLowerCase();
     filteredData = menuData;
     
-    if(currentCategory !== 'Semua') { 
+    if (currentCategory !== 'Semua') { 
         filteredData = filteredData.filter(m => (m.category || "").trim() === currentCategory); 
     }
+
+    if (currentSubCategory !== 'Semua') {
+        filteredData = filteredData.filter(m => (m.subCategory || "").trim() === currentSubCategory);
+    }
     
-    if(keyword !== "") {
+    if (keyword !== "") {
         filteredData = filteredData.filter(m => 
             m.name.toLowerCase().includes(keyword) || 
             (m.description && m.description.toLowerCase().includes(keyword))
@@ -258,8 +324,6 @@ function applyFilters(searchStr = "") {
         }, 150);
     }
 }
-
-// --- SUNTIKAN PADA FILE waiter.js ---
 
 function renderMenuHTML(items) {
     const container = document.getElementById('menu-container');
@@ -283,10 +347,6 @@ function renderMenuHTML(items) {
         const isHot = (parseInt(item.totalSold) || 0) > 10;
         const badgeHtml = isHot ? `<div class="absolute top-2 left-2 bg-rose-600 text-white text-[9px] font-black px-2 py-1 rounded-md shadow-md animate-pulse">🔥 HOT</div>` : ``;
 
-        // PERBAIKAN STRUKTUR TEKS WAITER (HP):
-        // 1. h-full tetap dipertahankan pada pembungkus luar agar kartu sejajar.
-        // 2. Gambar dikunci ke h-[110px].
-        // 3. Deskripsi bebas memanjang ke bawah (break-words).
         return `
         <div onclick="addToCart('${safeId}', '${safeName}', ${safePrice}, '${safeRoute}')" class="bg-slate-800 rounded-2xl border border-slate-700 flex flex-col overflow-hidden cursor-pointer active:scale-95 transition-transform relative h-full">
             
@@ -296,7 +356,6 @@ function renderMenuHTML(items) {
                 <div class="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-md text-slate-300 text-[9px] font-bold px-2 py-0.5 rounded border border-slate-700">${safeCat}</div>
             </div>
 
-            <!-- Fleksibel Container Teks -->
             <div class="p-3 flex flex-col justify-between flex-1 bg-slate-800 w-full">
                 <div class="text-left mb-2 w-full">
                     <h3 class="text-xs font-bold text-white break-words whitespace-normal leading-snug w-full">${safeName}</h3>
@@ -330,10 +389,8 @@ function addNote(index) {
     if(note !== null) { cart[index].notes = note; renderCart(); }
 }
 
-// FILE: waiter.js (Ubah fungsi clearCart ini)
-
 function clearCart() {
-    if(confirm("Kosongkan keranjang Waiterss?")) { 
+    if(confirm("Kosongkan keranjang Waitress?")) { 
         cart = []; 
         const orderTableEl = document.getElementById('order-table');
         if (orderTableEl) orderTableEl.value = ""; 
@@ -427,7 +484,7 @@ async function sendOrderToCashier() {
             voucherCode: "",
             tax: 0, 
             serviceCharge: 0, 
-            rounding: 0, // Injeksi nilai pembulatan default ke draf
+            rounding: 0, 
             totalAmount: subtotal, 
             paymentMethod: "-",
             orderStatus: "Draft", 
@@ -501,17 +558,15 @@ window.addEventListener('online', async () => {
 function checkWaiterShiftAlarm() {
     if (!cashierInfo) return;
     
-    // Interval cek pasif setiap 1 menit sekali (Sangat Hemat Baterai HP)
     setInterval(() => {
         const nowObj = new Date();
         const currentHour = nowObj.getHours();
         const alarmBanner = document.getElementById('waiter-shift-alarm-banner');
         
         if (alarmBanner) {
-            // Alarm bergetar jika melewati batas shift malam default (01:00 WITA)
             if (currentHour >= 1 && currentHour < 6) {
                 alarmBanner.classList.remove('hidden-screen');
-                if (navigator.vibrate) navigator.vibrate([100, 50, 100]); // Getar halus HP Waiterss
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100]); 
             }
         }
     }, 60000);
