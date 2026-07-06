@@ -90,7 +90,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nama Menu/Hidangan</label>
-                        <input type="text" id="form-name" placeholder="Ayam Goreng Sambal Hijau" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500">
+                        <input type="text" id="form-name" placeholder="Nama Data Menu" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500">
                     </div>
                     <div>
                         <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Harga Jual (Rp)</label>
@@ -312,7 +312,7 @@
         }
 
         function renderDynamicCategoryFilters() {
-            let uniqueCats = new Set(["Makanan", "Minuman", "Snack"]); 
+            let uniqueCats = new Set([""]); 
             allMenus.forEach(item => {
                 if (item.category && item.category.trim() !== "") {
                     uniqueCats.add(item.category.trim());
@@ -333,7 +333,7 @@
             newCatInput.classList.add('hidden-screen');
             newCatInput.value = "";
 
-            let uniqueCats = new Set(["Makanan", "Minuman", "Snack"]);
+            let uniqueCats = new Set([""]);
             allMenus.forEach(item => {
                 if (item.category && item.category.trim() !== "") {
                     uniqueCats.add(item.category.trim());
@@ -450,7 +450,7 @@
             document.getElementById('form-menu-id').value = "";
             document.getElementById('form-name').value = "";
             document.getElementById('form-price').value = "";
-            document.getElementById('form-category').value = "Makanan";
+            document.getElementById('form-category').value = "";
             document.getElementById('form-route').value = "Kitchen";
             document.getElementById('form-status').value = "Available";
             document.getElementById('form-image').value = "";
