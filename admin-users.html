@@ -12,76 +12,26 @@
         .hidden-screen { display: none !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
 
-        /* =========================================================================
-         * OVERRIDE TEMA TERANG PREMIUM UNTUK IFRAME ANAK (LIGHT MODE)
-         * ========================================================================= */
-        body.light-mode {
-            background-color: #f8fafc;
-            color: #0f172a;
-        }
-        body.light-mode .text-white {
-            color: #0f172a !important;
-        }
-        body.light-mode .text-slate-300 {
-            color: #334155 !important;
-        }
-        body.light-mode .text-slate-400 {
-            color: #475569 !important;
-        }
-        body.light-mode .text-slate-500 {
-            color: #64748b !important;
-        }
-        body.light-mode .bg-slate-900,
-        body.light-mode .bg-slate-900\/40,
-        body.light-mode .bg-slate-900\/60 {
-            background-color: #ffffff !important;
-            border-color: #cbd5e1 !important;
-        }
-        body.light-mode .border-slate-800,
-        body.light-mode .border-slate-850 {
-            border-color: #cbd5e1 !important;
-        }
-        body.light-mode table th {
-            background-color: #f1f5f9 !important;
-            color: #475569 !important;
-            border-bottom-color: #cbd5e1 !important;
-        }
-        body.light-mode table td {
-            color: #1e293b !important;
-            border-bottom-color: #f1f5f9 !important;
-        }
-        body.light-mode tr:hover {
-            background-color: #f8fafc !important;
-        }
-        body.light-mode input,
-        body.light-mode select,
-        body.light-mode textarea {
-            background-color: #ffffff !important;
-            border-color: #cbd5e1 !important;
-            color: #0f172a !important;
-        }
-        body.light-mode input::placeholder {
-            color: #94a3b8 !important;
-        }
-        body.light-mode .bg-slate-950,
-        body.light-mode .bg-slate-950\/40 {
-            background-color: #f1f5f9 !important;
-            border-color: #cbd5e1 !important;
-        }
-        body.light-mode #modal-form > div {
-            background-color: #ffffff !important;
-            border-color: #cbd5e1 !important;
-            color: #0f172a !important;
-        }
-        body.light-mode #admin-auth-section {
-            background-color: #f1f5f9 !important;
-            border-color: #cbd5e1 !important;
-        }
+        /* OVERRIDE TEMA TERANG */
+        body.light-mode { background-color: #f8fafc; color: #0f172a; }
+        body.light-mode .text-white { color: #0f172a !important; }
+        body.light-mode .text-slate-300 { color: #334155 !important; }
+        body.light-mode .text-slate-400 { color: #475569 !important; }
+        body.light-mode .text-slate-500 { color: #64748b !important; }
+        body.light-mode .bg-slate-900, body.light-mode .bg-slate-900\/40, body.light-mode .bg-slate-900\/60 { background-color: #ffffff !important; border-color: #cbd5e1 !important; }
+        body.light-mode .border-slate-800, body.light-mode .border-slate-850 { border-color: #cbd5e1 !important; }
+        body.light-mode table th { background-color: #f1f5f9 !important; color: #475569 !important; border-bottom-color: #cbd5e1 !important; }
+        body.light-mode table td { color: #1e293b !important; border-bottom-color: #f1f5f9 !important; }
+        body.light-mode tr:hover { background-color: #f8fafc !important; }
+        body.light-mode input, body.light-mode select, body.light-mode textarea { background-color: #ffffff !important; border-color: #cbd5e1 !important; color: #0f172a !important; }
+        body.light-mode input::placeholder { color: #94a3b8 !important; }
+        body.light-mode .bg-slate-950, body.light-mode .bg-slate-950\/40 { background-color: #f1f5f9 !important; border-color: #cbd5e1 !important; }
+        body.light-mode #modal-form > div, body.light-mode #modal-delete-user > div { background-color: #ffffff !important; border-color: #cbd5e1 !important; color: #0f172a !important; }
+        body.light-mode #admin-auth-section { background-color: #f1f5f9 !important; border-color: #cbd5e1 !important; }
     </style>
 </head>
 <body class="text-slate-100 p-2 overflow-y-auto h-full">
 
-    <!-- DETEKSI WARISAN TEMA INDUK SAAS -->
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('theme') === 'light') {
@@ -108,12 +58,9 @@
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
             <input type="text" id="search-input" onkeyup="filterUsers()" placeholder="Cari nama atau No WA..." class="w-full pl-9 pr-4 py-2.5 bg-slate-900 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500">
         </div>
-        
-        <!-- Dropdown Cabang Dinamis (SaaS) -->
         <select id="filter-area" onchange="filterUsers()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2.5 outline-none text-xs focus:border-amber-500">
             <option value="">Memuat Cabang...</option>
         </select>
-
         <select id="filter-status" onchange="filterUsers()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2.5 outline-none text-xs focus:border-amber-500">
             <option value="">Semua Status Profil</option>
             <option value="Active">Active</option>
@@ -144,7 +91,7 @@
     </div>
 
     <!-- MODAL FORM TAMBAH / EDIT KARYAWAN -->
-    <div id="modal-form" class="hidden-screen fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4">
+    <div id="modal-form" class="hidden-screen fixed inset-0 bg-black/85 z-40 flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg p-6 shadow-2xl flex flex-col max-h-[90vh]">
             <div class="flex justify-between items-center mb-4 shrink-0 border-b border-slate-800 pb-3">
                 <h3 id="modal-title" class="text-sm font-black text-amber-500 uppercase tracking-wider">Tambah Karyawan Baru</h3>
@@ -258,9 +205,7 @@
                     </div>
                 </div>
 
-                <!-- =========================================================================
-                 * SAAS ACL: SEKSI PENGATURAN OTORISASI AKSES BACKOFFICE (KHUSUS ADMINISTRATOR)
-                 * ========================================================================= -->
+                <!-- SAAS ACL BACKOFFICE -->
                 <div id="admin-auth-section" class="hidden-screen bg-slate-950 p-4 border border-slate-850 rounded-2xl space-y-3.5">
                     <p class="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1.5"><i data-lucide="shield-check" class="w-4 h-4 animate-pulse"></i> Otorisasi Akses Backoffice (Admin Only)</p>
                     <div class="grid grid-cols-2 gap-3">
@@ -313,13 +258,31 @@
         </div>
     </div>
 
+    <!-- MODAL: OTP ATASAN UNTUK HAPUS KARYAWAN NON-AKTIF (SOFT DELETE) -->
+    <div id="modal-delete-user" class="hidden-screen fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-sm p-6 shadow-2xl flex flex-col text-center">
+            <div class="w-14 h-14 bg-rose-500/10 border border-rose-500/30 rounded-full flex items-center justify-center mx-auto mb-3 text-rose-500">
+                <i data-lucide="trash-2" class="w-7 h-7 animate-pulse"></i>
+            </div>
+            <h3 class="text-sm font-black text-rose-500 uppercase tracking-wider">Otorisasi Hapus Karyawan</h3>
+            <p class="text-xs text-slate-400 mb-4 leading-relaxed">Penghapusan data karyawan bersifat permanen secara operasional dan memerlukan verifikasi OTP Manager.</p>
+            
+            <input type="hidden" id="delete-user-id">
+            <input type="password" id="delete-user-otp" maxlength="4" placeholder="••••" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-amber-500 text-center text-2xl tracking-[0.5em] rounded-xl outline-none font-bold mb-4 focus:border-rose-500">
+            
+            <div class="flex gap-3">
+                <button onclick="closeDeleteUserModal()" class="flex-1 py-2.5 text-slate-400 font-bold text-xs hover:text-white">Batal</button>
+                <button onclick="submitDeleteUserAuth()" id="btn-exec-delete-user" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs rounded-xl shadow-lg">HAPUS KARYAWAN</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const GAS_URL = localStorage.getItem("MRD_API_URL");
         const adminSession = JSON.parse(localStorage.getItem("MRD_ADMIN_SESSION"));
         const loggedInRole = adminSession && adminSession.role ? adminSession.role.toLowerCase().trim() : "";
         let allUsers = [];
 
-        // 1. SINKRONISASI WINDOW ONLOAD
         window.onload = () => {
             if (GAS_URL) {
                 fetchUsers();
@@ -327,7 +290,25 @@
             }
         };
 
-        // 2. MEMBACA DATA KARYAWAN DARI GAS
+        // PARSER DATA METADATA OTORISASI SAAS ACL
+        function parseKeterangan(keteranganStr) {
+            let adminAccess = "OFF";
+            let allowedTabs = [];
+            let cleanKeterangan = keteranganStr || "";
+
+            if (keteranganStr) {
+                const accessMatch = keteranganStr.match(/\[ADMIN_ACCESS:(ON|OFF)\]/);
+                if (accessMatch) adminAccess = accessMatch[1];
+
+                const tabsMatch = keteranganStr.match(/\[ALLOWED_TABS:([^\]]+)\]/);
+                if (tabsMatch) allowedTabs = tabsMatch[1].split(",");
+                
+                cleanKeterangan = keteranganStr.replace(/\[ADMIN_ACCESS:(ON|OFF)\]/, "").replace(/\[ALLOWED_TABS:([^\]]+)\]/, "").trim();
+                if (cleanKeterangan.endsWith("|")) cleanKeterangan = cleanKeterangan.slice(0, -1).trim();
+            }
+            return { adminAccess, allowedTabs, cleanKeterangan };
+        }
+
         async function fetchUsers() {
             const container = document.getElementById('user-table-body');
             try {
@@ -337,7 +318,7 @@
                 });
                 const json = await res.json();
                 if (json.success) {
-                    // FILTER SAAS: Sembunyikan akun sistem USR-0000 dari daftar karyawan
+                    // FILTER SAAS: Sembunyikan akun sistem USR-0000 dari tabel & form kelola
                     allUsers = json.data.filter(user => user.userId !== "USR-0000");
                     renderUsersTable(allUsers);
                 } else {
@@ -348,7 +329,6 @@
             }
         }
 
-        // 3. RENDERING TABEL KARYAWAN
         function renderUsersTable(dataList) {
             const container = document.getElementById('user-table-body');
             if (dataList.length === 0) {
@@ -356,21 +336,42 @@
                 return;
             }
 
+            let expiringEmployees = [];
+
             container.innerHTML = dataList.map(user => {
                 const safeFoto = user.foto || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=1e293b&color=f59e0b&size=100`;
+                const parsed = parseKeterangan(user.keterangan);
 
+                // Logika Pelacakan Masa Habis Kontrak Asinkron untuk PWA Alarm
+                let diffDays = -999;
                 const sisaKontrakText = user.endDate ? (() => {
                     let endD = new Date(user.endDate);
                     let diffTime = endD - new Date();
-                    let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
                     return diffDays > 0 
                         ? `<span class="text-amber-500 font-bold">${diffDays} Hari</span> (${user.statusUser})`
                         : `<span class="text-rose-500 font-bold">Habis Kontrak</span>`;
                 })() : "-";
 
+                // Daftarkan staf ke antrean popup jika sisa kontrak <= 30 hari & status karyawan aktif
+                if (user.endDate && diffDays <= 30 && user.status === "Active") {
+                    expiringEmployees.push({
+                        userId: user.userId,
+                        name: user.name,
+                        daysLeft: diffDays,
+                        statusUser: user.statusUser
+                    });
+                }
+
                 const gpsBadge = user.geotag === "Active"
                     ? `<span class="text-emerald-500 flex items-center gap-1 font-semibold text-[10px]"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i> Lock Radius</span>`
                     : `<span class="text-slate-500 flex items-center gap-1 font-semibold text-[10px]"><i data-lucide="map" class="w-3.5 h-3.5"></i> Bebas Radius</span>`;
+
+                // TOMBOL HAPUS (SOFT-DELETE) HANYA MUNCUL JIKA KARYAWAN BERSTATUS INACTIVE
+                const deleteBtn = user.status === "Inactive"
+                    ? `<button onclick="requestDeleteUser('${user.userId}')" class="p-2 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-lg hover:bg-rose-500 hover:text-white transition" title="Hapus Karyawan"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`
+                    : ``;
 
                 return `
                     <tr class="hover:bg-slate-900/40 transition">
@@ -391,12 +392,20 @@
                         </td>
                         <td class="py-4 px-4 text-left">${sisaKontrakText}</td>
                         <td class="py-4 px-4 text-right">
-                            <button onclick="editUser('${user.userId}')" class="p-2 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg hover:bg-amber-500 hover:text-slate-950 transition"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                            <div class="flex justify-end gap-1.5">
+                                <button onclick="editUser('${user.userId}')" class="p-2 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg hover:bg-amber-500 hover:text-slate-950 transition"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                                ${deleteBtn}
+                            </div>
                         </td>
                     </tr>
                 `;
             }).join('');
             lucide.createIcons();
+
+            // KIRIM SINYAL ANTREAN ABSENSI KRITIS KE HALAMAN INDUK ADMIN.HTML
+            if (expiringEmployees.length > 0 && window.parent && typeof window.parent.triggerContractWarning === 'function') {
+                window.parent.triggerContractWarning(expiringEmployees);
+            }
         }
 
         function convertPhotoToBase64() {
@@ -451,13 +460,11 @@
             renderUsersTable(filtered);
         }
 
-        // 4. LOGIKA PEMUTAKHIRAN MODAL FORM (DATABASE STANDARD)
         function openFormModal(userId = null) {
             const modal = document.getElementById('modal-form');
             const title = document.getElementById('modal-title');
             modal.classList.remove('hidden-screen');
 
-            // Kontrol seksi otorisasi jika yang login adalah administrator
             const authSection = document.getElementById('admin-auth-section');
             if (loggedInRole === "administrator") {
                 authSection.classList.remove('hidden-screen');
@@ -483,16 +490,16 @@
             document.getElementById('form-foto-base64').value = "";
             document.getElementById('form-keterangan').value = "";
             
-            // Reset input otorisasi backoffice
             document.getElementById('form-admin-access').value = "OFF";
             document.querySelectorAll('input[name="form-allowed-tabs"]').forEach(cb => cb.checked = false);
-            // Reset Ceklis Jobdesk
             document.querySelectorAll('input[name="form-jobdesk"]').forEach(cb => cb.checked = false);
 
             if (userId) {
                 title.innerText = "Edit Data Karyawan";
                 const u = allUsers.find(x => x.userId === userId);
                 if (u) {
+                    const parsed = parseKeterangan(u.keterangan);
+
                     document.getElementById('form-user-id').value = u.userId;
                     document.getElementById('form-name').value = u.name;
                     document.getElementById('form-pin').value = u.pin;
@@ -508,20 +515,14 @@
                     document.getElementById('form-geotag').value = u.geotag;
                     document.getElementById('form-foto').value = u.foto;
                     
-                    // MEMBACA KOLOM DATABASE RIIL SECARA LANGSUNG
-                    document.getElementById('form-keterangan').value = u.keterangan || "";
+                    document.getElementById('form-keterangan').value = parsed.cleanKeterangan;
                     document.getElementById('form-admin-access').value = u.adminAccess === "1" ? "ON" : "OFF";
 
-                    // Nyalakan ceklis modul yang boleh dibuka (SaaS ACL)
-                    if (u.allowedTabs) {
-                        const activeTabs = u.allowedTabs.split(",").map(t => t.trim());
-                        activeTabs.forEach(tab => {
-                            const cb = document.querySelector(`input[name="form-allowed-tabs"][value="${tab}"]`);
-                            if (cb) cb.checked = true;
-                        });
-                    }
+                    parsed.allowedTabs.forEach(tab => {
+                        const cb = document.querySelector(`input[name="form-allowed-tabs"][value="${tab}"]`);
+                        if (cb) cb.checked = true;
+                    });
 
-                    // Nyalakan Ceklis Jobdesk (SaaS EnumList)
                     if (u.jobdesk) {
                         const jds = u.jobdesk.split(",").map(item => item.trim());
                         jds.forEach(jd => {
@@ -540,14 +541,13 @@
             document.getElementById('modal-form').classList.add('hidden-screen');
         }
 
-        // 5. PENGIRIMAN DATA FORM BARU (STANDARD DATABASE)
         async function submitUserForm() {
             const name = document.getElementById('form-name').value.trim();
             const pin = document.getElementById('form-pin').value.trim();
             const joinDate = document.getElementById('form-joindate').value;
             const noWa = document.getElementById('form-nowa').value.trim();
+            let rawKeterangan = document.getElementById('form-keterangan').value.trim();
 
-            // Kumpulkan nilai kotak centang jobdesk (EnumList)
             const selectedJobdesks = [];
             document.querySelectorAll('input[name="form-jobdesk"]:checked').forEach(cb => {
                 selectedJobdesks.push(cb.value);
@@ -563,7 +563,6 @@
             saveBtn.innerText = "Mengirim...";
             saveBtn.disabled = true;
 
-            // Kumpulkan data otorisasi jika login sebagai administrator (DATABASE RIIL)
             let adminAccessValue = "0";
             let allowedTabsList = [];
             if (loggedInRole === "administrator") {
@@ -572,7 +571,6 @@
                     allowedTabsList.push(cb.value);
                 });
             } else {
-                // Jika bukan administrator, pertahankan nilai otorisasi lama agar tidak hilang
                 const oldUser = allUsers.find(x => x.userId === document.getElementById('form-user-id').value);
                 if (oldUser) {
                     adminAccessValue = oldUser.adminAccess || "0";
@@ -597,10 +595,9 @@
                 geotag: document.getElementById('form-geotag').value,
                 foto: document.getElementById('form-foto').value.trim(),
                 photoBase64: document.getElementById('form-foto-base64').value,
-                // PENYIMPANAN KE KOLOM BARU SPREADSHEET (MURNI TANPA REGEX)
-                keterangan: document.getElementById('form-keterangan').value.trim(),
-                adminAccess: adminAccessValue, // Disimpan ke kolom 'AdminAccess' (1 atau 0)
-                allowedTabs: allowedTabsList.join(",") // Disimpan ke kolom 'AllowedTabs'
+                keterangan: rawKeterangan,
+                adminAccess: adminAccessValue, 
+                allowedTabs: allowedTabsList.join(",") 
             };
 
             try {
@@ -617,7 +614,7 @@
                     alert("Gagal: " + json.message);
                 }
             } catch (e) {
-                alert("Kesalahan pengiriman data ke Apps Script.");
+                alert("Kesalahan pengiriman data.");
             } finally {
                 saveBtn.innerText = "SIMPAN DATA";
                 saveBtn.disabled = false;
@@ -626,6 +623,84 @@
 
         function editUser(userId) {
             openFormModal(userId);
+        }
+
+        // =========================================================================
+        // LOGIKA BARU: OTORISASI SOFT-DELETE KARYAWAN BERSTATUS INACTIVE
+        // =========================================================================
+        function requestDeleteUser(userId) {
+            const modal = document.getElementById('modal-delete-user');
+            if (modal) {
+                document.getElementById('delete-user-id').value = userId;
+                document.getElementById('delete-user-otp').value = "";
+                modal.classList.remove('hidden-screen');
+                lucide.createIcons();
+            }
+        }
+
+        function closeDeleteUserModal() {
+            document.getElementById('modal-delete-user').classList.add('hidden-screen');
+        }
+
+        async function submitDeleteUserAuth() {
+            const userId = document.getElementById('delete-user-id').value;
+            const otp = document.getElementById('delete-user-otp').value;
+            
+            if (!otp || otp.length < 4) {
+                alert("Masukkan 4-Digit OTP Manager!");
+                return;
+            }
+
+            const btn = document.getElementById('btn-exec-delete-user');
+            btn.innerText = "Memverifikasi...";
+            btn.disabled = true;
+
+            try {
+                // Verifikasi OTP menggunakan fungsi pengawas yang sudah teruji di GAS
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: "verifyVoidManager", data: { managerPin: otp } })
+                });
+                const json = await res.json();
+
+                if (json.success) {
+                    const allowedCompRoles = ["admin", "hrd", "manager", "owner"];
+                    const managerRole = json.role ? json.role.toLowerCase().trim() : "";
+                    const managerType = json.type ? json.type.toLowerCase().trim() : "";
+
+                    if (!allowedCompRoles.includes(managerRole) && managerType !== "vip" && managerType !== "manager") {
+                        alert("Otorisasi Ditolak! Penghapusan karyawan wajib disetujui oleh OTP tingkat Manager.");
+                        btn.innerText = "HAPUS KARYAWAN";
+                        btn.disabled = false;
+                        return;
+                    }
+
+                    // Jika sukses, panggil aksi soft-delete archiveUser di GAS
+                    const deleteRes = await fetch(GAS_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ 
+                            action: "archiveUser", 
+                            data: { userId: userId, managerName: json.managerName } 
+                        })
+                    });
+                    const deleteJson = await deleteRes.json();
+
+                    if (deleteJson.success) {
+                        alert(deleteJson.message);
+                        closeDeleteUserModal();
+                        fetchUsers(); // Refresh tabel
+                    } else {
+                        alert("Gagal: " + deleteJson.message);
+                    }
+                } else {
+                    alert(json.message || "OTP Manager Salah atau Kedaluwarsa!");
+                }
+            } catch(e) {
+                alert("Koneksi gagal menghubungi server.");
+            } finally {
+                btn.innerText = "HAPUS KARYAWAN";
+                btn.disabled = false;
+            }
         }
         
         async function loadDynamicAreas() {

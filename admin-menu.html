@@ -12,76 +12,26 @@
         .hidden-screen { display: none !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
 
-        /* =========================================================================
-         * OVERRIDE TEMA TERANG PREMIUM UNTUK IFRAME ANAK (LIGHT MODE)
-         * ========================================================================= */
-        body.light-mode {
-            background-color: #f8fafc;
-            color: #0f172a;
-        }
-        body.light-mode .text-white {
-            color: #0f172a !important;
-        }
-        body.light-mode .text-slate-300 {
-            color: #334155 !important;
-        }
-        body.light-mode .text-slate-400 {
-            color: #475569 !important;
-        }
-        body.light-mode .text-slate-500 {
-            color: #64748b !important;
-        }
-        body.light-mode .bg-slate-900,
-        body.light-mode .bg-slate-900\/40,
-        body.light-mode .bg-slate-900\/60 {
-            background-color: #ffffff !important;
-            border-color: #cbd5e1 !important;
-        }
-        body.light-mode .border-slate-800,
-        body.light-mode .border-slate-850 {
-            border-color: #cbd5e1 !important;
-        }
-        body.light-mode table th {
-            background-color: #f1f5f9 !important;
-            color: #475569 !important;
-            border-bottom-color: #cbd5e1 !important;
-        }
-        body.light-mode table td {
-            color: #1e293b !important;
-            border-bottom-color: #f1f5f9 !important;
-        }
-        body.light-mode tr:hover {
-            background-color: #f8fafc !important;
-        }
-        body.light-mode input,
-        body.light-mode select,
-        body.light-mode textarea {
-            background-color: #ffffff !important;
-            border-color: #cbd5e1 !important;
-            color: #0f172a !important;
-        }
-        body.light-mode input::placeholder {
-            color: #94a3b8 !important;
-        }
-        body.light-mode .bg-slate-950,
-        body.light-mode .bg-slate-950\/40 {
-            background-color: #f1f5f9 !important;
-            border-color: #cbd5e1 !important;
-        }
-        body.light-mode #modal-form > div {
-            background-color: #ffffff !important;
-            border-color: #cbd5e1 !important;
-            color: #0f172a !important;
-        }
-        body.light-mode #form-area-container {
-            background-color: #f1f5f9 !important;
-            border-color: #cbd5e1 !important;
-        }
+        /* OVERRIDE TEMA TERANG */
+        body.light-mode { background-color: #f8fafc; color: #0f172a; }
+        body.light-mode .text-white { color: #0f172a !important; }
+        body.light-mode .text-slate-300 { color: #334155 !important; }
+        body.light-mode .text-slate-400 { color: #475569 !important; }
+        body.light-mode .text-slate-500 { color: #64748b !important; }
+        body.light-mode .bg-slate-900, body.light-mode .bg-slate-900\/40, body.light-mode .bg-slate-900\/60 { background-color: #ffffff !important; border-color: #cbd5e1 !important; }
+        body.light-mode .border-slate-800, body.light-mode .border-slate-850 { border-color: #cbd5e1 !important; }
+        body.light-mode table th { background-color: #f1f5f9 !important; color: #475569 !important; border-bottom-color: #cbd5e1 !important; }
+        body.light-mode table td { color: #1e293b !important; border-bottom-color: #f1f5f9 !important; }
+        body.light-mode tr:hover { background-color: #f8fafc !important; }
+        body.light-mode input, body.light-mode select, body.light-mode textarea { background-color: #ffffff !important; border-color: #cbd5e1 !important; color: #0f172a !important; }
+        body.light-mode input::placeholder { color: #94a3b8 !important; }
+        body.light-mode .bg-slate-950, body.light-mode .bg-slate-950\/40 { background-color: #f1f5f9 !important; border-color: #cbd5e1 !important; }
+        body.light-mode #modal-form > div, body.light-mode #modal-delete-menu > div { background-color: #ffffff !important; border-color: #cbd5e1 !important; color: #0f172a !important; }
+        body.light-mode #form-area-container { background-color: #f1f5f9 !important; border-color: #cbd5e1 !important; }
     </style>
 </head>
 <body class="text-slate-100 p-2 overflow-y-auto h-full animate-fade-in">
 
-    <!-- DETEKSI WARISAN TEMA INDUK SAAS -->
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('theme') === 'light') {
@@ -102,7 +52,7 @@
         </button>
     </div>
 
-    <!-- FILTER BAR (KATEGORI SEKARANG DINAMIS) -->
+    <!-- FILTER BAR -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
         <div class="relative">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
@@ -111,7 +61,6 @@
         <select id="filter-category" onchange="filterMenu()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2.5 outline-none text-xs focus:border-amber-500">
             <option value="">Memuat Kategori...</option>
         </select>
-        <!-- Dropdown Cabang Dinamis (SaaS) -->
         <select id="filter-area" onchange="filterMenu()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2.5 outline-none text-xs focus:border-amber-500">
             <option value="">Memuat Cabang...</option>
         </select>
@@ -150,20 +99,16 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
-                    <!-- KATEGORI UTAMA DINAMIS -->
                     <div>
                         <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Kategori Utama</label>
                         <select id="form-category" onchange="handleCategoryChange()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white focus:border-amber-500">
-                            <!-- Diisi dinamis -->
                         </select>
-                        <input type="text" id="form-category-new" onkeyup="updateSubCategoryDropdown()" placeholder="Tulis Kategori baru (Contoh: Food)..." class="hidden-screen mt-2 w-full px-3 py-2 bg-slate-950 border-2 border-emerald-500/30 text-white rounded-xl outline-none text-xs focus:border-emerald-500">
+                        <input type="text" id="form-category-new" onkeyup="updateSubCategoryDropdown()" placeholder="Tulis Kategori baru..." class="hidden-screen mt-2 w-full px-3 py-2 bg-slate-950 border-2 border-emerald-500/30 text-white rounded-xl outline-none text-xs focus:border-emerald-500">
                     </div>
                     
-                    <!-- DROPDOWN SUB-KATEGORI DEPENDENT -->
                     <div>
                         <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Sub-Kategori</label>
                         <select id="form-subcategory-select" onchange="toggleCustomSubCategoryInput()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white focus:border-amber-500">
-                            <!-- Diisi dinamis -->
                         </select>
                         <input type="text" id="form-subcategory-new" placeholder="Tulis Sub-Kategori baru..." class="hidden-screen mt-2 w-full px-3 py-2 bg-slate-950 border-2 border-emerald-500/30 text-white rounded-xl outline-none text-xs focus:border-emerald-500">
                     </div>
@@ -186,7 +131,6 @@
                     </div>
                 </div>
 
-                <!-- DROPDOWN AREA ENUMLIST CHECKBOXES (SINKRONISASI OTOMATIS) -->
                 <div>
                     <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2.5">Aktif di Cabang (SaaS Area Group)</label>
                     <div id="form-area-container" class="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-950 border border-slate-850 p-3 rounded-2xl">
@@ -216,6 +160,25 @@
         </div>
     </div>
 
+    <!-- MODAL: OTP ATASAN UNTUK HAPUS MENU (SOFT DELETE) -->
+    <div id="modal-delete-menu" class="hidden-screen fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-sm p-6 shadow-2xl flex flex-col text-center">
+            <div class="w-14 h-14 bg-rose-500/10 border border-rose-500/30 rounded-full flex items-center justify-center mx-auto mb-3 text-rose-500">
+                <i data-lucide="trash-2" class="w-7 h-7 animate-pulse"></i>
+            </div>
+            <h3 class="text-sm font-black text-rose-500 uppercase tracking-wider">Otorisasi Hapus Menu</h3>
+            <p class="text-xs text-slate-400 mb-4 leading-relaxed">Penghapusan menu kuliner dari daftar aktif memerlukan verifikasi OTP Manager.</p>
+            
+            <input type="hidden" id="delete-menu-id">
+            <input type="password" id="delete-menu-otp" maxlength="4" placeholder="••••" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-amber-500 text-center text-2xl tracking-[0.5em] rounded-xl outline-none font-bold mb-4 focus:border-rose-500">
+            
+            <div class="flex gap-3">
+                <button onclick="closeDeleteMenuModal()" class="flex-1 py-2.5 text-slate-400 font-bold text-xs hover:text-white">Batal</button>
+                <button onclick="submitDeleteMenuAuth()" id="btn-exec-delete-menu" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs rounded-xl shadow-lg">HAPUS MENU</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const GAS_URL = localStorage.getItem("MRD_API_URL");
         let allMenus = [];
@@ -228,7 +191,6 @@
             }
         };
 
-        // 1. MEMBACA MASTER DATA MENU DARI GAS
         async function fetchAdminMenu() {
             const container = document.getElementById('menu-grid');
             try {
@@ -240,7 +202,7 @@
                 if (json.success) {
                     allMenus = json.data;
                     renderMenuGrid(allMenus);
-                    renderDynamicCategoryFilters(); // Bangun penyaringan kategori dinamis untuk filter atas
+                    renderDynamicCategoryFilters(); 
                 } else {
                     container.innerHTML = `<div class="col-span-full py-8 text-center text-rose-500 font-bold">Gagal: ${json.message}</div>`;
                 }
@@ -249,7 +211,6 @@
             }
         }
 
-        // 2. RENDERING DATA GRID MENU (THE ARIA THEME)
         function renderMenuGrid(dataList) {
             const container = document.getElementById('menu-grid');
             if (dataList.length === 0) {
@@ -261,12 +222,10 @@
             container.innerHTML = dataList.map(item => {
                 const fallbackImg = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&background=1e293b&color=f59e0b&size=200&font-size=0.33`;
                 
-                // Status Badge
                 const statusBadge = item.status === "Available"
                     ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] px-2 py-0.5 rounded-full font-bold">Available</span>`
                     : `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[9px] px-2 py-0.5 rounded-full font-bold">Unavailable (Habis)</span>`;
 
-                // Badge Rute Printer
                 const routeBadge = item.route === "Kitchen"
                     ? `<span class="text-amber-500 flex items-center gap-1 text-[10px] font-semibold"><i data-lucide="chef-hat" class="w-3.5 h-3.5"></i> Kitchen</span>`
                     : `<span class="text-indigo-400 flex items-center gap-1 text-[10px] font-semibold"><i data-lucide="wine" class="w-3.5 h-3.5"></i> Bar (Drinks)</span>`;
@@ -300,7 +259,10 @@
                                 <div class="flex flex-wrap gap-1 max-w-[70%]">
                                     ${areaBadges}
                                 </div>
-                                <button onclick="editMenu('${item.menuId}')" class="p-1.5 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg hover:bg-amber-500 hover:text-slate-950 transition"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                                <div class="flex gap-1.5">
+                                    <button onclick="editMenu('${item.menuId}')" class="p-1.5 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg hover:bg-amber-500 hover:text-slate-950 transition"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                                    <button onclick="requestDeleteMenu('${item.menuId}')" class="p-1.5 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-lg hover:bg-rose-500 hover:text-white transition" title="Hapus Menu"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -309,7 +271,6 @@
             lucide.createIcons();
         }
 
-        // 3. LOGIKA FILTER PENYARINGAN DATA MENU
         function filterMenu() {
             const query = document.getElementById('search-input').value.toLowerCase();
             const category = document.getElementById('filter-category').value;
@@ -326,7 +287,6 @@
             renderMenuGrid(filtered);
         }
 
-        // 4. MEMUAT DAFTAR AREA SECARA DINAMIS (SAAS ENGINE)
         async function loadDynamicAreas() {
             try {
                 const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "getAvailableAreas" }) });
@@ -351,9 +311,8 @@
             }
         }
 
-        // RENDERING DINAMIS DAFTAR KATEGORI FILTER ATAS
         function renderDynamicCategoryFilters() {
-            let uniqueCats = new Set(["Makanan", "Minuman", "Snack"]); // Default fallbacks
+            let uniqueCats = new Set(["Makanan", "Minuman", "Snack"]); 
             allMenus.forEach(item => {
                 if (item.category && item.category.trim() !== "") {
                     uniqueCats.add(item.category.trim());
@@ -367,9 +326,6 @@
             document.getElementById('filter-category').innerHTML = optionsHtml;
         }
 
-        // =========================================================================
-        // LOGIKA BARU: CASCADING DEPENDENT DROP-DOWN UNTUK KATEGORI & SUB-KATEGORI DINAMIS
-        // =========================================================================
         function initCategoryAndSubCategoryDropdowns(selectedCat = "", selectedSub = "") {
             const catSelect = document.getElementById('form-category');
             const newCatInput = document.getElementById('form-category-new');
@@ -468,7 +424,6 @@
             }
         }
 
-        // 5. PENANGAN KONVERTER FOTO FISIK MENJADI BASE64
         function convertImageToBase64() {
             const file = document.getElementById('form-image-file').files[0];
             const base64Input = document.getElementById('form-image-base64');
@@ -488,12 +443,10 @@
             }
         }
 
-        // 6. KONTROL MODAL FORM
         function openFormModal(menuId = null) {
             const modal = document.getElementById('modal-form');
             modal.classList.remove('hidden-screen');
 
-            // Reset Form Master
             document.getElementById('form-menu-id').value = "";
             document.getElementById('form-name').value = "";
             document.getElementById('form-price').value = "";
@@ -509,7 +462,6 @@
             document.getElementById('form-subcategory-new').classList.add('hidden-screen');
             document.getElementById('form-subcategory-new').value = "";
 
-            // Reset centang checkboxes
             document.querySelectorAll('input[name="form-menu-area"]').forEach(cb => cb.checked = false);
 
             if (menuId) {
@@ -524,7 +476,6 @@
                     document.getElementById('form-image').value = item.image;
                     document.getElementById('form-description').value = item.description;
 
-                    // Inisiasi cascading dropdowns kategori & sub-kategori
                     initCategoryAndSubCategoryDropdowns(item.category, item.subCategory);
 
                     if (item.area) {
@@ -537,7 +488,7 @@
                 }
             } else {
                 document.getElementById('modal-title').innerText = "Tambah Menu Hidangan Baru";
-                initCategoryAndSubCategoryDropdowns(); // Inisiasi dropdown kosong/bawaan
+                initCategoryAndSubCategoryDropdowns(); 
             }
             lucide.createIcons();
         }
@@ -546,24 +497,20 @@
             document.getElementById('modal-form').classList.add('hidden-screen');
         }
 
-        // 7. PENGIRIMAN DATA FORM MENU KE BACKEND GAS
         async function submitMenuForm() {
             const name = document.getElementById('form-name').value.trim();
             const price = parseFloat(document.getElementById('form-price').value) || 0;
             const route = document.getElementById('form-route').value;
             const status = document.getElementById('form-status').value;
 
-            // Logika Penyusunan Kategori Utama Dinamis
             const catSelect = document.getElementById('form-category').value;
             const catNew = document.getElementById('form-category-new').value.trim();
             const finalCategoryValue = catSelect === "ADD_NEW_CAT" ? catNew : catSelect;
 
-            // Logika Penyusunan Sub-Kategori Dinamis
             const subSelect = document.getElementById('form-subcategory-select').value;
             const subNew = document.getElementById('form-subcategory-new').value.trim();
             const finalSubCategoryValue = subSelect === "ADD_NEW" ? subNew : subSelect;
 
-            // Kumpulkan daftar area tercentang
             let selectedAreas = [];
             document.querySelectorAll('input[name="form-menu-area"]:checked').forEach(cb => {
                 selectedAreas.push(cb.value);
@@ -583,8 +530,8 @@
                 menuId: document.getElementById('form-menu-id').value,
                 name: name,
                 price: price,
-                category: finalCategoryValue, // Kategori Utama Dinamis
-                subCategory: finalSubCategoryValue, // Sub-Kategori Dinamis
+                category: finalCategoryValue, 
+                subCategory: finalSubCategoryValue, 
                 route: route,
                 status: status,
                 area: areaValue, 
@@ -616,6 +563,84 @@
 
         function editMenu(menuId) {
             openFormModal(menuId);
+        }
+
+        // ==========================================
+        // LOGIKA BARU: OTORISASI SOFT-DELETE MENU HIDANGAN
+        // ==========================================
+        function requestDeleteMenu(menuId) {
+            const modal = document.getElementById('modal-delete-menu');
+            if (modal) {
+                document.getElementById('delete-menu-id').value = menuId;
+                document.getElementById('delete-menu-otp').value = "";
+                modal.classList.remove('hidden-screen');
+                lucide.createIcons();
+            }
+        }
+
+        function closeDeleteMenuModal() {
+            document.getElementById('modal-delete-menu').classList.add('hidden-screen');
+        }
+
+        async function submitDeleteMenuAuth() {
+            const menuId = document.getElementById('delete-menu-id').value;
+            const otp = document.getElementById('delete-menu-otp').value;
+            
+            if (!otp || otp.length < 4) {
+                alert("Masukkan 4-Digit OTP Manager!");
+                return;
+            }
+
+            const btn = document.getElementById('btn-exec-delete-menu');
+            btn.innerText = "Memverifikasi...";
+            btn.disabled = true;
+
+            try {
+                // Verifikasi OTP menggunakan fungsi pengawas yang sudah teruji di GAS
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: "verifyVoidManager", data: { managerPin: otp } })
+                });
+                const json = await res.json();
+
+                if (json.success) {
+                    const allowedCompRoles = ["admin", "hrd", "manager", "owner"];
+                    const managerRole = json.role ? json.role.toLowerCase().trim() : "";
+                    const managerType = json.type ? json.type.toLowerCase().trim() : "";
+
+                    if (!allowedCompRoles.includes(managerRole) && managerType !== "vip" && managerType !== "manager") {
+                        alert("Otorisasi Ditolak! Penghapusan menu wajib disetujui oleh OTP tingkat Manager.");
+                        btn.innerText = "HAPUS MENU";
+                        btn.disabled = false;
+                        return;
+                    }
+
+                    // Jika sukses, panggil aksi soft-delete archiveMenu di GAS
+                    const deleteRes = await fetch(GAS_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ 
+                            action: "archiveMenu", 
+                            data: { menuId: menuId, managerName: json.managerName } 
+                        })
+                    });
+                    const deleteJson = await deleteRes.json();
+
+                    if (deleteJson.success) {
+                        alert(deleteJson.message);
+                        closeDeleteMenuModal();
+                        fetchAdminMenu(); // Refresh data grid
+                    } else {
+                        alert("Gagal: " + deleteJson.message);
+                    }
+                } else {
+                    alert(json.message || "OTP Manager Salah atau Kedaluwarsa!");
+                }
+            } catch(e) {
+                alert("Koneksi gagal menghubungi server.");
+            } finally {
+                btn.innerText = "HAPUS MENU";
+                btn.disabled = false;
+            }
         }
     </script>
 </body>
