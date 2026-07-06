@@ -18,9 +18,7 @@
         .fade-out { animation: fadeOut 0.5s forwards; }
         @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
 
-        /* =========================================================================
-         * OVERRIDE TEMA TERANG SAAS (LIGHT MODE)
-         * ========================================================================= */
+        /* OVERRIDE TEMA TERANG SAAS */
         body.light-mode {
             background-color: #f8fafc;
             color: #0f172a;
@@ -106,7 +104,6 @@
 </head>
 <body class="h-[100dvh] w-screen flex flex-col select-none text-slate-100 overflow-hidden">
 
-    <!-- EKSEKUSI TEMA AWAL SEBELUM HALAMAN SELESAI RENDERING -->
     <script>
         const storedTheme = localStorage.getItem("MRD_ADMIN_THEME") || "dark";
         if (storedTheme === "light") {
@@ -206,7 +203,7 @@
                         <i data-lucide="ticket" class="w-4 h-4 text-rose-400"></i> <span>Diskon & Voucher</span>
                     </button>
 
-                    <!-- SUB-MENU GROUP 2: LAPORAN PENJUALAN (PRO SAAS GROUP) -->
+                    <!-- SUB-MENU GROUP 2: LAPORAN PENJUALAN -->
                     <div id="group-reports" class="w-full border-t border-b border-slate-800 py-2">
                         <button onclick="toggleReportMenu()" class="w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-between text-slate-400 hover:bg-slate-800 hover:text-white transition">
                             <div class="flex items-center gap-3">
@@ -374,8 +371,9 @@
                     sessionStorage.removeItem(STORAGE_ADMIN);
                 }
 
+                // SUNTIKAN KEAMANAN: Jika tidak ada sesi ATAU terdeteksi sesi lama (tanpa kolom baru)
                 if (!adminInfo || adminInfo.adminAccess === undefined) {
-                    sessionStorage.removeItem(STORAGE_ADMIN);
+                    sessionStorage.removeItem(STORAGE_ADMIN); // Hancurkan sesi usang!
                     showScreen('login-screen');
                     fetchConfigBg();
                     clearPin();
@@ -476,6 +474,7 @@
             const role = (adminInfo.role || "").toLowerCase().trim();
             if (role === "administrator") return; // Bypass penuh untuk admin dewa (USR-0000)
 
+            // MEMBACA KOLOM DATABASE RIIL (TANPA PARSER REGEX)
             const allowedTabs = adminInfo.allowedTabs ? adminInfo.allowedTabs.split(",").map(t => t.trim()) : [];
             const adminAccess = adminInfo.adminAccess;
 
@@ -598,13 +597,14 @@
                     const roleClean = json.role ? json.role.toLowerCase().trim() : "";
                     
                     if (roleClean === "administrator") {
-                        localStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
+                        sessionStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
                         window.location.reload();
                         return;
                     }
 
+                    // MEMBACA KOLOM DATABASE RIIL (TANPA REGEX)
                     if (json.adminAccess === "1" || json.adminAccess === 1) {
-                        localStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
+                        sessionStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
                         window.location.reload();
                     } else {
                         alert("Akses Ditolak!\n\nAkun Anda tidak memiliki izin otorisasi untuk mengakses Backoffice.");
@@ -695,6 +695,7 @@
             const area = document.getElementById('content-area');
             if (!area) return;
 
+            // SaaS Dynamic Cache Buster
             const buster = window.appVersion || Date.now();
             const themeParam = document.body.classList.contains('light-mode') ? `?theme=light&v=${buster}` : `?v=${buster}`;
 
