@@ -346,21 +346,22 @@
         }
 
         async function fetchUsers() {
-            const container = document.getElementById('user-table-body');
-            try {
-                const res = await fetch(GAS_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify({ action: "getUsers" }) 
-                });
-                const json = await res.json();
-                if (json.success) {
-                    allUsers = json.data;
-                    renderUsersTable(allUsers);
-                } else {
-                    container.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-rose-500 font-bold">Error: ${json.message}</td></tr>`;
-                }
-            } catch (e) {
-                container.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-rose-500 font-bold">Koneksi putus ke database!</td></tr>`;
+    const container = document.getElementById('user-table-body');
+    try {
+        const res = await fetch(GAS_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: "getUsers" }) 
+        });
+        const json = await res.json();
+        if (json.success) {
+            // FILTER SAAS: Sembunyikan akun sistem USR-0000 dari tabel & form kelola
+            allUsers = json.data.filter(user => user.userId !== "USR-0000");
+            renderUsersTable(allUsers);
+        } else {
+            container.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-rose-500 font-bold">Error: ${json.message}</td></tr>`;
+        }
+    } catch (e) {
+        container.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-rose-500 font-bold">Koneksi putus ke database!</td></tr>`;
             }
         }
 
