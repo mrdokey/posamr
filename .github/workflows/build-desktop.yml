@@ -9,10 +9,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # Diperbarui ke v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4 # Diperbarui ke v4
         with:
           node-version: 18
 
@@ -27,9 +27,9 @@ jobs:
       - name: Build Standalone Exe (No Bundle)
         run: npm run tauri build -- --no-bundle
 
-      # Unggah hasil rakitan .exe langsung ke halaman Actions Artifacts Anda
+      # Unggah hasil rakitan .exe menggunakan versi v4 yang direkomendasikan secara resmi
       - name: Upload Standalone Exe
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4 # Diperbarui ke v4 untuk memperbaiki error pemblokiran
         with:
           name: AMR-Admin-Windows-Exe
           path: src-tauri/target/release/AMR_Admin.exe
