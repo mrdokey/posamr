@@ -263,6 +263,7 @@
     </div>
 
     <script>
+        window.appVersion = Date.now();
         const STORAGE_API = "MRD_API_URL";
         const STORAGE_ADMIN = "MRD_ADMIN_SESSION";
         
@@ -464,14 +465,19 @@
         }
 
         async function fetchConfigBg() {
-            try {
-                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) });
-                const json = await res.json();
-                if (json.success) {
-                    document.getElementById('login-resto-name').innerText = json.data["NAMA_PERUSAHAAN"] || "AMR ADMIN";
-                }
-            } catch(e) {}
+    try {
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) });
+        const json = await res.json();
+        if (json.success) {
+            document.getElementById('login-resto-name').innerText = json.data["NAMA_PERUSAHAAN"] || "AMR ADMIN";
+            
+            // SUNTIKAN SAAS: Ambil versi rilis aktif dari Google Sheets
+            if (json.data["VERSION_BUSTER"]) {
+                window.appVersion = json.data["VERSION_BUSTER"].toString().trim();
+            }
         }
+    } catch(e) {}
+}
 
         function pressNum(num) {
             if(loginPinValue.length < 4) {
@@ -609,33 +615,35 @@
         }
 
         function renderContent(tab) {
-            const area = document.getElementById('content-area');
-            if (!area) return;
+    const area = document.getElementById('content-area');
+    if (!area) return;
 
-            const themeParam = document.body.classList.contains('light-mode') ? '?theme=light&v=200' : '?v=200';
+    // SaaS Dynamic Cache Buster
+    const buster = window.appVersion || Date.now();
+    const themeParam = document.body.classList.contains('light-mode') ? `?theme=light&v=${buster}` : `?v=${buster}`;
 
-            if (tab === "Users") {
-                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
-                area.innerHTML = `<iframe src="admin-users.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
-            } else if (tab === "Attendance") {
-                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
-                area.innerHTML = `<iframe src="admin-attendance.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
-            } else if (tab === "Menu") {
-                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
-                area.innerHTML = `<iframe src="admin-menu.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
-            } else if (tab === "Promo") {
-                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
-                area.innerHTML = `<iframe src="admin-promo.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
-            } else if (tab === "Config") {
-                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
-                area.innerHTML = `<iframe src="admin-config.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
-            } else if (tab === "ProdSales") {
-                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
-                area.innerHTML = `<iframe src="admin-reports-product.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
-            } else if (tab === "AuditSales") {
-                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
-                area.innerHTML = `<iframe src="admin-reports-audit.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
-            } else {
+    if (tab === "Users") {
+        area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+        area.innerHTML = `<iframe src="admin-users.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+    } else if (tab === "Attendance") {
+        area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+        area.innerHTML = `<iframe src="admin-attendance.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+    } else if (tab === "Menu") {
+        area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+        area.innerHTML = `<iframe src="admin-menu.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+    } else if (tab === "Promo") {
+        area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+        area.innerHTML = `<iframe src="admin-promo.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+    } else if (tab === "Config") {
+        area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+        area.innerHTML = `<iframe src="admin-config.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+    } else if (tab === "ProdSales") {
+        area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+        area.innerHTML = `<iframe src="admin-reports-product.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+    } else if (tab === "AuditSales") {
+        area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+        area.innerHTML = `<iframe src="admin-reports-audit.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+    } else {
                 area.className = "flex-1 overflow-y-auto p-6 flex flex-col justify-center items-center text-center space-y-4";
                 area.innerHTML = `
                     <div class="w-16 h-16 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center justify-center text-amber-500">
