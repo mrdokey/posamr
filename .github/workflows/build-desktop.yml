@@ -9,27 +9,27 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4 # Diperbarui ke v4
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4 # Diperbarui ke v4
+        uses: actions/setup-node@v4
         with:
           node-version: 18
 
       - name: Install Rust Stable
         uses: dtolnay/rust-toolchain@stable
 
-      # Menginstal pustaka lokal dari package.json (sangat stabil)
+      # Menginstal pustaka lokal dari package.json
       - name: Install Local Dependencies
         run: npm install
 
-      # Menjalankan kompilasi aman tanpa bundler
+      # Menjalankan kompilasi tanpa bundler menggunakan sintaksis Tauri v1 yang benar
       - name: Build Standalone Exe (No Bundle)
-        run: npm run tauri build -- --no-bundle
+        run: npm run tauri build -- --bundles none
 
-      # Unggah hasil rakitan .exe menggunakan versi v4 yang direkomendasikan secara resmi
+      # Unggah hasil rakitan .exe ke halaman Actions Artifacts
       - name: Upload Standalone Exe
-        uses: actions/upload-artifact@v4 # Diperbarui ke v4 untuk memperbaiki error pemblokiran
+        uses: actions/upload-artifact@v4
         with:
           name: AMR-Admin-Windows-Exe
           path: src-tauri/target/release/AMR_Admin.exe
