@@ -102,17 +102,14 @@
         </button>
     </div>
 
-    <!-- FILTER BAR -->
+    <!-- FILTER BAR (KATEGORI SEKARANG DINAMIS) -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
         <div class="relative">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
             <input type="text" id="search-input" onkeyup="filterMenu()" placeholder="Cari nama hidangan..." class="w-full pl-9 pr-4 py-2.5 bg-slate-900 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500">
         </div>
         <select id="filter-category" onchange="filterMenu()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2.5 outline-none text-xs focus:border-amber-500">
-            <option value="">Semua Kategori</option>
-            <option value="Makanan">Makanan</option>
-            <option value="Minuman">Minuman</option>
-            <option value="Snack">Snack</option>
+            <option value="">Memuat Kategori...</option>
         </select>
         <!-- Dropdown Cabang Dinamis (SaaS) -->
         <select id="filter-area" onchange="filterMenu()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2.5 outline-none text-xs focus:border-amber-500">
@@ -130,7 +127,7 @@
         <div class="col-span-full py-20 text-center text-slate-500 animate-pulse font-semibold">Mengambil daftar hidangan dari database...</div>
     </div>
 
-    <!--- MODAL FORM TAMBAH / EDIT MENU --->
+    <!-- MODAL FORM TAMBAH / EDIT MENU -->
     <div id="modal-form" class="hidden-screen fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg p-6 shadow-2xl flex flex-col max-h-[90vh]">
             <div class="flex justify-between items-center mb-4 shrink-0 border-b border-slate-800 pb-3">
@@ -153,23 +150,21 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
+                    <!-- KATEGORI UTAMA DINAMIS -->
                     <div>
                         <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Kategori Utama</label>
-                        <select id="form-category" onchange="updateSubCategoryDropdown()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white focus:border-amber-500">
-                            <option value="Makanan">Makanan</option>
-                            <option value="Minuman">Minuman</option>
-                            <option value="Snack">Snack</option>
+                        <select id="form-category" onchange="handleCategoryChange()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white focus:border-amber-500">
+                            <!-- Diisi dinamis -->
                         </select>
+                        <input type="text" id="form-category-new" onkeyup="updateSubCategoryDropdown()" placeholder="Tulis Kategori baru (Contoh: Food)..." class="hidden-screen mt-2 w-full px-3 py-2 bg-slate-950 border-2 border-emerald-500/30 text-white rounded-xl outline-none text-xs focus:border-emerald-500">
                     </div>
                     
                     <!-- DROPDOWN SUB-KATEGORI DEPENDENT -->
                     <div>
                         <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Sub-Kategori</label>
                         <select id="form-subcategory-select" onchange="toggleCustomSubCategoryInput()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white focus:border-amber-500">
-                            <!-- Diisi dinamis oleh fungsi JavaScript -->
+                            <!-- Diisi dinamis -->
                         </select>
-                        
-                        <!-- Input Teks Baru jika pilih '+ Tambah Kategori Baru' -->
                         <input type="text" id="form-subcategory-new" placeholder="Tulis Sub-Kategori baru..." class="hidden-screen mt-2 w-full px-3 py-2 bg-slate-950 border-2 border-emerald-500/30 text-white rounded-xl outline-none text-xs focus:border-emerald-500">
                     </div>
                 </div>
@@ -245,6 +240,7 @@
                 if (json.success) {
                     allMenus = json.data;
                     renderMenuGrid(allMenus);
+                    renderDynamicCategoryFilters(); // Bangun penyaringan kategori dinamis untuk filter atas
                 } else {
                     container.innerHTML = `<div class="col-span-full py-8 text-center text-rose-500 font-bold">Gagal: ${json.message}</div>`;
                 }
@@ -275,23 +271,20 @@
                     ? `<span class="text-amber-500 flex items-center gap-1 text-[10px] font-semibold"><i data-lucide="chef-hat" class="w-3.5 h-3.5"></i> Kitchen</span>`
                     : `<span class="text-indigo-400 flex items-center gap-1 text-[10px] font-semibold"><i data-lucide="wine" class="w-3.5 h-3.5"></i> Bar (Drinks)</span>`;
 
-                // Pecah teks cabang terpisah koma menjadi lencana visual yang rapi
                 const areaBadges = item.area 
                     ? item.area.split(',').map(a => `<span class="bg-slate-900 border border-slate-800 text-slate-400 text-[9px] px-1.5 py-0.5 rounded font-bold">${a.trim()}</span>`).join(' ')
                     : `<span class="text-slate-600 text-[9px] font-bold">Semua Cabang</span>`;
 
-                const cleanSubCategory = item.subCategory ? `<span class="text-slate-500 font-semibold text-[10px] block mt-1">Sub: ${item.subCategory}</span>` : '';
+                const cleanSubCategory = item.subCategory ? `<span class="text-slate-500 font-bold text-[10px] block mt-1">Sub: ${item.subCategory}</span>` : '';
 
                 return `
                     <div class="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden flex flex-col hover:border-amber-500/50 transition duration-300">
-                        <!-- Thumbnail Frame -->
                         <div class="h-28 w-full relative bg-slate-950 overflow-hidden shrink-0">
                             <img src="${item.image || fallbackImg}" onerror="this.onerror=null; this.src='${fallbackImg}';" class="w-full h-full object-cover">
                             <div class="absolute top-2 left-2">${statusBadge}</div>
                             <div class="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-md border border-slate-700 text-slate-300 text-[9px] font-bold px-2 py-0.5 rounded">${item.category}</div>
                         </div>
 
-                        <!-- Content Frame -->
                         <div class="p-3 flex-1 flex flex-col justify-between text-left">
                             <div>
                                 <h3 class="font-bold text-white text-sm truncate uppercase tracking-tight" title="${item.name}">${item.name}</h3>
@@ -303,7 +296,6 @@
                                 </div>
                             </div>
                             
-                            <!-- Area List & Edit Button -->
                             <div class="border-t border-slate-800/80 mt-3 pt-2.5 flex items-center justify-between">
                                 <div class="flex flex-wrap gap-1 max-w-[70%]">
                                     ${areaBadges}
@@ -342,13 +334,11 @@
                 if (json.success) {
                     availableAreas = json.data;
                     
-                    // Render Filter Area
                     const filterSelect = document.getElementById('filter-area');
                     let filterOptions = `<option value="">Semua Cabang (Area)</option>`;
                     availableAreas.forEach(area => { filterOptions += `<option value="${area}">${area}</option>`; });
                     filterSelect.innerHTML = filterOptions;
 
-                    // Render Ceklis Cabang Dinamis dalam Form Modal
                     const formContainer = document.getElementById('form-area-container');
                     formContainer.innerHTML = availableAreas.map(area => `
                         <label class="flex items-center gap-1.5 text-xs text-slate-300 font-bold cursor-pointer hover:text-white">
@@ -357,21 +347,87 @@
                     `).join('');
                 }
             } catch (e) {
-                console.error("Gagal menyinkronkan data area dari Config");
+                console.error("Gagal menyinkronkan data area");
             }
         }
 
+        // RENDERING DINAMIS DAFTAR KATEGORI FILTER ATAS
+        function renderDynamicCategoryFilters() {
+            let uniqueCats = new Set(["Makanan", "Minuman", "Snack"]); // Default fallbacks
+            allMenus.forEach(item => {
+                if (item.category && item.category.trim() !== "") {
+                    uniqueCats.add(item.category.trim());
+                }
+            });
+
+            let optionsHtml = `<option value="">Semua Kategori</option>`;
+            Array.from(uniqueCats).sort().forEach(cat => {
+                optionsHtml += `<option value="${cat}">${cat}</option>`;
+            });
+            document.getElementById('filter-category').innerHTML = optionsHtml;
+        }
+
         // =========================================================================
-        // LOGIKA BARU: CASCADING DEPENDENT DROP-DOWN UNTUK SUB-KATEGORI DINAMIS
+        // LOGIKA BARU: CASCADING DEPENDENT DROP-DOWN UNTUK KATEGORI & SUB-KATEGORI DINAMIS
         // =========================================================================
+        function initCategoryAndSubCategoryDropdowns(selectedCat = "", selectedSub = "") {
+            const catSelect = document.getElementById('form-category');
+            const newCatInput = document.getElementById('form-category-new');
+            
+            newCatInput.classList.add('hidden-screen');
+            newCatInput.value = "";
+
+            let uniqueCats = new Set(["Makanan", "Minuman", "Snack"]);
+            allMenus.forEach(item => {
+                if (item.category && item.category.trim() !== "") {
+                    uniqueCats.add(item.category.trim());
+                }
+            });
+
+            let optionsHtml = ``;
+            Array.from(uniqueCats).sort().forEach(cat => {
+                optionsHtml += `<option value="${cat}">${cat}</option>`;
+            });
+            optionsHtml += `<option value="ADD_NEW_CAT" class="text-emerald-400 font-bold">+ Tambah Kategori Baru</option>`;
+            catSelect.innerHTML = optionsHtml;
+
+            if (selectedCat !== "") {
+                if (uniqueCats.has(selectedCat)) {
+                    catSelect.value = selectedCat;
+                } else {
+                    catSelect.value = "ADD_NEW_CAT";
+                    newCatInput.classList.remove('hidden-screen');
+                    newCatInput.value = selectedCat;
+                }
+            }
+            
+            updateSubCategoryDropdown(selectedSub);
+        }
+
+        function handleCategoryChange() {
+            const selectVal = document.getElementById('form-category').value;
+            const newCatInput = document.getElementById('form-category-new');
+            
+            if (selectVal === "ADD_NEW_CAT") {
+                newCatInput.classList.remove('hidden-screen');
+                newCatInput.focus();
+            } else {
+                newCatInput.classList.add('hidden-screen');
+                newCatInput.value = "";
+            }
+            updateSubCategoryDropdown();
+        }
+
         function updateSubCategoryDropdown(selectedSubValue = "") {
-            const category = document.getElementById('form-category').value;
+            const catSelectValue = document.getElementById('form-category').value;
+            const newCatValue = document.getElementById('form-category-new').value.trim();
+            const activeCategory = catSelectValue === "ADD_NEW_CAT" ? newCatValue : catSelectValue;
+
             const subSelect = document.getElementById('form-subcategory-select');
             
-            // Cari seluruh sub-kategori unik dari database berdasarkan kategori yang sedang dipilih
             let uniqueSubs = new Set();
             allMenus.forEach(item => {
-                if (item.category === category && item.subCategory && item.subCategory.trim() !== "") {
+                if (item.category === activeCategory && item.subCategory && item.subCategory.trim() !== "") {
                     uniqueSubs.add(item.subCategory.trim());
                 }
             });
@@ -380,25 +436,20 @@
             Array.from(uniqueSubs).sort().forEach(sub => {
                 optionsHtml += `<option value="${sub}">${sub}</option>`;
             });
-            
-            // Tambahkan tombol spesial untuk pendaftaran sub-kategori baru
             optionsHtml += `<option value="ADD_NEW" class="text-emerald-400 font-bold">+ Tambah Sub-Kategori Baru</option>`;
             
             subSelect.innerHTML = optionsHtml;
 
-            // Jika sedang mode edit, pasang kembali nilainya secara otomatis
             if (selectedSubValue !== "") {
                 if (uniqueSubs.has(selectedSubValue)) {
                     subSelect.value = selectedSubValue;
                 } else if (selectedSubValue.trim() !== "") {
-                    // Jika sub-kategori lama tidak ada di daftar saat ini, paksa tampilkan mode input teks baru
                     subSelect.value = "ADD_NEW";
                     const newTxtInput = document.getElementById('form-subcategory-new');
                     newTxtInput.classList.remove('hidden-screen');
                     newTxtInput.value = selectedSubValue;
                 }
             } else {
-                // Sembunyikan input teks baru jika ganti kategori secara normal
                 document.getElementById('form-subcategory-new').classList.add('hidden-screen');
                 document.getElementById('form-subcategory-new').value = "";
             }
@@ -440,7 +491,6 @@
         // 6. KONTROL MODAL FORM
         function openFormModal(menuId = null) {
             const modal = document.getElementById('modal-form');
-            const title = document.getElementById('modal-title');
             modal.classList.remove('hidden-screen');
 
             // Reset Form Master
@@ -454,6 +504,8 @@
             document.getElementById('form-image-file').value = "";
             document.getElementById('form-image-base64').value = "";
             document.getElementById('form-description').value = "";
+            document.getElementById('form-category-new').classList.add('hidden-screen');
+            document.getElementById('form-category-new').value = "";
             document.getElementById('form-subcategory-new').classList.add('hidden-screen');
             document.getElementById('form-subcategory-new').value = "";
 
@@ -461,22 +513,20 @@
             document.querySelectorAll('input[name="form-menu-area"]').forEach(cb => cb.checked = false);
 
             if (menuId) {
-                title.innerText = "Edit Data Hidangan";
+                document.getElementById('modal-title').innerText = "Edit Data Hidangan";
                 const item = allMenus.find(x => x.menuId === menuId);
                 if (item) {
                     document.getElementById('form-menu-id').value = item.menuId;
                     document.getElementById('form-name').value = item.name;
                     document.getElementById('form-price').value = item.price;
-                    document.getElementById('form-category').value = item.category;
                     document.getElementById('form-route').value = item.route;
                     document.getElementById('form-status').value = item.status;
                     document.getElementById('form-image').value = item.image;
                     document.getElementById('form-description').value = item.description;
 
-                    // Inisiasi dropdown sub-kategori berdasarkan sub-kategori hidangan yang diedit
-                    updateSubCategoryDropdown(item.subCategory);
+                    // Inisiasi cascading dropdowns kategori & sub-kategori
+                    initCategoryAndSubCategoryDropdowns(item.category, item.subCategory);
 
-                    // Nyalakan ceklis cabang berdasarkan string terpisah koma
                     if (item.area) {
                         const activeAreas = item.area.split(',').map(a => a.trim());
                         activeAreas.forEach(a => {
@@ -486,8 +536,8 @@
                     }
                 }
             } else {
-                title.innerText = "Tambah Menu Hidangan Baru";
-                updateSubCategoryDropdown(); // Muat daftar sub-kategori kosong/bawaan
+                document.getElementById('modal-title').innerText = "Tambah Menu Hidangan Baru";
+                initCategoryAndSubCategoryDropdowns(); // Inisiasi dropdown kosong/bawaan
             }
             lucide.createIcons();
         }
@@ -500,11 +550,15 @@
         async function submitMenuForm() {
             const name = document.getElementById('form-name').value.trim();
             const price = parseFloat(document.getElementById('form-price').value) || 0;
-            const category = document.getElementById('form-category').value;
             const route = document.getElementById('form-route').value;
             const status = document.getElementById('form-status').value;
 
-            // Logika Penyusunan Sub-Kategori Dinamis (SaaS Cascade)
+            // Logika Penyusunan Kategori Utama Dinamis
+            const catSelect = document.getElementById('form-category').value;
+            const catNew = document.getElementById('form-category-new').value.trim();
+            const finalCategoryValue = catSelect === "ADD_NEW_CAT" ? catNew : catSelect;
+
+            // Logika Penyusunan Sub-Kategori Dinamis
             const subSelect = document.getElementById('form-subcategory-select').value;
             const subNew = document.getElementById('form-subcategory-new').value.trim();
             const finalSubCategoryValue = subSelect === "ADD_NEW" ? subNew : subSelect;
@@ -516,8 +570,8 @@
             });
             const areaValue = selectedAreas.join(", ");
 
-            if (!name || price <= 0 || selectedAreas.length === 0) {
-                alert("Mohon lengkapi Nama Menu, Harga Jual, dan pilih minimal 1 Area Cabang aktif!");
+            if (!name || price <= 0 || !finalCategoryValue || selectedAreas.length === 0) {
+                alert("Mohon lengkapi Nama Menu, Harga Jual, Kategori, dan pilih minimal 1 Area Cabang aktif!");
                 return;
             }
 
@@ -529,8 +583,8 @@
                 menuId: document.getElementById('form-menu-id').value,
                 name: name,
                 price: price,
-                category: category,
-                subCategory: finalSubCategoryValue, // <--- Kirim nilai sub-kategori dinamis ("Coffee" atau "Tea", dll)
+                category: finalCategoryValue, // Kategori Utama Dinamis
+                subCategory: finalSubCategoryValue, // Sub-Kategori Dinamis
                 route: route,
                 status: status,
                 area: areaValue, 
