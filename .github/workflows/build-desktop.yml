@@ -1,34 +1,35 @@
-{
-  "build": {
-    "beforeBuildCommand": "",
-    "beforeDevCommand": "",
-    "devPath": "https://amrpos.mrdsolution.my.id/admin.html",
-    "distDir": "../dist"
-  },
-  "package": {
-    "productName": "AMR_Admin",
-    "version": "1.0.0"
-  },
-  "tauri": {
-    "allowlist": {
-      "all": true
-    },
-    "bundle": {
-      "active": false,
-      "identifier": "com.amrpos.mrdsolution"
-    },
-    "security": {
-      "csp": null
-    },
-    "windows": [
-      {
-        "fullscreen": false,
-        "height": 800,
-        "resizable": true,
-        "title": "AMR Backoffice Admin",
-        "url": "https://amrpos.mrdsolution.my.id/admin.html",
-        "width": 1280
-      }
-    ]
-  }
-}
+name: Build Desktop Exe (No-Bundle)
+on:
+  push:
+    branches:
+      - main # Memicu perakitan setiap kali Anda push ke branch main
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Rust Stable
+        uses: dtolnay/rust-toolchain@stable
+
+      # Menginstal pustaka lokal dari package.json
+      - name: Install Local Dependencies
+        run: npm install
+
+      # Menjalankan kompilasi tanpa bundler menggunakan sintaksis tauri v1 yang benar
+      - name: Build Standalone Exe (No Bundle)
+        run: npm run tauri build -- --bundles none
+
+      # Unggah hasil rakitan .exe ke halaman Actions Artifacts
+      - name: Upload Standalone Exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: AMR-Admin-Windows-Exe
+          path: src-tauri/target/release/AMR_Admin.exe
