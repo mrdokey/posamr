@@ -3,7 +3,7 @@
     "beforeBuildCommand": "",
     "beforeDevCommand": "",
     "devPath": "https://amrpos.mrdsolution.my.id/admin.html",
-    "distDir": "../dist"
+    "distDir": "../dummy"
   },
   "package": {
     "productName": "AMR_Admin",
