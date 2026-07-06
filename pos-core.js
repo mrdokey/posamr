@@ -37,7 +37,7 @@ async function loginKasir() {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) });
         const json = await res.json();
         if(json.success) {
-            const allowedRoles = ["admin", "hrd", "manager", "owner", "administrator"];
+            const allowedRoles = ["admin", "hrd", "manager", "owner", "administrator", "staff"];
             const jobdeskClean = json.jobdesk ? json.jobdesk.toLowerCase().trim() : "";
             const roleClean = json.role ? json.role.toLowerCase().trim() : "";
 
