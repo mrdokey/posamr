@@ -349,7 +349,13 @@
             } else if (tab === "Attendance") {
                 area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
                 area.innerHTML = `<iframe src="admin-attendance.html" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
-            } else {
+            } 
+            else if (tab === "Menu") {
+    area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+    area.innerHTML = `<iframe src="admin-menu.html" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+}
+            
+            else {
                 area.className = "flex-1 overflow-y-auto p-6 flex flex-col justify-center items-center text-center space-y-4";
                 area.innerHTML = `
                     <div class="w-16 h-16 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center justify-center text-amber-500">
