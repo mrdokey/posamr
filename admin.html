@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SaaS Backoffice Admin AMR</title>
-    <link rel="icon" type="image/png" href="https://i.ibb.co.com/JW1FFbCz/1780229137561.png">
+    <link rel="icon" type="image/png" href="https://i.ibb.co.com/gMmSSTgq/IMG-20260606-WA0000.jpg">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -97,6 +97,11 @@
             background-color: #f59e0b;
             color: #0f172a;
         }
+        body.light-mode #modal-contract-warning > div {
+            background-color: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #0f172a !important;
+        }
     </style>
 </head>
 <body class="h-[100dvh] w-screen flex flex-col select-none text-slate-100 overflow-hidden">
@@ -175,7 +180,7 @@
 
                 <nav class="hidden md:flex flex-col gap-2.5 w-full mt-6">
                     <!-- SUB-MENU GROUP 1: MANAJEMEN HRD -->
-                    <div id="group-hrd" class="w-full border-b border-slate-800 pb-3">
+                    <div id="group-hrd" class="w-full border-b border-slate-800 pb-2">
                         <button onclick="toggleHrdMenu()" class="w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-between text-slate-400 hover:bg-slate-800 hover:text-white transition">
                             <div class="flex items-center gap-3">
                                 <i data-lucide="users" class="w-4 h-4 text-amber-500"></i>
@@ -183,7 +188,7 @@
                             </div>
                             <i data-lucide="chevron-down" id="hrd-chevron" class="w-4 h-4 transition-transform duration-200"></i>
                         </button>
-                        <div id="hrd-submenu" class="hidden pl-6 mt-1.5 flex flex-col gap-1 w-full submenu-container">
+                        <div id="hrd-submenu" class="hidden pl-6 mt-1 flex flex-col gap-1 w-full submenu-container">
                             <button onclick="switchTab('Users')" id="nav-Users" class="nav-btn w-full px-4 py-2.5 rounded-xl text-[11px] font-bold flex items-center gap-2 text-slate-400 hover:bg-slate-850 hover:text-white transition">
                                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> <span>Daftar Karyawan</span>
                             </button>
@@ -201,7 +206,7 @@
                         <i data-lucide="ticket" class="w-4 h-4 text-rose-400"></i> <span>Diskon & Voucher</span>
                     </button>
 
-                    <!-- DROPDOWN GROUP LAPORAN PENJUALAN -->
+                    <!-- SUB-MENU GROUP 2: LAPORAN PENJUALAN (PRO SAAS GROUP) -->
                     <div id="group-reports" class="w-full border-t border-b border-slate-800 py-2">
                         <button onclick="toggleReportMenu()" class="w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-between text-slate-400 hover:bg-slate-800 hover:text-white transition">
                             <div class="flex items-center gap-3">
@@ -260,6 +265,30 @@
 
             <div id="content-area" class="flex-1 overflow-y-auto p-6"></div>
         </main>
+    </div>
+
+    <!-- =========================================================================
+     * MODAL POPUP PERINGATAN KONTRAK KERJA KRITIS (SAAS IN-APP ALARM)
+     * ========================================================================= -->
+    <div id="modal-contract-warning" class="hidden-screen fixed inset-0 bg-black/85 z-[160] flex items-center justify-center p-4 smooth-transition">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-6 shadow-2xl flex flex-col">
+            <div class="flex justify-between items-center mb-4 border-b border-rose-900/50 pb-3">
+                <h3 class="text-xs font-black text-rose-500 uppercase tracking-wider flex items-center gap-1.5">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 animate-bounce"></i> Peringatan Kontrak Kerja Kritis
+                </h3>
+                <button onclick="closeContractWarning()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="space-y-3 text-left overflow-y-auto max-h-[40vh] pr-1">
+                <p class="text-[11px] text-slate-400 leading-relaxed mb-2">Daftar staf berikut terdeteksi akan segera berakhir masa kontraknya atau telah kedaluwarsa. Mohon segera ambil tindakan perpanjangan kontrak kerja.</p>
+                <div id="contract-warning-list" class="space-y-2">
+                    <!-- Diisi otomatis secara asinkron dari halaman anak admin-users.html -->
+                </div>
+            </div>
+            <div class="mt-6 pt-3 border-t border-slate-800 flex justify-end gap-2 shrink-0">
+                <button onclick="closeContractWarning()" class="px-5 py-2 text-xs font-bold text-slate-400 hover:text-white transition">Ingatkan Nanti</button>
+                <button onclick="goToContractManagement()" class="px-6 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-lg transition">Kelola Kontrak</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -340,13 +369,13 @@
                 showScreen('activation-screen');
             } else {
                 try {
-                    adminInfo = JSON.parse(localStorage.getItem(STORAGE_ADMIN));
+                    adminInfo = JSON.parse(sessionStorage.getItem(STORAGE_ADMIN));
                 } catch(e) {
-                    localStorage.removeItem(STORAGE_ADMIN);
+                    sessionStorage.removeItem(STORAGE_ADMIN);
                 }
 
                 if (!adminInfo || adminInfo.adminAccess === undefined) {
-                    localStorage.removeItem(STORAGE_ADMIN);
+                    sessionStorage.removeItem(STORAGE_ADMIN);
                     showScreen('login-screen');
                     fetchConfigBg();
                     clearPin();
@@ -373,16 +402,80 @@
                         }
                     }
                     
+                    resetIdleTimer();
+                    
                     switchTab(currentTab);
                 }
             }
+        }
+
+        // ==========================================
+        // SAAS SECURITY: IDLE TIMEOUT TIMER (AUTO-LOGOUT 5 MENIT)
+        // ==========================================
+        let idleTimer;
+        const IDLE_LIMIT = 5 * 60 * 1000; 
+
+        function resetIdleTimer() {
+            if (!sessionStorage.getItem(STORAGE_ADMIN)) return;
+            clearTimeout(idleTimer);
+            idleTimer = setTimeout(executeAutoLogout, IDLE_LIMIT);
+        }
+
+        function executeAutoLogout() {
+            sessionStorage.removeItem(STORAGE_ADMIN);
+            showScreen('login-screen');
+            clearPin();
+            alert("Sesi Keamanan Berakhir!\n\nAplikasi otomatis keluar karena tidak ada aktivitas selama 5 menit.");
+        }
+
+        ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(evt => {
+            window.addEventListener(evt, resetIdleTimer, { passive: true });
+        });
+
+        // =========================================================================
+        // HUBUNGAN TRIGGER ANTARA IFRAME ANAK DAN POPUP INDUK
+        // =========================================================================
+        function triggerContractWarning(expiringEmployees) {
+            if (sessionStorage.getItem("MRD_CONTRACT_WARN_SHOWN")) return;
+
+            const container = document.getElementById('contract-warning-list');
+            if (!container || expiringEmployees.length === 0) return;
+
+            container.innerHTML = expiringEmployees.map(emp => {
+                const statusText = emp.daysLeft <= 0 
+                    ? `<span class="text-rose-500 font-bold">Habis Kontrak</span>`
+                    : `<span class="text-amber-500 font-bold">Sisa ${emp.daysLeft} Hari</span>`;
+                return `
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-850 flex justify-between items-center text-slate-100">
+                        <div>
+                            <p class="text-xs font-bold capitalize">${emp.name}</p>
+                            <p class="text-[9px] text-slate-500 font-bold uppercase mt-0.5">ID: ${emp.userId} | ${emp.statusUser}</p>
+                        </div>
+                        <div class="text-right text-[10px]">
+                            ${statusText}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('modal-contract-warning').classList.remove('hidden-screen');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function closeContractWarning() {
+            document.getElementById('modal-contract-warning').classList.add('hidden-screen');
+            sessionStorage.setItem("MRD_CONTRACT_WARN_SHOWN", "true");
+        }
+
+        function goToContractManagement() {
+            closeContractWarning();
+            switchTab("Users");
         }
 
         function enforceSidebarPermissions() {
             const role = (adminInfo.role || "").toLowerCase().trim();
             if (role === "administrator") return; // Bypass penuh untuk admin dewa (USR-0000)
 
-            // MEMBACA KOLOM DATABASE RIIL (TANPA PARSER REGEX)
             const allowedTabs = adminInfo.allowedTabs ? adminInfo.allowedTabs.split(",").map(t => t.trim()) : [];
             const adminAccess = adminInfo.adminAccess;
 
@@ -510,7 +603,6 @@
                         return;
                     }
 
-                    // MEMBACA KOLOM DATABASE RIIL (TANPA REGEX)
                     if (json.adminAccess === "1" || json.adminAccess === 1) {
                         localStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
                         window.location.reload();
@@ -530,7 +622,7 @@
 
         function logoutAdmin() {
             if (confirm("Keluar dari sesi admin?")) {
-                localStorage.removeItem(STORAGE_ADMIN);
+                sessionStorage.removeItem(STORAGE_ADMIN);
                 window.location.reload();
             }
         }
@@ -538,6 +630,7 @@
         function resetLicense() {
             if(confirm("Hapus lisensi dan reset cache?")) {
                 localStorage.clear();
+                sessionStorage.clear();
                 window.location.reload();
             }
         }
@@ -602,7 +695,6 @@
             const area = document.getElementById('content-area');
             if (!area) return;
 
-            // SaaS Dynamic Cache Buster
             const buster = window.appVersion || Date.now();
             const themeParam = document.body.classList.contains('light-mode') ? `?theme=light&v=${buster}` : `?v=${buster}`;
 
