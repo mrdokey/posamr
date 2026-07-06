@@ -612,7 +612,7 @@
             const area = document.getElementById('content-area');
             if (!area) return;
 
-            const themeParam = document.body.classList.contains('light-mode') ? '?theme=light' : '';
+            const themeParam = document.body.classList.contains('light-mode') ? '?theme=light&v=200' : '?v=200';
 
             if (tab === "Users") {
                 area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
