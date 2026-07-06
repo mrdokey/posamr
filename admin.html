@@ -115,6 +115,9 @@
                     <button onclick="switchTab('Reports')" id="nav-Reports" class="nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-400 hover:bg-slate-800 hover:text-white transition">
                         <i data-lucide="bar-chart-3" class="w-4 h-4"></i> <span>Laporan Harian</span>
                     </button>
+                    <button onclick="switchTab('Config')" id="nav-Config" class="nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-400 hover:bg-slate-800 hover:text-white transition">
+    <i data-lucide="settings" class="w-4 h-4"></i> <span>Pengaturan Sistem</span>
+</button>
                 </nav>
             </div>
 
@@ -138,6 +141,7 @@
                 <button onclick="switchTab('Menu')" id="mob-nav-Menu" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Menu</button>
                 <button onclick="switchTab('Promo')" id="mob-nav-Promo" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Promo</button>
                 <button onclick="switchTab('Reports')" id="mob-nav-Reports" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Laporan</button>
+                <button onclick="switchTab('Config')" id="mob-nav-Config" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Pengaturan</button>
             </div>
 
             <div id="content-area" class="flex-1 overflow-y-auto p-6"></div>
@@ -358,6 +362,12 @@
 else if (tab === "Promo") {
     area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
     area.innerHTML = `<iframe src="admin-promo.html" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+}
+
+// Tambahkan kondisi pencabangan baru ini di dalam fungsi renderContent(tab):
+else if (tab === "Config") {
+    area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+    area.innerHTML = `<iframe src="admin-config.html" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
 }
             
             else {
