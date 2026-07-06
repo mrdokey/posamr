@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SaaS Backoffice Admin AMR</title>
-    <link rel="icon" type="image/png" href="https://i.ibb.co.com/JW1FFbCz/1780229137561.png">
+    <link class="apple-touch-icon" rel="apple-touch-icon" href="https://i.ibb.co.com/JW1FFbCz/1780229137561.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -263,7 +263,6 @@
     </div>
 
     <script>
-        window.appVersion = Date.now();
         const STORAGE_API = "MRD_API_URL";
         const STORAGE_ADMIN = "MRD_ADMIN_SESSION";
         
@@ -271,6 +270,7 @@
         let adminInfo = null;
         let loginPinValue = "";
         let currentTab = "Users";
+        window.appVersion = Date.now(); // Default cache buster jika database belum merespon
 
         window.onload = () => {
             setTimeout(() => {
@@ -359,14 +359,16 @@
                     // JAMINAN KEAMANAN: Alihkan tab bawaan jika akses ke "Users" dilarang
                     const role = (adminInfo.role || "").toLowerCase().trim();
                     if (role !== "administrator") {
-                        const parsed = parseKeterangan(adminInfo.keterangan || "");
-                        if (parsed.adminAccess !== "ON") {
+                        const adminAccess = adminInfo.adminAccess;
+                        const allowedTabs = adminInfo.allowedTabs ? adminInfo.allowedTabs.split(",").map(t => t.trim()) : [];
+                        
+                        if (adminAccess !== "1" && adminAccess !== 1) {
                             alert("Akses Ditolak!\n\nAkun Anda telah dinonaktifkan dari akses Backoffice.");
                             logoutAdmin();
                             return;
                         }
-                        if (!parsed.allowedTabs.includes("Users") && parsed.allowedTabs.length > 0) {
-                            currentTab = parsed.allowedTabs[0]; 
+                        if (!allowedTabs.includes("Users") && allowedTabs.length > 0) {
+                            currentTab = allowedTabs[0]; 
                         }
                     }
                     
@@ -375,74 +377,9 @@
             }
         }
 
-        // PARSER DATA METADATA OTORISASI SAAS ACL
-        function parseKeterangan(keteranganStr) {
-            let adminAccess = "OFF";
-            let allowedTabs = [];
-            let cleanKeterangan = keteranganStr || "";
-
-            if (keteranganStr) {
-                const accessMatch = keteranganStr.match(/\[ADMIN_ACCESS:(ON|OFF)\]/);
-                if (accessMatch) adminAccess = accessMatch[1];
-
-                const tabsMatch = keteranganStr.match(/\[ALLOWED_TABS:([^\]]+)\]/);
-                if (tabsMatch) allowedTabs = tabsMatch[1].split(",");
-                
-                cleanKeterangan = keteranganStr.replace(/\[ADMIN_ACCESS:(ON|OFF)\]/, "").replace(/\[ALLOWED_TABS:([^\]]+)\]/, "").trim();
-                if (cleanKeterangan.endsWith("|")) cleanKeterangan = cleanKeterangan.slice(0, -1).trim();
-            }
-            return { adminAccess, allowedTabs, cleanKeterangan };
-        }
-
-        function enforceSidebarPermissions() {
-            const role = (adminInfo.role || "").toLowerCase().trim();
-            if (role === "administrator") return; // Bypass penuh untuk admin dewa (USR-0000)
-
-            const parsed = parseKeterangan(adminInfo.keterangan || "");
-            
-            const tabs = ["Users", "Attendance", "Menu", "Promo", "Config"];
-            tabs.forEach(tab => {
-                const navBtn = document.getElementById(`nav-${tab}`);
-                const mobBtn = document.getElementById(`mob-nav-${tab}`);
-                const hasAccess = parsed.adminAccess === "ON" && parsed.allowedTabs.includes(tab);
-
-                if (!hasAccess) {
-                    if (navBtn) navBtn.classList.add('hidden-screen');
-                    if (mobBtn) mobBtn.classList.add('hidden-screen');
-                } else {
-                    if (navBtn) navBtn.classList.remove('hidden-screen');
-                    if (mobBtn) mobBtn.classList.remove('hidden-screen');
-                }
-            });
-
-            const reportTabs = ["ProdSales", "AuditSales"];
-            let hasReportsAccess = false;
-            reportTabs.forEach(tab => {
-                const navBtn = document.getElementById(`nav-${tab}`);
-                const mobBtn = document.getElementById(`mob-nav-${tab}`);
-                const hasAccess = parsed.adminAccess === "ON" && parsed.allowedTabs.includes(tab);
-                if (hasAccess) hasReportsAccess = true;
-
-                if (!hasAccess) {
-                    if (navBtn) navBtn.classList.add('hidden-screen');
-                    if (mobBtn) mobBtn.classList.add('hidden-screen');
-                } else {
-                    if (navBtn) navBtn.classList.remove('hidden-screen');
-                    if (mobBtn) mobBtn.classList.remove('hidden-screen');
-                }
-            });
-
-            const hasHrdAccess = parsed.allowedTabs.includes("Users") || parsed.allowedTabs.includes("Attendance");
-            const hrdGroup = document.getElementById('group-hrd');
-            if (!hasHrdAccess && hrdGroup) hrdGroup.classList.add('hidden-screen');
-
-            const reportGroup = document.getElementById('group-reports');
-            if (!hasReportsAccess && reportGroup) reportGroup.classList.add('hidden-screen');
-        }
-
         async function activateAdminSystem() {
             const input = document.getElementById('api-input').value.trim();
-            if(!input) return alert("Masukkan URL API Deploy Anda!");
+            if(!input) return alert("Masukkan URL API Anda!");
             const btn = document.getElementById('btn-activate');
             btn.innerHTML = "Memverifikasi...";
             btn.disabled = true;
@@ -458,26 +395,26 @@
                     throw new Error("Gagal");
                 }
             } catch (e) {
-                alert("Verifikasi Gagal!");
+                alert("Verifikasi Gagal! Periksa deploy GAS Anda.");
                 btn.innerHTML = "Aktifkan Backoffice";
                 btn.disabled = false;
             }
         }
 
         async function fetchConfigBg() {
-    try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) });
-        const json = await res.json();
-        if (json.success) {
-            document.getElementById('login-resto-name').innerText = json.data["NAMA_PERUSAHAAN"] || "AMR ADMIN";
-            
-            // SUNTIKAN SAAS: Ambil versi rilis aktif dari Google Sheets
-            if (json.data["VERSION_BUSTER"]) {
-                window.appVersion = json.data["VERSION_BUSTER"].toString().trim();
-            }
+            try {
+                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) });
+                const json = await res.json();
+                if (json.success) {
+                    document.getElementById('login-resto-name').innerText = json.data["NAMA_PERUSAHAAN"] || "AMR ADMIN";
+                    
+                    // SUNTIKAN SAAS: Ambil versi rilis aktif dari Google Sheets
+                    if (json.data["VERSION_BUSTER"]) {
+                        window.appVersion = json.data["VERSION_BUSTER"].toString().trim();
+                    }
+                }
+            } catch(e) {}
         }
-    } catch(e) {}
-}
 
         function pressNum(num) {
             if(loginPinValue.length < 4) {
@@ -487,7 +424,6 @@
             }
         }
 
-        // SINKRONISASI PENGHAPUS PIN BACKSPACE
         function backspacePin() {
             if(loginPinValue.length > 0) {
                 loginPinValue = loginPinValue.slice(0, -1);
@@ -514,35 +450,35 @@
         }
 
         async function loginAdmin() {
-    try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) });
-        const json = await res.json();
-        if(json.success) {
-            const roleClean = json.role ? json.role.toLowerCase().trim() : "";
-            
-            if (roleClean === "administrator") {
-                localStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
-                window.location.reload();
-                return;
-            }
+            try {
+                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) });
+                const json = await res.json();
+                if(json.success) {
+                    const roleClean = json.role ? json.role.toLowerCase().trim() : "";
+                    
+                    if (roleClean === "administrator") {
+                        localStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
+                        window.location.reload();
+                        return;
+                    }
 
-            // Jauh lebih bersih tanpa Regex! Cukup cek angka 1 (ON) atau 0 (OFF)
-            if (json.adminAccess === "1") {
-                localStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
-                window.location.reload();
-            } else {
-                alert("Akses Ditolak!\n\nAkun Anda tidak memiliki izin untuk mengakses Backoffice.");
+                    // MEMBACA KOLOM DATABASE RIIL (TANPA REGEX)
+                    if (json.adminAccess === "1" || json.adminAccess === 1) {
+                        localStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
+                        window.location.reload();
+                    } else {
+                        alert("Akses Ditolak!\n\nAkun Anda tidak memiliki izin otorisasi untuk mengakses Backoffice.");
+                        clearPin();
+                    }
+                } else {
+                    alert(json.message || "PIN Salah!");
+                    clearPin();
+                }
+            } catch(e) {
+                alert("Koneksi gagal.");
                 clearPin();
             }
-        } else {
-            alert(json.message || "PIN Salah!");
-            clearPin();
         }
-    } catch(e) {
-        alert("Koneksi gagal.");
-        clearPin();
-    }
-}
 
         function logoutAdmin() {
             if (confirm("Keluar dari sesi admin?")) {
@@ -615,35 +551,35 @@
         }
 
         function renderContent(tab) {
-    const area = document.getElementById('content-area');
-    if (!area) return;
+            const area = document.getElementById('content-area');
+            if (!area) return;
 
-    // SaaS Dynamic Cache Buster
-    const buster = window.appVersion || Date.now();
-    const themeParam = document.body.classList.contains('light-mode') ? `?theme=light&v=${buster}` : `?v=${buster}`;
+            // SaaS Dynamic Cache Buster
+            const buster = window.appVersion || Date.now();
+            const themeParam = document.body.classList.contains('light-mode') ? `?theme=light&v=${buster}` : `?v=${buster}`;
 
-    if (tab === "Users") {
-        area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
-        area.innerHTML = `<iframe src="admin-users.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
-    } else if (tab === "Attendance") {
-        area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
-        area.innerHTML = `<iframe src="admin-attendance.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
-    } else if (tab === "Menu") {
-        area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
-        area.innerHTML = `<iframe src="admin-menu.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
-    } else if (tab === "Promo") {
-        area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
-        area.innerHTML = `<iframe src="admin-promo.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
-    } else if (tab === "Config") {
-        area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
-        area.innerHTML = `<iframe src="admin-config.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
-    } else if (tab === "ProdSales") {
-        area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
-        area.innerHTML = `<iframe src="admin-reports-product.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
-    } else if (tab === "AuditSales") {
-        area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
-        area.innerHTML = `<iframe src="admin-reports-audit.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
-    } else {
+            if (tab === "Users") {
+                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+                area.innerHTML = `<iframe src="admin-users.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+            } else if (tab === "Attendance") {
+                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+                area.innerHTML = `<iframe src="admin-attendance.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+            } else if (tab === "Menu") {
+                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+                area.innerHTML = `<iframe src="admin-menu.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+            } else if (tab === "Promo") {
+                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+                area.innerHTML = `<iframe src="admin-promo.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+            } else if (tab === "Config") {
+                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+                area.innerHTML = `<iframe src="admin-config.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+            } else if (tab === "ProdSales") {
+                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+                area.innerHTML = `<iframe src="admin-reports-product.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+            } else if (tab === "AuditSales") {
+                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+                area.innerHTML = `<iframe src="admin-reports-audit.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+            } else {
                 area.className = "flex-1 overflow-y-auto p-6 flex flex-col justify-center items-center text-center space-y-4";
                 area.innerHTML = `
                     <div class="w-16 h-16 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center justify-center text-amber-500">
