@@ -83,7 +83,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nama Lengkap</label>
-                        <input type="text" id="form-name" placeholder="Ayam Goreng" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500">
+                        <input type="text" id="form-name" placeholder="Nama Karyawan" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs focus:border-amber-500">
                     </div>
                     <div>
                         <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">PIN Kiosk (4 Angka)</label>
@@ -102,17 +102,24 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Jobdesk Kerja</label>
-                        <select id="form-jobdesk" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white">
-                            <option value="Waiter">Waiter</option>
-                            <option value="Kasir">Kasir</option>
-                            <option value="Back office">Back office</option>
-                            <option value="Manager">Manager</option>
-                        </select>
+                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Jobdesk Kerja (Multi-Select)</label>
+                        <div class="grid grid-cols-2 gap-1.5 bg-slate-950 border border-slate-850 p-2.5 rounded-xl">
+                            <label class="flex items-center gap-1.5 text-[10px] text-slate-300 font-bold cursor-pointer">
+                                <input type="checkbox" name="form-jobdesk" value="Waiter" class="rounded accent-amber-500 w-3.5 h-3.5"> Waiter
+                            </label>
+                            <label class="flex items-center gap-1.5 text-[10px] text-slate-300 font-bold cursor-pointer">
+                                <input type="checkbox" name="form-jobdesk" value="Kasir" class="rounded accent-amber-500 w-3.5 h-3.5"> Kasir
+                            </label>
+                            <label class="flex items-center gap-1.5 text-[10px] text-slate-300 font-bold cursor-pointer">
+                                <input type="checkbox" name="form-jobdesk" value="Back office" class="rounded accent-amber-500 w-3.5 h-3.5"> Back office
+                            </label>
+                            <label class="flex items-center gap-1.5 text-[10px] text-slate-300 font-bold cursor-pointer">
+                                <input type="checkbox" name="form-jobdesk" value="Manager" class="rounded accent-amber-500 w-3.5 h-3.5"> Manager
+                            </label>
+                        </div>
                     </div>
                     <div>
                         <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Cabang Kerja (Area)</label>
-                        <!-- Dropdown Cabang Form Dinamis (SaaS) -->
                         <select id="form-area" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white">
                             <option value="">Memuat cabang...</option>
                         </select>
@@ -178,7 +185,7 @@
 
                 <div>
                     <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Keterangan / Deskripsi</label>
-                    <textarea id="form-keterangan" rows="2" placeholder="Manager Operasional..." class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs"></textarea>
+                    <textarea id="form-keterangan" rows="2" placeholder="Keterangan tambahan..." class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs"></textarea>
                 </div>
             </div>
             
@@ -193,7 +200,7 @@
         const GAS_URL = localStorage.getItem("MRD_API_URL");
         let allUsers = [];
 
-        // SATU SINKRONISASI WINDOW ONLOAD (Failsafe)
+        // HANYA SATU WINDOW ONLOAD (AMN DARI TABRAKAN)
         window.onload = () => {
             if (GAS_URL) {
                 fetchUsers();
@@ -331,7 +338,6 @@
             document.getElementById('form-name').value = "";
             document.getElementById('form-pin').value = "";
             document.getElementById('form-role').value = "Staff";
-            document.getElementById('form-jobdesk').value = "Waiter";
             document.getElementById('form-area').value = "";
             document.getElementById('form-nowa').value = "";
             document.getElementById('form-alamat').value = "";
@@ -346,6 +352,9 @@
             document.getElementById('form-foto-base64').value = "";
             document.getElementById('form-keterangan').value = "";
 
+            // Reset Ceklis Jobdesk
+            document.querySelectorAll('input[name="form-jobdesk"]').forEach(cb => cb.checked = false);
+
             if (userId) {
                 title.innerText = "Edit Data Karyawan";
                 const u = allUsers.find(x => x.userId === userId);
@@ -354,7 +363,6 @@
                     document.getElementById('form-name').value = u.name;
                     document.getElementById('form-pin').value = u.pin;
                     document.getElementById('form-role').value = u.role;
-                    document.getElementById('form-jobdesk').value = u.jobdesk;
                     document.getElementById('form-area').value = u.area;
                     document.getElementById('form-nowa').value = u.noWa;
                     document.getElementById('form-alamat').value = u.alamat;
@@ -366,6 +374,15 @@
                     document.getElementById('form-geotag').value = u.geotag;
                     document.getElementById('form-foto').value = u.foto;
                     document.getElementById('form-keterangan').value = u.keterangan;
+
+                    // Nyalakan Ceklis Berdasarkan Nilai Terpisah Koma (SaaS EnumList)
+                    if (u.jobdesk) {
+                        const jds = u.jobdesk.split(",").map(item => item.trim());
+                        jds.forEach(jd => {
+                            const cb = document.querySelector(`input[name="form-jobdesk"][value="${jd}"]`);
+                            if (cb) cb.checked = true;
+                        });
+                    }
                 }
             } else {
                 title.innerText = "Tambah Karyawan Baru";
@@ -383,8 +400,15 @@
             const joinDate = document.getElementById('form-joindate').value;
             const noWa = document.getElementById('form-nowa').value.trim();
 
-            if (!name || !pin || !joinDate || !noWa) {
-                alert("Lengkapi kolom Nama, PIN, Tanggal Join, dan No WA!");
+            // Kumpulkan nilai kotak centang jobdesk (EnumList)
+            const selectedJobdesks = [];
+            document.querySelectorAll('input[name="form-jobdesk"]:checked').forEach(cb => {
+                selectedJobdesks.push(cb.value);
+            });
+            const jobdeskValue = selectedJobdesks.join(", ");
+
+            if (!name || !pin || !joinDate || !noWa || selectedJobdesks.length === 0) {
+                alert("Lengkapi kolom Nama, PIN, Tanggal Join, No WA, dan pilih minimal 1 Jobdesk!");
                 return;
             }
 
@@ -397,7 +421,7 @@
                 name: name,
                 pin: pin,
                 role: document.getElementById('form-role').value,
-                jobdesk: document.getElementById('form-jobdesk').value,
+                jobdesk: jobdeskValue, // Dikirim sebagai "Waiter, Kasir"
                 area: document.getElementById('form-area').value,
                 noWa: noWa,
                 alamat: document.getElementById('form-alamat').value.trim(),

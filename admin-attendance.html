@@ -24,7 +24,7 @@
         </div>
         <div class="flex gap-2 w-full sm:w-auto">
             <button onclick="exportToExcel()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-slate-950 font-black text-xs rounded-xl flex items-center justify-center gap-1.5 transition shadow-lg shadow-emerald-600/10">
-                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> EKSPOR EXCEL (RANGE)
+                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> TARIK DATA EXCEL
             </button>
             <button onclick="fetchAttendance()" class="px-4 py-2.5 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5" title="Segarkan Data">
                 <i data-lucide="refresh-cw" class="w-4 h-4"></i>
@@ -32,7 +32,7 @@
         </div>
     </div>
 
-    <!-- FILTER BAR (5 KOLOM RESPONSIF) -->
+    <!-- FILTER BAR -->
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 mb-6 items-end">
         <div class="flex flex-col">
             <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Pencarian Staf</label>
@@ -43,9 +43,9 @@
         </div>
         <div class="flex flex-col">
             <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Cabang (Area)</label>
-            <select id="filter-area" onchange="filterLogs()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2.5 outline-none text-xs focus:border-emerald-500">
-    <option value="">Memuat Cabang...</option>
-</select>
+            <select id="filter-area" onchange="filterLogs()" class="bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-3 py-2 outline-none text-xs focus:border-emerald-500">
+                <option value="">Memuat Cabang...</option>
+            </select>
         </div>
         <div class="flex flex-col">
             <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Validasi GPS</label>
@@ -65,7 +65,7 @@
         </div>
     </div>
 
-    <!-- TABEL LOG REKAP (KINI DENGAN KOLOM KETERANGAN) -->
+    <!-- TABEL LOG REKAP -->
     <div class="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -103,7 +103,10 @@
         let filteredLogs = [];
 
         window.onload = () => {
-            if (GAS_URL) fetchAttendance();
+            if (GAS_URL) {
+                fetchAttendance();
+                loadDynamicAreas();
+            }
         };
 
         async function fetchAttendance() {
@@ -123,7 +126,7 @@
                     container.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-rose-500 font-bold">Gagal: ${attJson.message}</td></tr>`;
                 }
             } catch (err) {
-                container.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-rose-500 font-bold">Gagal memproses rekap absensi. Periksa kembali backend GAS Anda!</td></tr>`;
+                container.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-rose-500 font-bold">Koneksi putus ke database!</td></tr>`;
             }
         }
 
@@ -147,7 +150,6 @@
                     ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] px-2 py-0.5 rounded-full font-bold">In Radius</span>`
                     : `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[9px] px-2 py-0.5 rounded-full font-bold">Out of Radius</span>`;
 
-                // Logika pewarnaan keterangan/alasan pulang cepat agar mencolok
                 const cleanKeterangan = log.keterangan || "-";
                 const isIzin = cleanKeterangan.includes("[IZIN]") || cleanKeterangan.includes("Pulang Cepat");
                 const keteranganDisplay = isIzin 
@@ -159,7 +161,8 @@
                         <td class="py-4 px-4 font-semibold text-slate-300">${log.date}</td>
                         <td class="py-4 px-4">
                             <p class="font-bold text-white text-xs sm:text-sm capitalize">${log.userName}</p>
-                            <p class="text-[9px] text-slate-500 font-semibold tracking-wider mt-0.5">ID: ${log.userId}</p>
+                            <!-- LENCANA PENUNJUK MULTI-JOBDESK/ENUMLIST -->
+                            <p class="text-[9px] text-slate-500 font-semibold tracking-wider mt-0.5">ID: ${log.userId} | <span class="text-amber-500 font-bold uppercase">${log.userJobdesk || "-"}</span></p>
                         </td>
                         <td class="py-4 px-4">${checkInPhoto}</td>
                         <td class="py-4 px-4">${checkOutPhoto}</td>
@@ -175,7 +178,6 @@
             lucide.createIcons();
         }
 
-        // FILTER PINTAR MENDUKUNG JANGKAUAN DUA TANGGAL (DATE RANGE)
         function filterLogs() {
             const query = document.getElementById('search-input').value.toLowerCase();
             const area = document.getElementById('filter-area').value;
@@ -192,7 +194,6 @@
                 
                 const matchLokasi = lokasi === "" || log.statusLokasi === lokasi;
                 
-                // Kalkulasi keaktifan filter rentang hari
                 let matchDate = true;
                 if (log.date) {
                     const logTime = new Date(log.date).getTime();
@@ -212,28 +213,25 @@
             renderLogsTable(filteredLogs);
         }
 
-        // =========================================================================
-        // EKSPOR EXCEL RANGE DENGAN TAUTAN FOTO GOOGLE DRIVE (CLICKABLE HYPERLINK)
-        // =========================================================================
         function exportToExcel() {
             if (filteredLogs.length === 0) {
                 alert("Tidak ada data absensi untuk diekspor!");
                 return;
             }
             
-            // Menggunakan format CSV Semicolon (Titik Koma) ber-BOM agar otomatis rapi tanpa pecah kolom di Excel Indonesia
             let csv = "\uFEFF"; 
-            csv += "Tanggal;ID Karyawan;Nama Karyawan;Jam Masuk (IN);Foto Masuk (URL);Jam Pulang (OUT);Foto Pulang (URL);Durasi Kerja;Shift Kerja;Status Geotag;Keterangan / Alasan\n";
+            csv += "Tanggal;ID Karyawan;Nama Karyawan;Jobdesk Kerja;Jam Masuk (IN);Foto Masuk (URL);Jam Pulang (OUT);Foto Pulang (URL);Durasi Kerja;Shift Kerja;Status Geotag;Keterangan / Alasan\n";
             
             filteredLogs.forEach(log => {
                 csv += [
                     log.date,
                     log.userId,
                     log.userName.replace(/;/g, ' '),
+                    log.userJobdesk || "-", // <--- EKSPOR KOLOM MULTI-JOBDESK KE EXCEL
                     log.timeIn,
-                    log.photoIn || "-", // Tautan URL Foto Masuk
+                    log.photoIn || "-", 
                     log.timeOut || "-",
-                    log.photoOut || "-", // Tautan URL Foto Pulang
+                    log.photoOut || "-", 
                     log.duration || "-",
                     log.statusShift,
                     log.statusLokasi,
@@ -263,28 +261,21 @@
         function closePhotoModal() {
             document.getElementById('modal-photo').classList.add('hidden-screen');
         }
-        
-        async function loadDynamicAreas() {
-    try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "getAvailableAreas" }) });
-        const json = await res.json();
-        if (json.success) {
-            const areas = json.data;
-            let options = `<option value="">Semua Cabang (Area)</option>`;
-            areas.forEach(area => { options += `<option value="${area}">${area}</option>`; });
-            document.getElementById('filter-area').innerHTML = options;
-        }
-    } catch (e) {}
-}
 
-// Panggil di window.onload
-window.onload = () => {
-    if (GAS_URL) {
-        fetchAttendance();
-        loadDynamicAreas();
-    }
-};
-        
+        async function loadDynamicAreas() {
+            try {
+                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "getAvailableAreas" }) });
+                const json = await res.json();
+                if (json.success) {
+                    const areas = json.data;
+                    let options = `<option value="">Semua Cabang (Area)</option>`;
+                    areas.forEach(area => { options += `<option value="${area}">${area}</option>`; });
+                    document.getElementById('filter-area').innerHTML = options;
+                }
+            } catch (e) {
+                console.error("Gagal memuat cabang");
+            }
+        }
     </script>
 </body>
 </html>
