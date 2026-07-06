@@ -69,10 +69,10 @@
         body.light-mode #admin-name {
             color: #0f172a;
         }
-        body.light-mode #hrd-submenu button {
+        body.light-mode .submenu-container button {
             color: #475569;
         }
-        body.light-mode #hrd-submenu button:hover {
+        body.light-mode .submenu-container button:hover {
             background-color: #f1f5f9;
         }
         body.light-mode .pin-dot {
@@ -101,7 +101,6 @@
 </head>
 <body class="h-[100dvh] w-screen flex flex-col select-none text-slate-100 overflow-hidden">
 
-    <!-- EKSEKUSI TEMA AWAL SEBELUM HALAMAN SELESAI RENDERING (MENCEGAH KEDIPAN FLASH) -->
     <script>
         const storedTheme = localStorage.getItem("MRD_ADMIN_THEME") || "dark";
         if (storedTheme === "light") {
@@ -173,9 +172,9 @@
                     <h1 class="text-md font-black text-amber-500 tracking-tight uppercase">AMR Backoffice</h1>
                 </div>
 
-                <nav class="hidden md:flex flex-col gap-2.5 w-full mt-6">
-                    <!-- DROPDOWN GROUP MANAJEMEN HRD -->
-                    <div class="w-full border-b border-slate-800 pb-3">
+                <nav class="hidden md:flex flex-col gap-2 w-full mt-6">
+                    <!-- SUB-MENU GROUP 1: MANAJEMEN HRD -->
+                    <div class="w-full border-b border-slate-800 pb-2">
                         <button onclick="toggleHrdMenu()" class="w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-between text-slate-400 hover:bg-slate-800 hover:text-white transition">
                             <div class="flex items-center gap-3">
                                 <i data-lucide="users" class="w-4 h-4 text-amber-500"></i>
@@ -183,7 +182,7 @@
                             </div>
                             <i data-lucide="chevron-down" id="hrd-chevron" class="w-4 h-4 transition-transform duration-200"></i>
                         </button>
-                        <div id="hrd-submenu" class="hidden pl-6 mt-1.5 flex flex-col gap-1 w-full">
+                        <div id="hrd-submenu" class="hidden pl-6 mt-1 flex flex-col gap-1 w-full submenu-container">
                             <button onclick="switchTab('Users')" id="nav-Users" class="nav-btn w-full px-4 py-2.5 rounded-xl text-[11px] font-bold flex items-center gap-2 text-slate-400 hover:bg-slate-850 hover:text-white transition">
                                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> <span>Daftar Karyawan</span>
                             </button>
@@ -193,18 +192,35 @@
                         </div>
                     </div>
 
-                    <!-- MENU TOP LEVEL UTAMA LAINNYA -->
+                    <!-- MENU UTAMA TOP-LEVEL -->
                     <button onclick="switchTab('Menu')" id="nav-Menu" class="nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-400 hover:bg-slate-800 hover:text-white transition">
-                        <i data-lucide="utensils" class="w-4 h-4"></i> <span>Data Menu</span>
+                        <i data-lucide="utensils" class="w-4 h-4 text-indigo-400"></i> <span>Data Menu</span>
                     </button>
                     <button onclick="switchTab('Promo')" id="nav-Promo" class="nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-400 hover:bg-slate-800 hover:text-white transition">
-                        <i data-lucide="ticket" class="w-4 h-4"></i> <span>Diskon & Voucher</span>
+                        <i data-lucide="ticket" class="w-4 h-4 text-rose-400"></i> <span>Diskon & Voucher</span>
                     </button>
-                    <button onclick="switchTab('Reports')" id="nav-Reports" class="nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-400 hover:bg-slate-800 hover:text-white transition">
-                        <i data-lucide="bar-chart-3" class="w-4 h-4"></i> <span>Laporan Harian</span>
-                    </button>
+
+                    <!-- SUB-MENU GROUP 2: LAPORAN PENJUALAN (PRO SAAS GROUP) -->
+                    <div class="w-full border-t border-b border-slate-800 py-2">
+                        <button onclick="toggleReportMenu()" class="w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-between text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-500"></i>
+                                <span>Laporan Penjualan</span>
+                            </div>
+                            <i data-lucide="chevron-down" id="report-chevron" class="w-4 h-4 transition-transform duration-200"></i>
+                        </button>
+                        <div id="report-submenu" class="hidden pl-6 mt-1 flex flex-col gap-1 w-full submenu-container">
+                            <button onclick="switchTab('ProdSales')" id="nav-ProdSales" class="nav-btn w-full px-4 py-2.5 rounded-xl text-[11px] font-bold flex items-center gap-2 text-slate-400 hover:bg-slate-850 hover:text-white transition">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> <span>Penjualan Item</span>
+                            </button>
+                            <button onclick="switchTab('AuditSales')" id="nav-AuditSales" class="nav-btn w-full px-4 py-2.5 rounded-xl text-[11px] font-bold flex items-center gap-2 text-slate-400 hover:bg-slate-850 hover:text-white transition">
+                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> <span>Rekonsiliasi & Audit</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <button onclick="switchTab('Config')" id="nav-Config" class="nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-400 hover:bg-slate-800 hover:text-white transition">
-                        <i data-lucide="settings" class="w-4 h-4"></i> <span>Pengaturan Sistem</span>
+                        <i data-lucide="settings" class="w-4 h-4 text-slate-400"></i> <span>Pengaturan Sistem</span>
                     </button>
                 </nav>
             </div>
@@ -216,7 +232,6 @@
                     <p id="admin-role" class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">-</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <!-- TOMBOL TOGGLE TEMA GELAP/TERANG -->
                     <button onclick="toggleTheme()" class="p-2 bg-slate-800 hover:bg-slate-700 text-amber-500 rounded-lg transition" title="Ubah Tema">
                         <i id="theme-icon" data-lucide="sun" class="w-4 h-4"></i>
                     </button>
@@ -230,11 +245,12 @@
         <!-- AREA KONTEN UTAMA -->
         <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-950">
             <div class="md:hidden flex gap-2 overflow-x-auto p-4 bg-slate-900 border-b border-slate-800 no-scrollbar">
-                <button onclick="switchTab('Users')" id="mob-nav-Users" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Daftar Karyawan</button>
+                <button onclick="switchTab('Users')" id="mob-nav-Users" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Karyawan</button>
                 <button onclick="switchTab('Attendance')" id="mob-nav-Attendance" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Absensi</button>
                 <button onclick="switchTab('Menu')" id="mob-nav-Menu" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Menu</button>
                 <button onclick="switchTab('Promo')" id="mob-nav-Promo" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Promo</button>
-                <button onclick="switchTab('Reports')" id="mob-nav-Reports" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Laporan</button>
+                <button onclick="switchTab('ProdSales')" id="mob-nav-ProdSales" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Laporan Produk</button>
+                <button onclick="switchTab('AuditSales')" id="mob-nav-AuditSales" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Audit</button>
                 <button onclick="switchTab('Config')" id="mob-nav-Config" class="mob-nav-btn px-4 py-2 rounded-lg text-[10px] font-bold whitespace-nowrap bg-slate-800 text-slate-400">Pengaturan</button>
             </div>
 
@@ -259,22 +275,17 @@
                     setTimeout(() => {
                         splash.classList.add('hidden-screen');
                         checkAdminState();
-                        updateThemeIcon(); // Render ikon tema yang sesuai saat startup
+                        updateThemeIcon(); 
                     }, 500);
                 }
             }, 1000);
         };
 
-        // ==========================================
-        // SISTEM KONTROL TEMA PINTAR (DARK/LIGHT SWAP)
-        // ==========================================
         function toggleTheme() {
             const body = document.body;
             const isLight = body.classList.toggle('light-mode');
             localStorage.setItem("MRD_ADMIN_THEME", isLight ? "light" : "dark");
             updateThemeIcon();
-            
-            // Segarkan Iframe aktif agar ikut mendeteksi pembaruan tema
             renderContent(currentTab);
         }
 
@@ -321,7 +332,7 @@
 
         async function activateAdminSystem() {
             const input = document.getElementById('api-input').value.trim();
-            if(!input) return alert("Masukkan URL API Deploy Anda!");
+            if(!input) return alert("Masukkan URL API Anda!");
             const btn = document.getElementById('btn-activate');
             btn.innerHTML = "Memverifikasi...";
             btn.disabled = true;
@@ -337,7 +348,7 @@
                     throw new Error("Gagal");
                 }
             } catch (e) {
-                alert("Verifikasi Gagal! Periksa parameter deploy GAS Anda.");
+                alert("Verifikasi Gagal! Periksa deploy GAS Anda.");
                 btn.innerHTML = "Aktifkan Backoffice";
                 btn.disabled = false;
             }
@@ -429,6 +440,18 @@
             }
         }
 
+        function toggleReportMenu() {
+            const submenu = document.getElementById('report-submenu');
+            const chevron = document.getElementById('report-chevron');
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                chevron.classList.add('rotate-180');
+            } else {
+                submenu.classList.add('hidden');
+                chevron.classList.remove('rotate-180');
+            }
+        }
+
         function switchTab(tabName) {
             currentTab = tabName;
             
@@ -443,6 +466,10 @@
                     activeBtn.classList.add('bg-slate-800/80', 'text-white');
                     document.getElementById('hrd-submenu').classList.remove('hidden');
                     document.getElementById('hrd-chevron').classList.add('rotate-180');
+                } else if (tabName === 'ProdSales' || tabName === 'AuditSales') {
+                    activeBtn.classList.add('bg-slate-800/80', 'text-white');
+                    document.getElementById('report-submenu').classList.remove('hidden');
+                    document.getElementById('report-chevron').classList.add('rotate-180');
                 } else {
                     activeBtn.classList.add('bg-amber-500', 'text-slate-950');
                 }
@@ -461,7 +488,6 @@
             const area = document.getElementById('content-area');
             if (!area) return;
 
-            // Terjemahkan status tema aktif menjadi parameter pencarian iframe (?theme=light)
             const themeParam = document.body.classList.contains('light-mode') ? '?theme=light' : '';
 
             if (tab === "Users") {
@@ -479,6 +505,12 @@
             } else if (tab === "Config") {
                 area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
                 area.innerHTML = `<iframe src="admin-config.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+            } else if (tab === "ProdSales") {
+                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+                area.innerHTML = `<iframe src="admin-reports-product.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+            } else if (tab === "AuditSales") {
+                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+                area.innerHTML = `<iframe src="admin-reports-audit.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
             } else {
                 area.className = "flex-1 overflow-y-auto p-6 flex flex-col justify-center items-center text-center space-y-4";
                 area.innerHTML = `
