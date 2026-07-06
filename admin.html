@@ -17,9 +17,97 @@
         .smooth-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .fade-out { animation: fadeOut 0.5s forwards; }
         @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
+
+        /* =========================================================================
+         * OVERRIDE TEMA TERANG SAAS (LIGHT MODE)
+         * ========================================================================= */
+        body.light-mode {
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+        body.light-mode #splash-screen {
+            background-color: #f1f5f9;
+        }
+        body.light-mode #activation-screen,
+        body.light-mode #login-screen {
+            background-color: #e2e8f0;
+        }
+        body.light-mode #activation-screen > div,
+        body.light-mode #login-screen > div {
+            background-color: #ffffff;
+            border-color: #cbd5e1;
+            color: #0f172a;
+        }
+        body.light-mode #activation-screen h2,
+        body.light-mode #login-screen h3,
+        body.light-mode #activation-screen p,
+        body.light-mode #login-screen p {
+            color: #1e293b;
+        }
+        body.light-mode #api-input {
+            background-color: #f8fafc;
+            border-color: #cbd5e1;
+            color: #0f172a;
+        }
+        body.light-mode #main-app {
+            background-color: #f8fafc;
+        }
+        body.light-mode aside {
+            background-color: #ffffff;
+            border-color: #cbd5e1;
+        }
+        body.light-mode main {
+            background-color: #f8fafc;
+        }
+        body.light-mode .nav-btn:hover {
+            background-color: #f1f5f9;
+            color: #0f172a;
+        }
+        body.light-mode .nav-btn:not(.bg-slate-800\/80):not(.bg-amber-500) {
+            color: #475569;
+        }
+        body.light-mode #admin-name {
+            color: #0f172a;
+        }
+        body.light-mode #hrd-submenu button {
+            color: #475569;
+        }
+        body.light-mode #hrd-submenu button:hover {
+            background-color: #f1f5f9;
+        }
+        body.light-mode .pin-dot {
+            border-color: #94a3b8;
+        }
+        body.light-mode .bg-slate-800 {
+            background-color: #e2e8f0;
+            color: #0f172a;
+        }
+        body.light-mode .bg-slate-800:hover {
+            background-color: #cbd5e1;
+        }
+        body.light-mode .bg-slate-900 {
+            background-color: #ffffff;
+            border-color: #cbd5e1;
+        }
+        body.light-mode .mob-nav-btn {
+            background-color: #e2e8f0;
+            color: #475569;
+        }
+        body.light-mode .mob-nav-btn.bg-amber-500 {
+            background-color: #f59e0b;
+            color: #0f172a;
+        }
     </style>
 </head>
 <body class="h-[100dvh] w-screen flex flex-col select-none text-slate-100 overflow-hidden">
+
+    <!-- EKSEKUSI TEMA AWAL SEBELUM HALAMAN SELESAI RENDERING (MENCEGAH KEDIPAN FLASH) -->
+    <script>
+        const storedTheme = localStorage.getItem("MRD_ADMIN_THEME") || "dark";
+        if (storedTheme === "light") {
+            document.body.classList.add("light-mode");
+        }
+    </script>
 
     <!-- 1. SPLASH SCREEN -->
     <div id="splash-screen" class="fixed inset-0 bg-[#020617] z-[150] flex flex-col items-center justify-center smooth-transition">
@@ -116,20 +204,26 @@
                         <i data-lucide="bar-chart-3" class="w-4 h-4"></i> <span>Laporan Harian</span>
                     </button>
                     <button onclick="switchTab('Config')" id="nav-Config" class="nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-400 hover:bg-slate-800 hover:text-white transition">
-    <i data-lucide="settings" class="w-4 h-4"></i> <span>Pengaturan Sistem</span>
-</button>
+                        <i data-lucide="settings" class="w-4 h-4"></i> <span>Pengaturan Sistem</span>
+                    </button>
                 </nav>
             </div>
 
-            <!-- Identitas Admin Logged-In -->
-            <div class="flex items-center gap-3 md:w-full md:border-t border-slate-800 md:pt-4">
+            <!-- Identitas Admin Logged-In & Tombol Kontrol Bawah -->
+            <div class="flex items-center justify-between gap-3 md:w-full md:border-t border-slate-800 md:pt-4">
                 <div class="hidden md:block flex-1 min-w-0 text-left">
                     <p id="admin-name" class="text-xs font-black text-white truncate">-</p>
                     <p id="admin-role" class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">-</p>
                 </div>
-                <button onclick="logoutAdmin()" class="p-2 bg-rose-500/10 text-rose-500 rounded-lg hover:bg-rose-500/20 transition" title="Logout Sesi Admin">
-                    <i data-lucide="log-out" class="w-4 h-4"></i>
-                </button>
+                <div class="flex items-center gap-2">
+                    <!-- TOMBOL TOGGLE TEMA GELAP/TERANG -->
+                    <button onclick="toggleTheme()" class="p-2 bg-slate-800 hover:bg-slate-700 text-amber-500 rounded-lg transition" title="Ubah Tema">
+                        <i id="theme-icon" data-lucide="sun" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="logoutAdmin()" class="p-2 bg-rose-500/10 text-rose-500 rounded-lg hover:bg-rose-500/20 transition" title="Logout Sesi Admin">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    </button>
+                </div>
             </div>
         </aside>
 
@@ -165,10 +259,32 @@
                     setTimeout(() => {
                         splash.classList.add('hidden-screen');
                         checkAdminState();
+                        updateThemeIcon(); // Render ikon tema yang sesuai saat startup
                     }, 500);
                 }
             }, 1000);
         };
+
+        // ==========================================
+        // SISTEM KONTROL TEMA PINTAR (DARK/LIGHT SWAP)
+        // ==========================================
+        function toggleTheme() {
+            const body = document.body;
+            const isLight = body.classList.toggle('light-mode');
+            localStorage.setItem("MRD_ADMIN_THEME", isLight ? "light" : "dark");
+            updateThemeIcon();
+            
+            // Segarkan Iframe aktif agar ikut mendeteksi pembaruan tema
+            renderContent(currentTab);
+        }
+
+        function updateThemeIcon() {
+            const icon = document.getElementById('theme-icon');
+            if (!icon) return;
+            const isLight = document.body.classList.contains('light-mode');
+            icon.setAttribute('data-lucide', isLight ? 'moon' : 'sun');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
 
         function showScreen(id) {
             ['activation-screen', 'login-screen', 'main-app'].forEach(el => {
@@ -301,7 +417,6 @@
             }
         }
 
-        // TOGGLE SUB-MENU HRD
         function toggleHrdMenu() {
             const submenu = document.getElementById('hrd-submenu');
             const chevron = document.getElementById('hrd-chevron');
@@ -317,7 +432,6 @@
         function switchTab(tabName) {
             currentTab = tabName;
             
-            // Atur gaya aktif menu utama & sub-menu
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('bg-amber-500', 'text-slate-950', 'bg-slate-800/80');
                 btn.classList.add('text-slate-400');
@@ -347,30 +461,25 @@
             const area = document.getElementById('content-area');
             if (!area) return;
 
+            // Terjemahkan status tema aktif menjadi parameter pencarian iframe (?theme=light)
+            const themeParam = document.body.classList.contains('light-mode') ? '?theme=light' : '';
+
             if (tab === "Users") {
                 area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
-                area.innerHTML = `<iframe src="admin-users.html" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+                area.innerHTML = `<iframe src="admin-users.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
             } else if (tab === "Attendance") {
                 area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
-                area.innerHTML = `<iframe src="admin-attendance.html" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
-            } 
-            else if (tab === "Menu") {
-    area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
-    area.innerHTML = `<iframe src="admin-menu.html" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
-}
-
-else if (tab === "Promo") {
-    area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
-    area.innerHTML = `<iframe src="admin-promo.html" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
-}
-
-// Tambahkan kondisi pencabangan baru ini di dalam fungsi renderContent(tab):
-else if (tab === "Config") {
-    area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
-    area.innerHTML = `<iframe src="admin-config.html" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
-}
-            
-            else {
+                area.innerHTML = `<iframe src="admin-attendance.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+            } else if (tab === "Menu") {
+                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+                area.innerHTML = `<iframe src="admin-menu.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+            } else if (tab === "Promo") {
+                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+                area.innerHTML = `<iframe src="admin-promo.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+            } else if (tab === "Config") {
+                area.className = "flex-1 h-full overflow-hidden p-0 md:p-4";
+                area.innerHTML = `<iframe src="admin-config.html${themeParam}" class="w-full h-full border-0 bg-transparent rounded-2xl"></iframe>`;
+            } else {
                 area.className = "flex-1 overflow-y-auto p-6 flex flex-col justify-center items-center text-center space-y-4";
                 area.innerHTML = `
                     <div class="w-16 h-16 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center justify-center text-amber-500">
