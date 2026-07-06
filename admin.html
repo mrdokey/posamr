@@ -17,86 +17,24 @@
         .smooth-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .fade-out { animation: fadeOut 0.5s forwards; }
         @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
-
-        /* =========================================================================
-         * OVERRIDE TEMA TERANG SAAS (LIGHT MODE)
-         * ========================================================================= */
-        body.light-mode {
-            background-color: #f8fafc;
-            color: #0f172a;
-        }
-        body.light-mode #splash-screen {
-            background-color: #f1f5f9;
-        }
-        body.light-mode #activation-screen,
-        body.light-mode #login-screen {
-            background-color: #e2e8f0;
-        }
-        body.light-mode #activation-screen > div,
-        body.light-mode #login-screen > div {
-            background-color: #ffffff;
-            border-color: #cbd5e1;
-            color: #0f172a;
-        }
-        body.light-mode #activation-screen h2,
-        body.light-mode #login-screen h3,
-        body.light-mode #activation-screen p,
-        body.light-mode #login-screen p {
-            color: #1e293b;
-        }
-        body.light-mode #api-input {
-            background-color: #f8fafc;
-            border-color: #cbd5e1;
-            color: #0f172a;
-        }
-        body.light-mode #main-app {
-            background-color: #f8fafc;
-        }
-        body.light-mode aside {
-            background-color: #ffffff;
-            border-color: #cbd5e1;
-        }
-        body.light-mode main {
-            background-color: #f8fafc;
-        }
-        body.light-mode .nav-btn:hover {
-            background-color: #f1f5f9;
-            color: #0f172a;
-        }
-        body.light-mode .nav-btn:not(.bg-slate-800\/80):not(.bg-amber-500) {
-            color: #475569;
-        }
-        body.light-mode #admin-name {
-            color: #0f172a;
-        }
-        body.light-mode .submenu-container button {
-            color: #475569;
-        }
-        body.light-mode .submenu-container button:hover {
-            background-color: #f1f5f9;
-        }
-        body.light-mode .pin-dot {
-            border-color: #94a3b8;
-        }
-        body.light-mode .bg-slate-800 {
-            background-color: #e2e8f0;
-            color: #0f172a;
-        }
-        body.light-mode .bg-slate-800:hover {
-            background-color: #cbd5e1;
-        }
-        body.light-mode .bg-slate-900 {
-            background-color: #ffffff;
-            border-color: #cbd5e1;
-        }
-        body.light-mode .mob-nav-btn {
-            background-color: #e2e8f0;
-            color: #475569;
-        }
-        body.light-mode .mob-nav-btn.bg-amber-500 {
-            background-color: #f59e0b;
-            color: #0f172a;
-        }
+        
+        /* Tema Terang */
+        body.light-mode { background-color: #f8fafc; color: #0f172a; }
+        body.light-mode #splash-screen { background-color: #f1f5f9; }
+        body.light-mode #activation-screen, body.light-mode #login-screen { background-color: #e2e8f0; }
+        body.light-mode #activation-screen > div, body.light-mode #login-screen > div { background-color: #ffffff; border-color: #cbd5e1; color: #0f172a; }
+        body.light-mode #activation-screen h2, body.light-mode #login-screen h3, body.light-mode #login-screen h2 { color: #0f172a; }
+        body.light-mode #api-input { background-color: #f8fafc; border-color: #cbd5e1; color: #0f172a; }
+        body.light-mode #main-app { background-color: #f8fafc; }
+        body.light-mode aside { background-color: #ffffff; border-color: #cbd5e1; }
+        body.light-mode main { background-color: #f8fafc; }
+        body.light-mode .nav-btn:hover { background-color: #f1f5f9; color: #0f172a; }
+        body.light-mode .nav-btn:not(.bg-slate-800\/80):not(.bg-amber-500) { color: #475569; }
+        body.light-mode .submenu-container button { color: #475569; }
+        body.light-mode .submenu-container button:hover { background-color: #f1f5f9; }
+        body.light-mode .pin-dot { border-color: #94a3b8; }
+        body.light-mode .bg-slate-800 { background-color: #e2e8f0; color: #0f172a; }
+        body.light-mode .bg-slate-800:hover { background-color: #cbd5e1; }
     </style>
 </head>
 <body class="h-[100dvh] w-screen flex flex-col select-none text-slate-100 overflow-hidden">
@@ -104,7 +42,7 @@
     <script>
         const storedTheme = localStorage.getItem("MRD_ADMIN_THEME") || "dark";
         if (storedTheme === "light") {
-            document.body.classList.add("light-mode");
+            document.body.classList.add('light-mode');
         }
     </script>
 
@@ -172,9 +110,9 @@
                     <h1 class="text-md font-black text-amber-500 tracking-tight uppercase">AMR Backoffice</h1>
                 </div>
 
-                <nav class="hidden md:flex flex-col gap-2 w-full mt-6">
-                    <!-- SUB-MENU GROUP 1: MANAJEMEN HRD -->
-                    <div class="w-full border-b border-slate-800 pb-2">
+                <nav class="hidden md:flex flex-col gap-2.5 w-full mt-6">
+                    <!-- DROPDOWN GROUP MANAJEMEN HRD -->
+                    <div id="group-hrd" class="w-full border-b border-slate-800 pb-3">
                         <button onclick="toggleHrdMenu()" class="w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-between text-slate-400 hover:bg-slate-800 hover:text-white transition">
                             <div class="flex items-center gap-3">
                                 <i data-lucide="users" class="w-4 h-4 text-amber-500"></i>
@@ -182,7 +120,7 @@
                             </div>
                             <i data-lucide="chevron-down" id="hrd-chevron" class="w-4 h-4 transition-transform duration-200"></i>
                         </button>
-                        <div id="hrd-submenu" class="hidden pl-6 mt-1 flex flex-col gap-1 w-full submenu-container">
+                        <div id="hrd-submenu" class="hidden pl-6 mt-1.5 flex flex-col gap-1 w-full submenu-container">
                             <button onclick="switchTab('Users')" id="nav-Users" class="nav-btn w-full px-4 py-2.5 rounded-xl text-[11px] font-bold flex items-center gap-2 text-slate-400 hover:bg-slate-850 hover:text-white transition">
                                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> <span>Daftar Karyawan</span>
                             </button>
@@ -192,7 +130,7 @@
                         </div>
                     </div>
 
-                    <!-- MENU UTAMA TOP-LEVEL -->
+                    <!-- MENU TOP LEVEL UTAMA -->
                     <button onclick="switchTab('Menu')" id="nav-Menu" class="nav-btn w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-400 hover:bg-slate-800 hover:text-white transition">
                         <i data-lucide="utensils" class="w-4 h-4 text-indigo-400"></i> <span>Data Menu</span>
                     </button>
@@ -200,8 +138,8 @@
                         <i data-lucide="ticket" class="w-4 h-4 text-rose-400"></i> <span>Diskon & Voucher</span>
                     </button>
 
-                    <!-- SUB-MENU GROUP 2: LAPORAN PENJUALAN (PRO SAAS GROUP) -->
-                    <div class="w-full border-t border-b border-slate-800 py-2">
+                    <!-- DROPDOWN GROUP LAPORAN PENJUALAN -->
+                    <div id="group-reports" class="w-full border-t border-b border-slate-800 py-2">
                         <button onclick="toggleReportMenu()" class="w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-between text-slate-400 hover:bg-slate-800 hover:text-white transition">
                             <div class="flex items-center gap-3">
                                 <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-500"></i>
@@ -225,30 +163,23 @@
                 </nav>
             </div>
 
-            <!-- Identitas Admin Logged-In & Tombol Kontrol Bawah (SINKRONISASI UTUH) -->
-<div class="flex items-center justify-between gap-3 md:w-full md:border-t border-slate-800 md:pt-4">
-    <!-- Frame Identitas Profil (Menampilkan Nama & Jabatan yang Login) -->
-    <div class="hidden md:block flex-1 min-w-0 text-left">
-        <p id="admin-name" class="text-xs font-black text-white truncate">-</p>
-        <p id="admin-role" class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">-</p>
-    </div>
-    
-    <!-- Frame Tombol Kontrol -->
-    <div class="flex items-center gap-1.5 shrink-0">
-        <!-- TOMBOL INSTAL PWA (HIDDEN SECARA BAWAAN) -->
-        <button id="btn-install-pwa" onclick="triggerPwaInstall()" class="hidden-screen p-2 bg-emerald-500/10 text-emerald-400 rounded-lg hover:bg-emerald-400 hover:text-slate-950 transition" title="Instal Aplikasi Desktop">
-            <i data-lucide="download" class="w-4 h-4 animate-bounce"></i>
-        </button>
-        <!-- TOMBOL GANTI TEMA -->
-        <button onclick="toggleTheme()" class="p-2 bg-slate-800 hover:bg-slate-700 text-amber-500 rounded-lg transition" title="Ubah Tema">
-            <i id="theme-icon" data-lucide="sun" class="w-4 h-4"></i>
-        </button>
-        <!-- TOMBOL LOGOUT -->
-        <button onclick="logoutAdmin()" class="p-2 bg-rose-500/10 text-rose-500 rounded-lg hover:bg-rose-500/20 transition" title="Logout Sesi Admin">
-            <i data-lucide="log-out" class="w-4 h-4"></i>
-        </button>
-    </div>
-</div>
+            <!-- Identitas Admin Logged-In & Tombol Kontrol Bawah -->
+            <div class="flex items-center justify-between gap-3 md:w-full md:border-t border-slate-800 md:pt-4">
+                <div class="hidden md:block flex-1 min-w-0 text-left">
+                    <p id="admin-name" class="text-xs font-black text-white truncate">-</p>
+                    <p id="admin-role" class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">-</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="btn-install-pwa" onclick="triggerPwaInstall()" class="hidden-screen p-2 bg-emerald-500/10 text-emerald-400 rounded-lg hover:bg-emerald-400 hover:text-slate-950 transition" title="Instal Aplikasi Desktop">
+                        <i data-lucide="download" class="w-4 h-4 animate-bounce"></i>
+                    </button>
+                    <button onclick="toggleTheme()" class="p-2 bg-slate-800 hover:bg-slate-700 text-amber-500 rounded-lg transition" title="Ubah Tema">
+                        <i id="theme-icon" data-lucide="sun" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="logoutAdmin()" class="p-2 bg-rose-500/10 text-rose-500 rounded-lg hover:bg-rose-500/20 transition" title="Logout Sesi Admin">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    </button>
+                </div>
             </div>
         </aside>
 
@@ -290,6 +221,29 @@
                 }
             }, 1000);
         };
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => console.error(err));
+            });
+        }
+
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const installBtn = document.getElementById('btn-install-pwa');
+            if (installBtn) installBtn.classList.remove('hidden-screen');
+        });
+
+        async function triggerPwaInstall() {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            const installBtn = document.getElementById('btn-install-pwa');
+            if (installBtn) installBtn.classList.add('hidden-screen');
+        }
 
         function toggleTheme() {
             const body = document.body;
@@ -335,14 +289,88 @@
                     showScreen('main-app');
                     document.getElementById('admin-name').innerText = adminInfo.name;
                     document.getElementById('admin-role').innerText = adminInfo.role;
+                    
+                    // SEMBUNYIKAN MENU SIDEBAR JIKA BUKAN ADMINISTRATOR UTAMA (SaaS ACL)
+                    enforceSidebarPermissions();
+                    
                     switchTab(currentTab);
                 }
             }
         }
 
+        // ==========================================
+        // SAAS ACL: PENYARING MENU BERBASIS IZIN KARYAWAN
+        // ==========================================
+        function parseKeterangan(keteranganStr) {
+            let adminAccess = "OFF";
+            let allowedTabs = [];
+            let cleanKeterangan = keteranganStr || "";
+
+            if (keteranganStr) {
+                const accessMatch = keteranganStr.match(/\[ADMIN_ACCESS:(ON|OFF)\]/);
+                if (accessMatch) adminAccess = accessMatch[1];
+
+                const tabsMatch = keteranganStr.match(/\[ALLOWED_TABS:([^\]]+)\]/);
+                if (tabsMatch) allowedTabs = tabsMatch[1].split(",");
+                
+                cleanKeterangan = keteranganStr.replace(/\[ADMIN_ACCESS:(ON|OFF)\]/, "").replace(/\[ALLOWED_TABS:([^\]]+)\]/, "").trim();
+                if (cleanKeterangan.endsWith("|")) cleanKeterangan = cleanKeterangan.slice(0, -1).trim();
+            }
+            return { adminAccess, allowedTabs, cleanKeterangan };
+        }
+
+        function enforceSidebarPermissions() {
+            const role = (adminInfo.role || "").toLowerCase().trim();
+            if (role === "administrator") return; // Bypass penuh untuk admin dewa (USR-0000)
+
+            const parsed = parseKeterangan(adminInfo.keterangan || "");
+            
+            // Periksa akses modul individual
+            const tabs = ["Users", "Attendance", "Menu", "Promo", "Config"];
+            tabs.forEach(tab => {
+                const navBtn = document.getElementById(`nav-${tab}`);
+                const mobBtn = document.getElementById(`mob-nav-${tab}`);
+                const hasAccess = parsed.adminAccess === "ON" && parsed.allowedTabs.includes(tab);
+
+                if (!hasAccess) {
+                    if (navBtn) navBtn.classList.add('hidden-screen');
+                    if (mobBtn) mobBtn.classList.add('hidden-screen');
+                } else {
+                    if (navBtn) navBtn.classList.remove('hidden-screen');
+                    if (mobBtn) mobBtn.classList.remove('hidden-screen');
+                }
+            });
+
+            // Periksa akses modul dropdown Laporan Penjualan
+            const reportTabs = ["ProdSales", "AuditSales"];
+            let hasReportsAccess = false;
+            reportTabs.forEach(tab => {
+                const navBtn = document.getElementById(`nav-${tab}`);
+                const mobBtn = document.getElementById(`mob-nav-${tab}`);
+                const hasAccess = parsed.adminAccess === "ON" && parsed.allowedTabs.includes(tab);
+                if (hasAccess) hasReportsAccess = true;
+
+                if (!hasAccess) {
+                    if (navBtn) navBtn.classList.add('hidden-screen');
+                    if (mobBtn) mobBtn.classList.add('hidden-screen');
+                } else {
+                    if (navBtn) navBtn.classList.remove('hidden-screen');
+                    if (mobBtn) mobBtn.classList.remove('hidden-screen');
+                }
+            });
+
+            // Sembunyikan grup jika semua anak modulnya dilarang
+            const hasHrdAccess = parsed.allowedTabs.includes("Users") || parsed.allowedTabs.includes("Attendance");
+            const hrdGroup = document.getElementById('group-hrd');
+            if (!hasHrdAccess && hrdGroup) hrdGroup.classList.add('hidden-screen');
+
+            const reportGroup = document.getElementById('group-reports');
+            if (!hasReportsAccess && reportGroup) reportGroup.classList.add('hidden-screen');
+        }
+
         async function activateAdminSystem() {
             const input = document.getElementById('api-input').value.trim();
-            if(!input) return alert("Masukkan URL API Anda!");
+            if(!input) return alert("Masukkan URL API Deploy Anda!");
             const btn = document.getElementById('btn-activate');
             btn.innerHTML = "Memverifikasi...";
             btn.disabled = true;
@@ -358,7 +386,7 @@
                     throw new Error("Gagal");
                 }
             } catch (e) {
-                alert("Verifikasi Gagal! Periksa deploy GAS Anda.");
+                alert("Verifikasi Gagal!");
                 btn.innerHTML = "Aktifkan Backoffice";
                 btn.disabled = false;
             }
@@ -412,8 +440,24 @@
                 const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) });
                 const json = await res.json();
                 if(json.success) {
-                    localStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
-                    window.location.reload();
+                    const roleClean = json.role ? json.role.toLowerCase().trim() : "";
+                    
+                    // Bypass langsung jika administrator utama (USR-0000)
+                    if (roleClean === "administrator") {
+                        localStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
+                        window.location.reload();
+                        return;
+                    }
+
+                    // Periksa apakah diizinkan masuk ke Backoffice berdasarkan tag Keterangan
+                    const parsed = parseKeterangan(json.keterangan || "");
+                    if (parsed.adminAccess === "ON") {
+                        localStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
+                        window.location.reload();
+                    } else {
+                        alert("Akses Ditolak!\n\nAkun Anda tidak memiliki izin otorisasi untuk mengakses Backoffice.");
+                        clearPin();
+                    }
                 } else {
                     alert(json.message || "PIN Salah!");
                     clearPin();
@@ -537,43 +581,6 @@
             }
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
-        
-        // A. Registrasi Service Worker untuk syarat PWA Layak Instal
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(err => console.error(err));
-    });
-}
-
-// B. Tangkap Sinyal Instalasi Native dari Browser
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault(); // Cegah popup otomatis bawaan browser agar terkontrol oleh tombol kita
-    deferredPrompt = e;
-    
-    // Munculkan tombol instalasi di sidebar kiri bawah
-    const installBtn = document.getElementById('btn-install-pwa');
-    if (installBtn) installBtn.classList.remove('hidden-screen');
-});
-
-async function triggerPwaInstall() {
-    if (!deferredPrompt) return;
-    
-    // Tampilkan popup konfirmasi instalasi asli dari sistem operasi
-    deferredPrompt.prompt();
-    
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-        console.log('Klien sukses menginstal AMR Admin!');
-    }
-    
-    deferredPrompt = null;
-    
-    // Sembunyikan kembali tombol setelah proses selesai
-    const installBtn = document.getElementById('btn-install-pwa');
-    if (installBtn) installBtn.classList.add('hidden-screen');
-}
-        
     </script>
 </body>
 </html>
