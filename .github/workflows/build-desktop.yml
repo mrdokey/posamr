@@ -23,7 +23,13 @@ jobs:
       - name: Install Local Dependencies
         run: npm install
 
-      # Menjalankan kompilasi tanpa bundler menggunakan sintaksis tauri v1 yang benar
+      # LANGKAH PENYELAMAT: Membuat folder 'dist' secara otomatis di awan
+      - name: Prepare Static Assets
+        run: |
+          mkdir dist
+          Copy-Item -Path "*.html", "*.js", "*.json" -Destination dist -Force
+
+      # Menjalankan kompilasi tanpa bundler menggunakan folder aset dist yang bersih
       - name: Build Standalone Exe (No Bundle)
         run: npm run tauri build -- --bundles none
 
