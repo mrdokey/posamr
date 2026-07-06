@@ -30,8 +30,9 @@
         body.light-mode #admin-auth-section { background-color: #f1f5f9 !important; border-color: #cbd5e1 !important; }
     </style>
 </head>
-<body class="text-slate-100 p-2 overflow-y-auto h-full">
+<body class="text-slate-100 p-2 overflow-y-auto h-full animate-fade-in">
 
+    <!-- DETEKSI WARISAN TEMA INDUK SAAS -->
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('theme') === 'light') {
@@ -91,7 +92,7 @@
     </div>
 
     <!-- MODAL FORM TAMBAH / EDIT KARYAWAN -->
-    <div id="modal-form" class="hidden-screen fixed inset-0 bg-black/85 z-40 flex items-center justify-center p-4">
+    <div id="modal-form" class="hidden-screen fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg p-6 shadow-2xl flex flex-col max-h-[90vh]">
             <div class="flex justify-between items-center mb-4 shrink-0 border-b border-slate-800 pb-3">
                 <h3 id="modal-title" class="text-sm font-black text-amber-500 uppercase tracking-wider">Tambah Karyawan Baru</h3>
@@ -290,6 +291,13 @@
             }
         };
 
+        // HUBUNGKAN RE-ROUTE ALERT LOKAL KE INDUK UTAMA (AMR PORTABLE SINKRONISASI)
+        if (window.parent && typeof window.parent.alert === 'function' && window.parent.alert !== window.alert) {
+            window.alert = function(msg) {
+                window.parent.alert(msg);
+            };
+        }
+
         // PARSER DATA METADATA OTORISASI SAAS ACL
         function parseKeterangan(keteranganStr) {
             let adminAccess = "OFF";
@@ -336,8 +344,6 @@
                 return;
             }
 
-            let expiringEmployees = [];
-
             container.innerHTML = dataList.map(user => {
                 const safeFoto = user.foto || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=1e293b&color=f59e0b&size=100`;
                 const parsed = parseKeterangan(user.keterangan);
@@ -347,22 +353,11 @@
                 const sisaKontrakText = user.endDate ? (() => {
                     let endD = new Date(user.endDate);
                     let diffTime = endD - new Date();
-                    diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    
+                    let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                     return diffDays > 0 
                         ? `<span class="text-amber-500 font-bold">${diffDays} Hari</span> (${user.statusUser})`
                         : `<span class="text-rose-500 font-bold">Habis Kontrak</span>`;
                 })() : "-";
-
-                // Daftarkan staf ke antrean popup jika sisa kontrak <= 30 hari & status karyawan aktif
-                if (user.endDate && diffDays <= 30 && user.status === "Active") {
-                    expiringEmployees.push({
-                        userId: user.userId,
-                        name: user.name,
-                        daysLeft: diffDays,
-                        statusUser: user.statusUser
-                    });
-                }
 
                 const gpsBadge = user.geotag === "Active"
                     ? `<span class="text-emerald-500 flex items-center gap-1 font-semibold text-[10px]"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i> Lock Radius</span>`
@@ -465,6 +460,7 @@
             const title = document.getElementById('modal-title');
             modal.classList.remove('hidden-screen');
 
+            // Kontrol seksi otorisasi jika yang login adalah administrator
             const authSection = document.getElementById('admin-auth-section');
             if (loggedInRole === "administrator") {
                 authSection.classList.remove('hidden-screen');
@@ -518,10 +514,13 @@
                     document.getElementById('form-keterangan').value = parsed.cleanKeterangan;
                     document.getElementById('form-admin-access').value = u.adminAccess === "1" ? "ON" : "OFF";
 
-                    parsed.allowedTabs.forEach(tab => {
-                        const cb = document.querySelector(`input[name="form-allowed-tabs"][value="${tab}"]`);
-                        if (cb) cb.checked = true;
-                    });
+                    if (u.allowedTabs) {
+                        const activeTabs = u.allowedTabs.split(",").map(t => t.trim());
+                        activeTabs.forEach(tab => {
+                            const cb = document.querySelector(`input[name="form-allowed-tabs"][value="${tab}"]`);
+                            if (cb) cb.checked = true;
+                        });
+                    }
 
                     if (u.jobdesk) {
                         const jds = u.jobdesk.split(",").map(item => item.trim());
@@ -546,7 +545,6 @@
             const pin = document.getElementById('form-pin').value.trim();
             const joinDate = document.getElementById('form-joindate').value;
             const noWa = document.getElementById('form-nowa').value.trim();
-            let rawKeterangan = document.getElementById('form-keterangan').value.trim();
 
             const selectedJobdesks = [];
             document.querySelectorAll('input[name="form-jobdesk"]:checked').forEach(cb => {
@@ -573,8 +571,9 @@
             } else {
                 const oldUser = allUsers.find(x => x.userId === document.getElementById('form-user-id').value);
                 if (oldUser) {
-                    adminAccessValue = oldUser.adminAccess || "0";
-                    allowedTabsList = oldUser.allowedTabs ? oldUser.allowedTabs.split(",") : [];
+                    const parsed = parseKeterangan(oldUser.keterangan);
+                    adminAccessValue = parsed.adminAccess;
+                    allowedTabsList = parsed.allowedTabs;
                 }
             }
 
@@ -656,7 +655,6 @@
             btn.disabled = true;
 
             try {
-                // Verifikasi OTP menggunakan fungsi pengawas yang sudah teruji di GAS
                 const res = await fetch(GAS_URL, {
                     method: 'POST',
                     body: JSON.stringify({ action: "verifyVoidManager", data: { managerPin: otp } })
@@ -675,7 +673,6 @@
                         return;
                     }
 
-                    // Jika sukses, panggil aksi soft-delete archiveUser di GAS
                     const deleteRes = await fetch(GAS_URL, {
                         method: 'POST',
                         body: JSON.stringify({ 
@@ -688,7 +685,7 @@
                     if (deleteJson.success) {
                         alert(deleteJson.message);
                         closeDeleteUserModal();
-                        fetchUsers(); // Refresh tabel
+                        fetchUsers(); 
                     } else {
                         alert("Gagal: " + deleteJson.message);
                     }

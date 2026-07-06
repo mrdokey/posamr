@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SaaS Backoffice Admin AMR</title>
-    <link rel="icon" type="image/png" href="https://i.ibb.co.com/gMmSSTgq/IMG-20260606-WA0000.jpg">
+    <link class="apple-touch-icon" rel="apple-touch-icon" href="https://i.ibb.co.com/gMmSSTgq/IMG-20260606-WA0000.jpg">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -97,7 +97,8 @@
             background-color: #f59e0b;
             color: #0f172a;
         }
-        body.light-mode #modal-contract-warning > div {
+        body.light-mode #modal-contract-warning > div,
+        body.light-mode #amr-custom-alert > div {
             background-color: #ffffff !important;
             border-color: #cbd5e1 !important;
             color: #0f172a !important;
@@ -116,7 +117,7 @@
 
     <!-- 1. SPLASH SCREEN -->
     <div id="splash-screen" class="fixed inset-0 bg-[#020617] z-[150] flex flex-col items-center justify-center smooth-transition">
-        <img src="https://i.ibb.co.com/gMmSSTgq/IMG-20260606-WA0000.jpg" alt="Loading" class="w-48 animate-pulse mb-4">
+        <img src="https://i.ibb.co.com/R4ZYj74K/1780229303550.png" alt="Loading" class="w-48 animate-pulse mb-4">
         <p class="text-slate-300 text-sm font-semibold tracking-widest animate-bounce">MEMUAT BACKOFFICE ADMIN...</p>
     </div>
 
@@ -206,7 +207,7 @@
                         <i data-lucide="ticket" class="w-4 h-4 text-rose-400"></i> <span>Diskon & Voucher</span>
                     </button>
 
-                    <!-- SUB-MENU GROUP 2: LAPORAN PENJUALAN (PRO SAAS GROUP) -->
+                    <!-- SUB-MENU GROUP 2: LAPORAN PENJUALAN -->
                     <div id="group-reports" class="w-full border-t border-b border-slate-800 py-2">
                         <button onclick="toggleReportMenu()" class="w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-between text-slate-400 hover:bg-slate-800 hover:text-white transition">
                             <div class="flex items-center gap-3">
@@ -281,13 +282,26 @@
             <div class="space-y-3 text-left overflow-y-auto max-h-[40vh] pr-1">
                 <p class="text-[11px] text-slate-400 leading-relaxed mb-2">Daftar staf berikut terdeteksi akan segera berakhir masa kontraknya atau telah kedaluwarsa. Mohon segera ambil tindakan perpanjangan kontrak kerja.</p>
                 <div id="contract-warning-list" class="space-y-2">
-                    <!-- Diisi otomatis secara asinkron dari halaman anak admin-users.html -->
                 </div>
             </div>
             <div class="mt-6 pt-3 border-t border-slate-800 flex justify-end gap-2 shrink-0">
                 <button onclick="closeContractWarning()" class="px-5 py-2 text-xs font-bold text-slate-400 hover:text-white transition">Ingatkan Nanti</button>
                 <button onclick="goToContractManagement()" class="px-6 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-lg transition">Kelola Kontrak</button>
             </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+     * AMR CUSTOM ALERT DIALOG (Mencegah Alamat Domain Tampil di Atas Dialog)
+     * ========================================================================= -->
+    <div id="amr-custom-alert" class="hidden-screen fixed inset-0 bg-black/85 z-[9999] flex items-center justify-center p-6 smooth-transition">
+        <div class="bg-slate-900 border-2 border-amber-500/20 rounded-3xl w-full max-w-xs p-6 shadow-2xl text-center scale-95 transition-all duration-300">
+            <div class="w-16 h-16 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <img src="https://lh3.googleusercontent.com/d/1ZXs1pIaPk7EjfcGIu5rew4qO9kQXoNlF" class="w-8 h-8 rounded object-cover" onerror="this.style.display='none';">
+            </div>
+            <h3 class="text-xs font-black text-amber-500 uppercase tracking-widest mb-2">Pemberitahuan</h3>
+            <p id="amr-alert-text" class="text-xs text-slate-300 leading-relaxed mb-6 whitespace-pre-line"></p>
+            <button id="amr-alert-ok-btn" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs transition active:scale-95 shadow-lg shadow-amber-500/10">OKE</button>
         </div>
     </div>
 
@@ -314,6 +328,44 @@
                 }
             }, 1000);
         };
+
+        // =========================================================================
+        // HUBUNGAN TRIGGER ANTARA IFRAME ANAK DAN POPUP INDUK + OVERRIDE INTERSEPTOR ALERT
+        // =========================================================================
+        (function() {
+            const nativeBrowserAlert = window.alert;
+
+            window.alert = function(message) {
+                if (!document.body) {
+                    nativeBrowserAlert(message);
+                    return;
+                }
+                const modal = document.getElementById('amr-custom-alert');
+                if (modal) {
+                    document.getElementById('amr-alert-text').innerText = message;
+                    modal.classList.remove('hidden-screen');
+                    setTimeout(() => {
+                        modal.firstElementChild.classList.remove('scale-95');
+                    }, 10);
+                } else {
+                    nativeBrowserAlert(message);
+                }
+            };
+
+            // Bind click event pada tombol OKE modal kustom
+            document.addEventListener('DOMContentLoaded', () => {
+                const okBtn = document.getElementById('amr-alert-ok-btn');
+                if (okBtn) {
+                    okBtn.addEventListener('click', () => {
+                        const modalElement = document.getElementById('amr-custom-alert');
+                        if (modalElement) {
+                            modalElement.classList.add('hidden-screen');
+                            modalElement.firstElementChild.classList.add('scale-95');
+                        }
+                    });
+                }
+            });
+        })();
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -386,7 +438,6 @@
                     
                     enforceSidebarPermissions();
                     
-                    // JAMINAN KEAMANAN: Alihkan tab bawaan jika akses ke "Users" dilarang
                     const role = (adminInfo.role || "").toLowerCase().trim();
                     if (role !== "administrator") {
                         const adminAccess = adminInfo.adminAccess;
@@ -409,9 +460,6 @@
             }
         }
 
-        // ==========================================
-        // SAAS SECURITY: IDLE TIMEOUT TIMER (AUTO-LOGOUT 5 MENIT)
-        // ==========================================
         let idleTimer;
         const IDLE_LIMIT = 5 * 60 * 1000; 
 
@@ -432,9 +480,6 @@
             window.addEventListener(evt, resetIdleTimer, { passive: true });
         });
 
-        // =========================================================================
-        // HUBUNGAN TRIGGER ANTARA IFRAME ANAK DAN POPUP INDUK
-        // =========================================================================
         function triggerContractWarning(expiringEmployees) {
             if (sessionStorage.getItem("MRD_CONTRACT_WARN_SHOWN")) return;
 
@@ -474,7 +519,7 @@
 
         function enforceSidebarPermissions() {
             const role = (adminInfo.role || "").toLowerCase().trim();
-            if (role === "administrator") return; // Bypass penuh untuk admin dewa (USR-0000)
+            if (role === "administrator") return; 
 
             const allowedTabs = adminInfo.allowedTabs ? adminInfo.allowedTabs.split(",").map(t => t.trim()) : [];
             const adminAccess = adminInfo.adminAccess;
@@ -591,36 +636,34 @@
         }
 
         async function loginAdmin() {
-    try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) });
-        const json = await res.json();
-        if(json.success) {
-            const roleClean = json.role ? json.role.toLowerCase().trim() : "";
-            
-            if (roleClean === "administrator") {
-                // SINKRONISASI SAAS: Gunakan sessionStorage agar hancur saat PWA ditutup
-                sessionStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
-                window.location.reload();
-                return;
-            }
+            try {
+                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) });
+                const json = await res.json();
+                if(json.success) {
+                    const roleClean = json.role ? json.role.toLowerCase().trim() : "";
+                    
+                    if (roleClean === "administrator") {
+                        sessionStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
+                        window.location.reload();
+                        return;
+                    }
 
-            // MEMBACA KOLOM DATABASE RIIL (TANPA REGEX)
-            if (json.adminAccess === "1" || json.adminAccess === 1) {
-                sessionStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
-                window.location.reload();
-            } else {
-                alert("Akses Ditolak!\n\nAkun Anda tidak memiliki izin otorisasi untuk mengakses Backoffice.");
+                    if (json.adminAccess === "1" || json.adminAccess === 1) {
+                        sessionStorage.setItem(STORAGE_ADMIN, JSON.stringify(json));
+                        window.location.reload();
+                    } else {
+                        alert("Akses Ditolak!\n\nAkun Anda tidak memiliki izin otorisasi untuk mengakses Backoffice.");
+                        clearPin();
+                    }
+                } else {
+                    alert(json.message || "PIN Salah!");
+                    clearPin();
+                }
+            } catch(e) {
+                alert("Koneksi gagal.");
                 clearPin();
             }
-        } else {
-            alert(json.message || "PIN Salah!");
-            clearPin();
         }
-    } catch(e) {
-        alert("Koneksi gagal.");
-        clearPin();
-    }
-}
 
         function logoutAdmin() {
             if (confirm("Keluar dari sesi admin?")) {

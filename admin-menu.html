@@ -12,26 +12,77 @@
         .hidden-screen { display: none !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
 
-        /* OVERRIDE TEMA TERANG */
-        body.light-mode { background-color: #f8fafc; color: #0f172a; }
-        body.light-mode .text-white { color: #0f172a !important; }
-        body.light-mode .text-slate-300 { color: #334155 !important; }
-        body.light-mode .text-slate-400 { color: #475569 !important; }
-        body.light-mode .text-slate-500 { color: #64748b !important; }
-        body.light-mode .bg-slate-900, body.light-mode .bg-slate-900\/40, body.light-mode .bg-slate-900\/60 { background-color: #ffffff !important; border-color: #cbd5e1 !important; }
-        body.light-mode .border-slate-800, body.light-mode .border-slate-850 { border-color: #cbd5e1 !important; }
-        body.light-mode table th { background-color: #f1f5f9 !important; color: #475569 !important; border-bottom-color: #cbd5e1 !important; }
-        body.light-mode table td { color: #1e293b !important; border-bottom-color: #f1f5f9 !important; }
-        body.light-mode tr:hover { background-color: #f8fafc !important; }
-        body.light-mode input, body.light-mode select, body.light-mode textarea { background-color: #ffffff !important; border-color: #cbd5e1 !important; color: #0f172a !important; }
-        body.light-mode input::placeholder { color: #94a3b8 !important; }
-        body.light-mode .bg-slate-950, body.light-mode .bg-slate-950\/40 { background-color: #f1f5f9 !important; border-color: #cbd5e1 !important; }
-        body.light-mode #modal-form > div, body.light-mode #modal-delete-menu > div { background-color: #ffffff !important; border-color: #cbd5e1 !important; color: #0f172a !important; }
-        body.light-mode #form-area-container { background-color: #f1f5f9 !important; border-color: #cbd5e1 !important; }
+        /* =========================================================================
+         * OVERRIDE TEMA TERANG PREMIUM UNTUK IFRAME ANAK (LIGHT MODE)
+         * ========================================================================= */
+        body.light-mode {
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+        body.light-mode .text-white {
+            color: #0f172a !important;
+        }
+        body.light-mode .text-slate-300 {
+            color: #334155 !important;
+        }
+        body.light-mode .text-slate-400 {
+            color: #475569 !important;
+        }
+        body.light-mode .text-slate-500 {
+            color: #64748b !important;
+        }
+        body.light-mode .bg-slate-900,
+        body.light-mode .bg-slate-900\/40,
+        body.light-mode .bg-slate-900\/60 {
+            background-color: #ffffff !important;
+            border-color: #cbd5e1 !important;
+        }
+        body.light-mode .border-slate-800,
+        body.light-mode .border-slate-850 {
+            border-color: #cbd5e1 !important;
+        }
+        body.light-mode table th {
+            background-color: #f1f5f9 !important;
+            color: #475569 !important;
+            border-bottom-color: #cbd5e1 !important;
+        }
+        body.light-mode table td {
+            color: #1e293b !important;
+            border-bottom-color: #f1f5f9 !important;
+        }
+        body.light-mode tr:hover {
+            background-color: #f8fafc !important;
+        }
+        body.light-mode input,
+        body.light-mode select,
+        body.light-mode textarea {
+            background-color: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #0f172a !important;
+        }
+        body.light-mode input::placeholder {
+            color: #94a3b8 !important;
+        }
+        body.light-mode .bg-slate-950,
+        body.light-mode .bg-slate-950\/40 {
+            background-color: #f1f5f9 !important;
+            border-color: #cbd5e1 !important;
+        }
+        body.light-mode #modal-form > div,
+        body.light-mode #modal-delete-menu > div {
+            background-color: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #0f172a !important;
+        }
+        body.light-mode #form-area-container {
+            background-color: #f1f5f9 !important;
+            border-color: #cbd5e1 !important;
+        }
     </style>
 </head>
 <body class="text-slate-100 p-2 overflow-y-auto h-full animate-fade-in">
 
+    <!-- DETEKSI WARISAN TEMA INDUK SAAS -->
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('theme') === 'light') {
@@ -52,7 +103,7 @@
         </button>
     </div>
 
-    <!-- FILTER BAR -->
+    <!-- FILTER BAR (KATEGORI MEMBACA SPREADSHEET 100% DINAMIS) -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
         <div class="relative">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
@@ -95,7 +146,7 @@
                     </div>
                 </div>
 
-                <!-- SEKSI HARGA HPP VS HARGA JUAL (REVISI 1) -->
+                <!-- SEKSI HARGA HPP VS HARGA JUAL (MEMPROSES KOLOM COSTPRICE) -->
                 <div class="grid grid-cols-2 gap-3 bg-slate-950/40 p-3 border border-slate-850 rounded-2xl">
                     <div>
                         <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Harga Pokok (HPP) (Rp)</label>
@@ -107,7 +158,7 @@
                     </div>
                 </div>
 
-                <!-- CASCADING DROP-DOWNS DINAMIS (REVISI 2 & 3) -->
+                <!-- CASCADING DROP-DOWNS DINAMIS (REVISI 2 & 3 - BEBAS TULISAN DROPDOWN MATI) -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Kategori Utama</label>
@@ -202,6 +253,13 @@
                 loadDynamicAreas();
             }
         };
+
+        // HUBUNGKAN RE-ROUTE ALERT LOKAL KE INDUK UTAMA (REVISI ALLERT SAAS)
+        if (window.parent && typeof window.parent.alert === 'function' && window.parent.alert !== window.alert) {
+            window.alert = function(msg) {
+                window.parent.alert(msg);
+            };
+        }
 
         async function fetchAdminMenu() {
             const container = document.getElementById('menu-grid');
@@ -342,7 +400,7 @@
         }
 
         // =========================================================================
-        // REVISI 2 & 3: GENERATOR KATEGORI & SUB-KATEGORI DINAMIS (FORM MODAL)
+        // REVISI 2 & 3: GENERATOR KATEGORI & SUB-KATEGORI 100% DINAMIS (FORM MODAL)
         // =========================================================================
         function initCategoryAndSubCategoryDropdowns(selectedCat = "", selectedSub = "") {
             const catSelect = document.getElementById('form-category');
@@ -477,6 +535,8 @@
             document.getElementById('form-menu-id').value = "";
             document.getElementById('form-name').value = "";
             document.getElementById('form-price').value = "";
+            // REVISI 1: Reset input HPP form modal
+            document.getElementById('form-hpp').value = "";
             document.getElementById('form-category').value = "";
             document.getElementById('form-route').value = "Kitchen";
             document.getElementById('form-status').value = "Available";
@@ -498,6 +558,8 @@
                     document.getElementById('form-menu-id').value = item.menuId;
                     document.getElementById('form-name').value = item.name;
                     document.getElementById('form-price').value = item.price;
+                    // REVISI 1: Pemuatan nilai HPP lama ke form edit
+                    document.getElementById('form-hpp').value = item.hpp || "";
                     document.getElementById('form-route').value = item.route;
                     document.getElementById('form-status').value = item.status;
                     document.getElementById('form-image').value = item.image;
@@ -527,6 +589,8 @@
         async function submitMenuForm() {
             const name = document.getElementById('form-name').value.trim();
             const price = parseFloat(document.getElementById('form-price').value) || 0;
+            // REVISI 1: Pembacaan isian HPP dari modal form
+            const hpp = parseFloat(document.getElementById('form-hpp').value) || 0;
             const route = document.getElementById('form-route').value;
             const status = document.getElementById('form-status').value;
 
@@ -557,6 +621,8 @@
                 menuId: document.getElementById('form-menu-id').value,
                 name: name,
                 price: price,
+                // REVISI 1: Pengiriman data HPP ke payload menuData
+                hpp: hpp,
                 category: finalCategoryValue, 
                 subCategory: finalSubCategoryValue, 
                 route: route,
