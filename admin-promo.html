@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diskon & Voucher Backoffice</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;950&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: transparent; }
+        .hidden-screen { display: none !important; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="text-slate-100 p-2 overflow-y-auto h-full animate-fade-in">
+
+    <!-- HEADER -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-4 mb-6">
+        <div>
+            <h2 class="text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
+                <i data-lucide="ticket" class="text-amber-500"></i> Diskon & Voucher Belanja
+            </h2>
+            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1">Kelola diskon kasir harian dan voucher diskon kode unik pelanggan</p>
+        </div>
+        <div class="flex gap-2 w-full sm:w-auto">
+            <button onclick="openDiscountModal()" class="w-full sm:w-auto px-4 py-2 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5">
+                <i data-lucide="plus-circle" class="w-4 h-4 text-amber-500"></i> TAMBAH DISKON
+            </button>
+            <button onclick="openVoucherModal()" class="w-full sm:w-auto px-4 py-2 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5">
+                <i data-lucide="plus-circle" class="w-4 h-4 text-indigo-400"></i> TAMBAH VOUCHER
+            </button>
+        </div>
+    </div>
+
+    <!-- SEKSI 1: TABEL DISKON (PERSENTASE) -->
+    <div class="mb-8">
+        <h3 class="text-xs font-black text-amber-500 uppercase tracking-widest mb-3 flex items-center gap-1.5"><i data-lucide="percent" class="w-4 h-4"></i> Diskon Tingkat Kasir</h3>
+        <div class="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-800 text-[10px] text-slate-400 uppercase tracking-widest bg-slate-950/40">
+                        <th class="py-3 px-4 font-black">ID Diskon</th>
+                        <th class="py-3 px-4 font-black">Nama Promo</th>
+                        <th class="py-3 px-4 font-black">Nilai (%)</th>
+                        <th class="py-3 px-4 font-black">Area Cabang</th>
+                        <th class="py-3 px-4 font-black">Status</th>
+                        <th class="py-3 px-4 font-black text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="discount-body" class="divide-y divide-slate-850 text-xs">
+                    <tr><td colspan="6" class="py-8 text-center text-slate-500 animate-pulse font-semibold">Mengambil data diskon...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- SEKSI 2: TABEL VOUCHER (KODE TEKS & MIN BELANJA) -->
+    <div class="mb-12">
+        <h3 class="text-xs font-black text-indigo-400 uppercase tracking-widest mb-3 flex items-center gap-1.5"><i data-lucide="ticket" class="w-4 h-4"></i> Kode Voucher Pelanggan</h3>
+        <div class="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-800 text-[10px] text-slate-400 uppercase tracking-widest bg-slate-950/40">
+                        <th class="py-3 px-4 font-black">Kode Voucher</th>
+                        <th class="py-3 px-4 font-black">Tipe Potongan</th>
+                        <th class="py-3 px-4 font-black">Nilai Diskon</th>
+                        <th class="py-3 px-4 font-black">Min. Belanja</th>
+                        <th class="py-3 px-4 font-black">Area Cabang</th>
+                        <th class="py-3 px-4 font-black">Status</th>
+                        <th class="py-3 px-4 font-black text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="voucher-body" class="divide-y divide-slate-850 text-xs">
+                    <tr><td colspan="7" class="py-8 text-center text-slate-500 animate-pulse font-semibold">Mengambil data voucher...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 3A. MODAL FORM: DISKON -->
+    <div id="modal-discount" class="hidden-screen fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-6 shadow-2xl flex flex-col">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
+                <h3 id="discount-title" class="text-xs font-black text-amber-500 uppercase tracking-wider">Tambah Diskon Baru</h3>
+                <button onclick="closeModal('modal-discount')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            
+            <div class="space-y-4 text-left">
+                <input type="hidden" id="form-discount-id">
+                <div>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nama Promo Diskon</label>
+                    <input type="text" id="form-discount-name" placeholder="Diskon Ramadhan" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Persentase (%)</label>
+                        <input type="number" id="form-discount-percentage" placeholder="10" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Status Aktif</label>
+                        <select id="form-discount-status" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white">
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2.5">Aktif di Cabang (SaaS Area)</label>
+                    <div id="form-discount-area" class="grid grid-cols-2 gap-2 bg-slate-950 border border-slate-850 p-3 rounded-xl">
+                        <!-- Diisi otomatis dari loadDynamicAreas -->
+                    </div>
+                </div>
+            </div>
+            <div class="mt-6 pt-3 border-t border-slate-800 flex justify-end gap-2 shrink-0">
+                <button onclick="closeModal('modal-discount')" class="px-5 py-2 text-xs font-bold text-slate-400 hover:text-white transition">Batal</button>
+                <button onclick="submitDiscountForm()" id="btn-save-discount" class="px-6 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-lg transition">SIMPAN DISKON</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3B. MODAL FORM: VOUCHER -->
+    <div id="modal-voucher" class="hidden-screen fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-6 shadow-2xl flex flex-col">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
+                <h3 id="voucher-title" class="text-xs font-black text-indigo-400 uppercase tracking-wider">Tambah Voucher Baru</h3>
+                <button onclick="closeModal('modal-voucher')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            
+            <div class="space-y-4 text-left">
+                <div>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Kode Voucher (Kapital, Unik)</label>
+                    <input type="text" id="form-voucher-code" placeholder="AMRMERDEKA" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs font-bold tracking-wider">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Tipe Potongan</label>
+                        <select id="form-voucher-type" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white">
+                            <option value="Nominal">Nominal (Rupiah)</option>
+                            <option value="Percent">Percent (Persentase)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nilai Potongan</label>
+                        <input type="number" id="form-voucher-value" placeholder="15000" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs font-bold">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Minimal Belanja (Rp)</label>
+                        <input type="number" id="form-voucher-min" placeholder="50000" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none text-xs font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Status Voucher</label>
+                        <select id="form-voucher-status" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 outline-none text-xs text-white">
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2.5">Aktif di Cabang (SaaS Area)</label>
+                    <div id="form-voucher-area" class="grid grid-cols-2 gap-2 bg-slate-950 border border-slate-850 p-3 rounded-xl">
+                        <!-- Diisi otomatis dari loadDynamicAreas -->
+                    </div>
+                </div>
+            </div>
+            <div class="mt-6 pt-3 border-t border-slate-800 flex justify-end gap-2 shrink-0">
+                <button onclick="closeModal('modal-voucher')" class="px-5 py-2 text-xs font-bold text-slate-400 hover:text-white transition">Batal</button>
+                <button onclick="submitVoucherForm()" id="btn-save-voucher" class="px-6 py-2 bg-indigo-500 hover:bg-indigo-600 text-slate-950 font-black text-xs rounded-xl shadow-lg transition">SIMPAN VOUCHER</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GAS_URL = localStorage.getItem("MRD_API_URL");
+        let allDiscounts = [];
+        let allVouchers = [];
+        let availableAreas = [];
+        let isEditingVoucher = false;
+
+        window.onload = () => {
+            if (GAS_URL) {
+                fetchPromoData();
+                loadDynamicAreas();
+            }
+        };
+
+        // 1. MEMBACA MASTER DATA DARI GAS
+        async function fetchPromoData() {
+            const discContainer = document.getElementById('discount-body');
+            const vouchContainer = document.getElementById('voucher-body');
+            try {
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: "getAdminPromoData" })
+                });
+                const json = await res.json();
+                if (json.success) {
+                    allDiscounts = json.discounts;
+                    allVouchers = json.vouchers;
+                    renderDiscounts(allDiscounts);
+                    renderVouchers(allVouchers);
+                } else {
+                    discContainer.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-rose-500 font-bold">Error: ${json.message}</td></tr>`;
+                    vouchContainer.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-rose-500 font-bold">Error: ${json.message}</td></tr>`;
+                }
+            } catch (e) {
+                discContainer.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-rose-500 font-bold">Koneksi putus ke database!</td></tr>`;
+                vouchContainer.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-rose-500 font-bold">Koneksi putus ke database!</td></tr>`;
+            }
+        }
+
+        // 2. RENDERING TABEL DISKON
+        function renderDiscounts(dataList) {
+            const container = document.getElementById('discount-body');
+            if (dataList.length === 0) {
+                container.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-600 font-semibold">Tidak ada data diskon</td></tr>`;
+                return;
+            }
+
+            container.innerHTML = dataList.map(disc => {
+                const statusBadge = disc.status === "Active"
+                    ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] px-2 py-0.5 rounded-full font-bold">Active</span>`
+                    : `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[9px] px-2 py-0.5 rounded-full font-bold">Inactive</span>`;
+
+                const areaBadges = disc.area 
+                    ? disc.area.split(',').map(a => `<span class="bg-slate-950 border border-slate-850 text-slate-400 text-[9px] px-1.5 py-0.5 rounded font-bold">${a.trim()}</span>`).join(' ')
+                    : `<span class="text-slate-600 text-[9px] font-bold">Semua Cabang</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-900/40 transition">
+                        <td class="py-3 px-4 font-bold text-slate-300 uppercase">${disc.discountId}</td>
+                        <td class="py-3 px-4 font-bold text-white capitalize">${disc.name}</td>
+                        <td class="py-3 px-4 text-amber-500 font-black">${disc.percentage}%</td>
+                        <td class="py-3 px-4">${areaBadges}</td>
+                        <td class="py-3 px-4">${statusBadge}</td>
+                        <td class="py-3 px-4 text-right">
+                            <button onclick="editDiscount('${disc.discountId}')" class="p-1.5 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg hover:bg-amber-500 hover:text-slate-950 transition"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        // 3. RENDERING TABEL VOUCHER
+        function renderVouchers(dataList) {
+            const container = document.getElementById('voucher-body');
+            if (dataList.length === 0) {
+                container.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-600 font-semibold">Tidak ada data voucher</td></tr>`;
+                return;
+            }
+
+            container.innerHTML = dataList.map(v => {
+                const statusBadge = v.status === "Active"
+                    ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] px-2 py-0.5 rounded-full font-bold">Active</span>`
+                    : `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[9px] px-2 py-0.5 rounded-full font-bold">Inactive</span>`;
+
+                const areaBadges = v.area 
+                    ? v.area.split(',').map(a => `<span class="bg-slate-950 border border-slate-850 text-slate-400 text-[9px] px-1.5 py-0.5 rounded font-bold">${a.trim()}</span>`).join(' ')
+                    : `<span class="text-slate-600 text-[9px] font-bold">Semua Cabang</span>`;
+
+                const displayValue = v.type === "Percent" ? `${v.value}%` : `Rp ${v.value.toLocaleString('id-ID')}`;
+
+                return `
+                    <tr class="hover:bg-slate-900/40 transition">
+                        <td class="py-3 px-4 font-bold text-indigo-400 tracking-wider">${v.code}</td>
+                        <td class="py-3 px-4 text-slate-400 font-semibold text-[11px]">${v.type}</td>
+                        <td class="py-3 px-4 text-amber-500 font-black">${displayValue}</td>
+                        <td class="py-3 px-4 text-slate-300">Rp ${v.minPurchase.toLocaleString('id-ID')}</td>
+                        <td class="py-3 px-4">${areaBadges}</td>
+                        <td class="py-3 px-4">${statusBadge}</td>
+                        <td class="py-3 px-4 text-right">
+                            <button onclick="editVoucher('${v.code}')" class="p-1.5 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg hover:bg-amber-500 hover:text-slate-950 transition"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        // 4. MEMUAT CABANG UNIK SECARA DINAMIS (SAAS ENGINE)
+        async function loadDynamicAreas() {
+            try {
+                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "getAvailableAreas" }) });
+                const json = await res.json();
+                if (json.success) {
+                    availableAreas = json.data;
+
+                    // Render Ceklis Cabang Dinamis dalam Form Diskon
+                    document.getElementById('form-discount-area').innerHTML = availableAreas.map(area => `
+                        <label class="flex items-center gap-1.5 text-xs text-slate-300 font-bold cursor-pointer hover:text-white">
+                            <input type="checkbox" name="form-discount-area-chk" value="${area}" class="rounded accent-amber-500 w-3.5 h-3.5"> ${area}
+                        </label>
+                    `).join('');
+
+                    // Render Ceklis Cabang Dinamis dalam Form Voucher
+                    document.getElementById('form-voucher-area').innerHTML = availableAreas.map(area => `
+                        <label class="flex items-center gap-1.5 text-xs text-slate-300 font-bold cursor-pointer hover:text-white">
+                            <input type="checkbox" name="form-voucher-area-chk" value="${area}" class="rounded accent-amber-500 w-3.5 h-3.5"> ${area}
+                        </label>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error("Gagal memuat cabang dinamis");
+            }
+        }
+
+        // 5. KONTROL FORM DISKON
+        function openDiscountModal(id = null) {
+            const modal = document.getElementById('modal-discount');
+            const title = document.getElementById('discount-title');
+            modal.classList.remove('hidden-screen');
+
+            document.getElementById('form-discount-id').value = "";
+            document.getElementById('form-discount-name').value = "";
+            document.getElementById('form-discount-percentage').value = "";
+            document.getElementById('form-discount-status').value = "Active";
+            document.querySelectorAll('input[name="form-discount-area-chk"]').forEach(cb => cb.checked = false);
+
+            if (id) {
+                title.innerText = "Edit Data Diskon";
+                const d = allDiscounts.find(x => x.discountId === id);
+                if (d) {
+                    document.getElementById('form-discount-id').value = d.discountId;
+                    document.getElementById('form-discount-name').value = d.name;
+                    document.getElementById('form-discount-percentage').value = d.percentage;
+                    document.getElementById('form-discount-status').value = d.status;
+
+                    if (d.area) {
+                        const activeAreas = d.area.split(',').map(a => a.trim());
+                        activeAreas.forEach(a => {
+                            const cb = document.querySelector(`input[name="form-discount-area-chk"][value="${a}"]`);
+                            if (cb) cb.checked = true;
+                        });
+                    }
+                }
+            } else {
+                title.innerText = "Tambah Diskon Baru";
+            }
+            lucide.createIcons();
+        }
+
+        // 6. KONTROL FORM VOUCHER
+        function openVoucherModal(code = null) {
+            const modal = document.getElementById('modal-voucher');
+            const title = document.getElementById('voucher-title');
+            modal.classList.remove('hidden-screen');
+
+            const codeInput = document.getElementById('form-voucher-code');
+            codeInput.value = "";
+            codeInput.removeAttribute('readonly'); // Bebas isi kode baru jika nambah
+
+            document.getElementById('form-voucher-type').value = "Nominal";
+            document.getElementById('form-voucher-value').value = "";
+            document.getElementById('form-voucher-min').value = "";
+            document.getElementById('form-voucher-status').value = "Active";
+            document.querySelectorAll('input[name="form-voucher-area-chk"]').forEach(cb => cb.checked = false);
+            
+            isEditingVoucher = false;
+
+            if (code) {
+                title.innerText = "Edit Data Voucher";
+                isEditingVoucher = true;
+                const v = allVouchers.find(x => x.code === code);
+                if (v) {
+                    codeInput.value = v.code;
+                    codeInput.setAttribute('readonly', 'true'); // Kunci kode teks jika sedang edit
+                    
+                    document.getElementById('form-voucher-type').value = v.type;
+                    document.getElementById('form-voucher-value').value = v.value;
+                    document.getElementById('form-voucher-min').value = v.minPurchase;
+                    document.getElementById('form-voucher-status').value = v.status;
+
+                    if (v.area) {
+                        const activeAreas = v.area.split(',').map(a => a.trim());
+                        activeAreas.forEach(a => {
+                            const cb = document.querySelector(`input[name="form-voucher-area-chk"][value="${a}"]`);
+                            if (cb) cb.checked = true;
+                        });
+                    }
+                }
+            } else {
+                title.innerText = "Tambah Voucher Baru";
+            }
+            lucide.createIcons();
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden-screen');
+        }
+
+        // 7. PENGIRIMAN DATA FORM DISKON
+        async function submitDiscountForm() {
+            const name = document.getElementById('form-discount-name').value.trim();
+            const percentage = parseFloat(document.getElementById('form-discount-percentage').value) || 0;
+            const status = document.getElementById('form-discount-status').value;
+
+            let selectedAreas = [];
+            document.querySelectorAll('input[name="form-discount-area-chk"]:checked').forEach(cb => {
+                selectedAreas.push(cb.value);
+            });
+            const areaValue = selectedAreas.join(", ");
+
+            if (!name || percentage <= 0 || selectedAreas.length === 0) {
+                alert("Lengkapi Nama Promo, Persentase Diskon, dan pilih minimal 1 Area Cabang aktif!");
+                return;
+            }
+
+            const saveBtn = document.getElementById('btn-save-discount');
+            saveBtn.innerText = "Menyimpan...";
+            saveBtn.disabled = true;
+
+            const discountData = {
+                discountId: document.getElementById('form-discount-id').value,
+                name: name,
+                percentage: percentage,
+                status: status,
+                area: areaValue
+            };
+
+            try {
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: "saveDiscount", data: { discountData: discountData } })
+                });
+                const json = await res.json();
+                if (json.success) {
+                    alert(json.message);
+                    closeModal('modal-discount');
+                    fetchPromoData();
+                } else {
+                    alert("Gagal: " + json.message);
+                }
+            } catch (e) {
+                alert("Kesalahan pengiriman data ke server GAS.");
+            } finally {
+                saveBtn.innerText = "SIMPAN DISKON";
+                saveBtn.disabled = false;
+            }
+        }
+
+        // 8. PENGIRIMAN DATA FORM VOUCHER
+        async function submitVoucherForm() {
+            const code = document.getElementById('form-voucher-code').value.trim().toUpperCase();
+            const type = document.getElementById('form-voucher-type').value;
+            const value = parseFloat(document.getElementById('form-voucher-value').value) || 0;
+            const minPurchase = parseFloat(document.getElementById('form-voucher-min').value) || 0;
+            const status = document.getElementById('form-voucher-status').value;
+
+            let selectedAreas = [];
+            document.querySelectorAll('input[name="form-voucher-area-chk"]:checked').forEach(cb => {
+                selectedAreas.push(cb.value);
+            });
+            const areaValue = selectedAreas.join(", ");
+
+            if (!code || value <= 0 || selectedAreas.length === 0) {
+                alert("Lengkapi Kode Voucher, Nilai Potongan, dan pilih minimal 1 Area Cabang aktif!");
+                return;
+            }
+
+            const saveBtn = document.getElementById('btn-save-voucher');
+            saveBtn.innerText = "Menyimpan...";
+            saveBtn.disabled = true;
+
+            const voucherData = {
+                code: code,
+                type: type,
+                value: value,
+                minPurchase: minPurchase,
+                status: status,
+                area: areaValue
+            };
+
+            try {
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ 
+                        action: "saveVoucher", 
+                        data: { voucherData: voucherData, isNew: !isEditingVoucher } 
+                    })
+                });
+                const json = await res.json();
+                if (json.success) {
+                    alert(json.message);
+                    closeModal('modal-voucher');
+                    fetchPromoData();
+                } else {
+                    alert("Gagal: " + json.message);
+                }
+            } catch (e) {
+                alert("Kesalahan pengiriman data ke server GAS.");
+            } finally {
+                saveBtn.innerText = "SIMPAN VOUCHER";
+                saveBtn.disabled = false;
+            }
+        }
+
+        function editDiscount(id) {
+            openDiscountModal(id);
+        }
+
+        function editVoucher(code) {
+            openVoucherModal(code);
+        }
+    </script>
+</body>
+</html>
