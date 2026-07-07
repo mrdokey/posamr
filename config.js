@@ -106,7 +106,7 @@ window.onload = () => {
 };
 
 function checkState() {
-    // PROTEKSI UTAMA SAAS KASIR: Jika lisensi kosong, tampilkan layar aktivasi lokal (tidak dilempar ke index.html)
+    // PROTEKSI UTAMA SAAS: Jika Lisensi Kosong, tampilkan layar aktivasi lokal
     if (!GAS_URL) {
         showScreen('activation-screen');
         return;
@@ -124,11 +124,15 @@ function checkState() {
             pinInput.addEventListener('input', handlePhysicalKeyboard);
         }
     } else {
-        const allowedRoles = ["admin", "hrd", "manager", "owner"];
+        const allowedRoles = ["administrator", "admin", "hrd", "manager", "owner"];
         const jobdeskClean = cashierInfo.jobdesk ? cashierInfo.jobdesk.toLowerCase().trim() : "";
         const roleClean = cashierInfo.role ? cashierInfo.role.toLowerCase().trim() : "";
 
-        if (jobdeskClean !== "cashier" && !allowedRoles.includes(roleClean)) {
+        // DETEKSI FLEKSIBEL: Harus berupa Cashier ATAU jajaran Atasan/Admin
+        let isCashier = jobdeskClean.includes("cashier");
+        let isAdmin = allowedRoles.includes(roleClean) || roleClean.includes("admin");
+
+        if (!isCashier && !isAdmin) {
             localStorage.removeItem(STORAGE_USER);
             window.location.reload();
             return;

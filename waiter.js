@@ -91,11 +91,15 @@ function checkState() {
         fetchConfigBg();
         clearPin();
     } else {
-        const allowedRoles = ["admin", "hrd", "manager", "owner"];
+        const allowedRoles = ["administrator", "admin", "hrd", "manager", "owner"];
         const jobdeskClean = cashierInfo.jobdesk ? cashierInfo.jobdesk.toLowerCase().trim() : "";
         const roleClean = cashierInfo.role ? cashierInfo.role.toLowerCase().trim() : "";
 
-        if (jobdeskClean === "cashier" || (jobdeskClean !== "waiter" && !allowedRoles.includes(roleClean))) {
+        // DETEKSI FLEKSIBEL WAITER: Harus berupa Waiter/Waiters ATAU jajaran Atasan/Admin
+        let isWaiter = jobdeskClean.includes("waiter") || jobdeskClean.includes("waiters");
+        let isAdmin = allowedRoles.includes(roleClean) || roleClean.includes("admin");
+
+        if (!isWaiter && !isAdmin) {
             localStorage.removeItem(STORAGE_USER);
             window.location.reload();
             return;
