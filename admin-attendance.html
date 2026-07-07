@@ -200,51 +200,66 @@
         }
 
         function renderLogsTable(dataList) {
-            const container = document.getElementById('attendance-body');
-            if (dataList.length === 0) {
-                container.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-600 font-semibold">Tidak ada log absensi yang cocok</td></tr>`;
-                return;
-            }
+    const container = document.getElementById('attendance-body');
+    if (dataList.length === 0) {
+        container.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-600 font-semibold">Tidak ada log absensi yang cocok</td></tr>`;
+        return;
+    }
 
-            container.innerHTML = dataList.map(log => {
-                const checkInPhoto = log.photoIn 
-                    ? `<button onclick="viewPhoto('${log.photoIn}')" class="text-emerald-400 font-bold hover:underline flex items-center gap-1"><i data-lucide="image" class="w-3.5 h-3.5 animate-pulse"></i> ${log.timeIn}</button>`
-                    : `<span class="text-slate-500">${log.timeIn}</span>`;
+    container.innerHTML = dataList.map(log => {
+        const checkInPhoto = log.photoIn 
+            ? `<button onclick="viewPhoto('${log.photoIn}')" class="text-emerald-400 font-bold hover:underline flex items-center gap-1"><i data-lucide="image" class="w-3.5 h-3.5 animate-pulse"></i> ${log.timeIn}</button>`
+            : `<span class="text-slate-500">${log.timeIn}</span>`;
 
-                const checkOutPhoto = log.photoOut 
-                    ? `<button onclick="viewPhoto('${log.photoOut}')" class="text-rose-400 font-bold hover:underline flex items-center gap-1"><i data-lucide="image" class="w-3.5 h-3.5 animate-pulse"></i> ${log.timeOut}</button>`
-                    : `<span class="text-slate-500">${log.timeOut || "-"}</span>`;
+        const checkOutPhoto = log.photoOut 
+            ? `<button onclick="viewPhoto('${log.photoOut}')" class="text-rose-400 font-bold hover:underline flex items-center gap-1"><i data-lucide="image" class="w-3.5 h-3.5 animate-pulse"></i> ${log.timeOut}</button>`
+            : `<span class="text-slate-500">${log.timeOut || "-"}</span>`;
 
-                const gpsStatusBadge = log.statusLokasi === "In Radius"
-                    ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] px-2 py-0.5 rounded-full font-bold">In Radius</span>`
-                    : `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[9px] px-2 py-0.5 rounded-full font-bold">Out of Radius</span>`;
+        const gpsStatusBadge = log.statusLokasi === "In Radius"
+            ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] px-2 py-0.5 rounded-full font-bold">In Radius</span>`
+            : `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[9px] px-2 py-0.5 rounded-full font-bold">Out of Radius</span>`;
 
-                const cleanKeterangan = log.keterangan || "-";
-                const isIzin = cleanKeterangan.includes("[IZIN]") || cleanKeterangan.includes("Pulang Cepat");
-                const keteranganDisplay = isIzin 
-                    ? `<span class="text-amber-500 font-bold">${cleanKeterangan}</span>`
-                    : `<span class="text-slate-300">${cleanKeterangan}</span>`;
-
-                return `
-                    <tr class="hover:bg-slate-900/40 transition">
-                        <td class="py-4 px-4 font-semibold text-slate-300">${log.date}</td>
-                        <td class="py-4 px-4">
-                            <p class="font-bold text-white text-xs sm:text-sm capitalize">${log.userName}</p>
-                            <p class="text-[9px] text-slate-500 font-semibold tracking-wider mt-0.5">ID: ${log.userId} | <span class="text-amber-500 font-bold uppercase">${log.userJobdesk || "-"}</span></p>
-                        </td>
-                        <td class="py-4 px-4">${checkInPhoto}</td>
-                        <td class="py-4 px-4">${checkOutPhoto}</td>
-                        <td class="py-4 px-4 text-left">
-                            <p class="font-bold text-white">${log.duration || "-"}</p>
-                            <p class="text-[9px] text-slate-500 font-bold mt-0.5">${log.statusShift}</p>
-                        </td>
-                        <td class="py-4 px-4">${gpsStatusBadge}</td>
-                        <td class="py-4 px-4 max-w-xs truncate" title="${cleanKeterangan}">${keteranganDisplay}</td>
-                    </tr>
-                `;
-            }).join('');
-            lucide.createIcons();
+        // GENERATOR TOMBOL PREVIEW GOOGLE MAPS JIKA KOORDINAT TERSEDIA
+        let mapButton = "";
+        const targetCoords = log.latLongIn || log.latLongOut;
+        if (targetCoords && targetCoords.trim() !== "") {
+            mapButton = `
+                <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(targetCoords)}" target="_blank" class="inline-flex items-center gap-1 text-[9px] bg-slate-900 border border-slate-800 hover:bg-slate-800 text-amber-500 font-black px-2 py-1 rounded-lg mt-1.5 transition-all" title="Lihat Lokasi Koordinat GPS">
+                    <i data-lucide="map" class="w-3 h-3"></i> MAPS
+                </a>
+            `;
         }
+
+        const cleanKeterangan = log.keterangan || "-";
+        const isIzin = cleanKeterangan.includes("[IZIN]") || cleanKeterangan.includes("Pulang Cepat");
+        const keteranganDisplay = isIzin 
+            ? `<span class="text-amber-500 font-bold">${cleanKeterangan}</span>`
+            : `<span class="text-slate-300">${cleanKeterangan}</span>`;
+
+        return `
+            <tr class="hover:bg-slate-900/40 transition">
+                <td class="py-4 px-4 font-semibold text-slate-300">${log.date}</td>
+                <td class="py-4 px-4">
+                    <p class="font-bold text-white text-xs sm:text-sm capitalize">${log.userName}</p>
+                    <p class="text-[9px] text-slate-500 font-semibold tracking-wider mt-0.5">ID: ${log.userId} | <span class="text-amber-500 font-bold uppercase">${log.userJobdesk || "-"}</span></p>
+                </td>
+                <td class="py-4 px-4">${checkInPhoto}</td>
+                <td class="py-4 px-4">${checkOutPhoto}</td>
+                <td class="py-4 px-4 text-left">
+                    <p class="font-bold text-white">${log.duration || "-"}</p>
+                    <p class="text-[9px] text-slate-500 font-bold mt-0.5">${log.statusShift}</p>
+                </td>
+                <!-- KOLOM GPS: MENYATUKAN STATUS BADGE & TOMBOL MAPS -->
+                <td class="py-4 px-4 flex flex-col items-start gap-1">
+                    ${gpsStatusBadge}
+                    ${mapButton}
+                </td>
+                <td class="py-4 px-4 max-w-xs truncate" title="${cleanKeterangan}">${keteranganDisplay}</td>
+            </tr>
+        `;
+    }).join('');
+    lucide.createIcons();
+}
 
         function filterLogs() {
             const query = document.getElementById('search-input').value.toLowerCase();
