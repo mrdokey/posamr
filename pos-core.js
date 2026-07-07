@@ -116,46 +116,7 @@ async function initApp() {
             renderCategoryButtons(); // <--- INJEKSI DINAMIS KATEGORI CLOUD
             if(document.getElementById('search-menu').value === "") {
                 const safeId = currentCategory.replace(/\s+/g, '_');
-                filterMenu(currentCategory, document.getElementById(`btn-cat-${safeId}`)); 
-            }
-        }
-        const resConf = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig', data: { area: userArea } }) });
-        const jsonConf = await resConf.json();
-        if(jsonConf.success) {
-            configData = jsonConf.data;
-            localStorage.setItem('localConfig', JSON.stringify(configData));
-            applyConfig();
-        }
-        const resDisc = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getDiscounts', data: { area: userArea } }) });
-        const jsonDisc = await resDisc.json();
-        if(jsonDisc.success) {
-            discountData = jsonDisc.data;
-            localStorage.setItem('localDiscounts', JSON.stringify(discountData));
-            renderDiscounts();
-        }
-        const resVoucher = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getVouchers', data: { area: userArea } }) });
-        const jsonVoucher = await resVoucher.json();
-        if(jsonVoucher.success) {
-            voucherData = jsonVoucher.data;
-            localStorage.setItem('localVouchers', JSON.stringify(voucherData));
-            renderVouchers(); 
-        }
-    } catch (e) { 
-        document.getElementById('offline-badge').classList.remove('hidden'); 
-        renderVouchers(); 
-    }
-}
-
-    let userArea = cashierInfo ? cashierInfo.area : "";
-
-    try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getMenu', data: { area: userArea } }) });
-        const json = await res.json();
-        if(json.success) {
-            menuData = json.data;
-            localStorage.setItem('localMenu', JSON.stringify(menuData));
-            if(document.getElementById('search-menu').value === "") {
-                filterMenu(currentCategory, document.getElementById(`btn-cat-${currentCategory}`)); 
+                filterMenu(currentCategory, document.getElementById('btn-cat-' + safeId)); 
             }
         }
         const resConf = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig', data: { area: userArea } }) });
