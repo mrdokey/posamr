@@ -315,17 +315,17 @@ function setupAbsensiMenu() {
             '</button>';
         }
 
-        // 2. Tombol khusus Jobdesk Kitchen
+        // 2. Tombol khusus Jobdesk Kitchen -> Mengarah ke kds.html dengan parameter Kitchen
         if (isKitchen || isAdmin) {
-            buttonsHtml += '<button onclick="autoLoginApp(\'kds.html\', \'Kitchen\', \'MRD_KDS_SESSION\')" class="py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl active:scale-95 shadow-lg flex items-center justify-center gap-2 w-full transition-all">' +
+            buttonsHtml += '<button onclick="autoLoginApp(\'kds.html?role=Kitchen\', \'Kitchen\', \'MRD_KDS_SESSION\')" class="py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl active:scale-95 shadow-lg flex items-center justify-center gap-2 w-full transition-all">' +
                 '<i data-lucide="chef-hat" class="w-4 h-4"></i>' +
                 '<span>DAPUR (KDS DISPLAY)</span>' +
             '</button>';
         }
 
-        // 3. Tombol khusus Jobdesk Bar
+        // 3. Tombol khusus Jobdesk Bar -> Mengarah ke kds.html dengan parameter Bar
         if (isBar || isAdmin) {
-            buttonsHtml += '<button onclick="autoLoginApp(\'bds.html\', \'Bar\', \'MRD_BAR_SESSION\')" class="py-3.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-black rounded-xl active:scale-95 shadow-lg flex items-center justify-center gap-2 w-full transition-all">' +
+            buttonsHtml += '<button onclick="autoLoginApp(\'kds.html?role=Bar\', \'Bar\', \'MRD_BAR_SESSION\')" class="py-3.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-black rounded-xl active:scale-95 shadow-lg flex items-center justify-center gap-2 w-full transition-all">' +
                 '<i data-lucide="glass-water" class="w-4 h-4"></i>' +
                 '<span>BAR (BDS DISPLAY)</span>' +
             '</button>';

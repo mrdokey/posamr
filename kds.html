@@ -60,14 +60,21 @@
         let pollingInterval = null;
 
         window.onload = () => {
-            // DETEKSI TIPE MONITOR SECARA CERDAS DARI SESSION SSO
-            const isBarSession = localStorage.getItem("MRD_BAR_SESSION");
-            const isKdsSession = localStorage.getItem("MRD_KDS_SESSION");
+            // MEMBACA PARAMETER URL SECARA REAL-TIME (?role=Kitchen atau ?role=Bar)
+            const urlParams = new URLSearchParams(window.location.search);
+            const roleParam = urlParams.get('role'); // "Kitchen" atau "Bar"
 
-            if (isBarSession && !isKdsSession) {
-                monitorType = "Bar";
+            if (roleParam === "Bar" || roleParam === "Kitchen") {
+                monitorType = roleParam;
             } else {
-                monitorType = "Kitchen";
+                // Fallback (cadangan) menggunakan deteksi session jika URL parameter kosong
+                const isBarSession = localStorage.getItem("MRD_BAR_SESSION");
+                const isKdsSession = localStorage.getItem("MRD_KDS_SESSION");
+                if (isBarSession && !isKdsSession) {
+                    monitorType = "Bar";
+                } else {
+                    monitorType = "Kitchen";
+                }
             }
 
             setupMonitorUI();
