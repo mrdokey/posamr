@@ -106,10 +106,9 @@ window.onload = () => {
 };
 
 function checkState() {
-    // PROTEKSI UTAMA SAAS: Jika Lisensi Kosong, paksa alihkan perangkat ke halaman Aktivasi Absensi
+    // PROTEKSI UTAMA SAAS KASIR: Jika lisensi kosong, tampilkan layar aktivasi lokal (tidak dilempar ke index.html)
     if (!GAS_URL) {
-        alert("Aplikasi Kasir Belum Diaktivasi!\n\nAnda akan dialihkan ke halaman utama Absensi untuk memasukkan URL API Lisensi.");
-        window.location.href = "index.html";
+        showScreen('activation-screen');
         return;
     }
 
@@ -227,3 +226,28 @@ function resetLicense() {
         }, 10);
     };
 })();
+
+// ==========================================
+// AKTIVASI MANDIRI MESIN KASIR (PORTABLE)
+// ==========================================
+async function activateSystem() { 
+    const input = document.getElementById('api-input').value.trim(); 
+    if(!input) return alert("Masukkan URL API Deploy Anda!"); 
+    const btn = document.getElementById('btn-activate');
+    if (btn) btn.innerHTML = "Memeriksa..."; 
+
+    try {
+        const res = await fetch(input, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) });
+        const json = await res.json();
+        if(json.success) {
+            localStorage.setItem(STORAGE_API, input);
+            GAS_URL = input;
+            window.location.reload(); // Reload kembali ke pos.html dan langsung memunculkan Numpad Login
+        } else {
+            throw new Error("Gagal melakukan verifikasi konfigurasi.");
+        }
+    } catch (e) {
+        alert("URL API tidak valid atau tidak merespon!");
+        if (btn) btn.innerHTML = "Aktifkan Kasir";
+    }
+}
