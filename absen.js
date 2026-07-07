@@ -199,6 +199,37 @@ function openDashboard() {
     if (userFoto) {
         extractReferenceFace(userFoto);
     }
+
+    // =========================================================================
+    // RENDERING DATA RIWAYAT 3 ABSENSI TERAKHIR (SINKRONISASI ESS)
+    // =========================================================================
+    const historyPanel = document.getElementById('kiosk-history-panel');
+    const historyList = document.getElementById('kiosk-history-list');
+
+    if (historyPanel && historyList) {
+        const historyData = verifiedUser.attendanceHistory || verifiedUser.AttendanceHistory || [];
+        
+        if (historyData.length > 0) {
+            historyPanel.classList.remove('hidden-screen');
+            historyList.innerHTML = historyData.map(function(log) {
+                return '<div class="bg-slate-900/80 border border-slate-800 p-3 rounded-2xl flex justify-between items-center text-xs">' +
+                    '<div class="text-left">' +
+                        '<p class="font-bold text-white">' + log.date + '</p>' +
+                        '<p class="text-[10px] text-slate-500 mt-0.5">IN: <span class="text-emerald-400 font-bold">' + log.timeIn + '</span> | OUT: <span class="text-rose-400 font-bold">' + (log.timeOut || "-") + '</span></p>' +
+                    '</div>' +
+                    '<div class="text-right">' +
+                        '<p class="font-black text-amber-500">' + (log.duration || "-") + '</p>' +
+                        '<p class="text-[9px] text-slate-400 uppercase font-semibold mt-0.5 tracking-wider truncate max-w-[100px]">' + (log.notes || "Hadir") + '</p>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        } else {
+            // Sembunyikan panel secara rapi jika memang belum ada riwayat absensi lampau
+            historyList.innerHTML = '<p class="text-[10px] text-slate-600 text-center py-2 uppercase font-black tracking-widest">Belum ada riwayat kerja</p>';
+        }
+    }
+
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function logoutDashboard() { 
