@@ -147,10 +147,10 @@
             <button id="btn-clock-in" onclick="startCapture('IN')" class="hidden-screen py-4 bg-emerald-500 text-slate-950 text-base font-black rounded-xl active:scale-95 shadow-lg w-full">AMBIL ABSEN MASUK</button>
             
             <!-- TOMBOL MANUAL UNTUK KE APLIKASI -->
-            <button id="btn-goto-app" onclick="autoLoginApp()" class="hidden-screen py-4 bg-amber-500 hover:bg-amber-600 text-slate-950 text-base font-black rounded-xl active:scale-95 shadow-lg flex items-center justify-center gap-2 w-full">
-                <i data-lucide="external-link" class="w-5 h-5"></i>
-                <span>BUKA APLIKASI KERJA</span>
-            </button>
+            <!-- CONTAINER DINAMIS UNTUK TOMBOL APLIKASI KERJA SESUAI MULTI-JOBDESK -->
+<div id="goto-apps-container" class="w-full flex flex-col gap-2.5">
+    <!-- Diisi otomatis secara dinamis dan spesifik oleh absen.js -->
+</div>
 
             <button id="btn-clock-out" onclick="startCapture('OUT')" class="hidden-screen py-4 bg-rose-500 text-white text-base font-black rounded-xl active:scale-95 shadow-lg w-full">AMBIL ABSEN PULANG</button>
             <button id="btn-bypass" onclick="triggerIzinCepat()" class="hidden-screen py-3 bg-amber-500/10 text-amber-500 border border-amber-500/30 text-xs font-bold rounded-xl active:scale-95 mt-2 w-full">IZIN PULANG CEPAT</button>

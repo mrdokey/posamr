@@ -275,6 +275,7 @@ function setupAbsensiMenu() {
     const msg = document.getElementById('status-msg');
     const sub = document.getElementById('status-sub');
     const timerContainer = document.getElementById('timer-container');
+    const appsContainer = document.getElementById('goto-apps-container');
 
     clearInterval(countdownInterval);
     timerContainer.classList.add('hidden-screen');
@@ -284,8 +285,7 @@ function setupAbsensiMenu() {
     document.getElementById('btn-clock-out').classList.add('hidden-screen');
     document.getElementById('btn-bypass').classList.add('hidden-screen');
     
-    const gotoAppBtn = document.getElementById('btn-goto-app');
-    if (gotoAppBtn) gotoAppBtn.classList.add('hidden-screen');
+    if (appsContainer) appsContainer.innerHTML = ""; // Bersihkan tombol lama
 
     const userStatus = (verifiedUser.status || verifiedUser.Status || "").toString().toUpperCase().trim();
     const userRole = (verifiedUser.role || verifiedUser.Role || "").toString().toLowerCase().trim();
@@ -298,15 +298,48 @@ function setupAbsensiMenu() {
     } else {
         msg.innerText = verifiedUser.message || verifiedUser.Message || "Status Kerja Aktif"; 
 
-        // SINKRONISASI ATURAN FLEKSIBEL (TOMBOL MUNCUL UNTUK WAITER & ADMIN/MANAGER)
+        // DETEKSI MULTI-JOBDESK SINKRON (BEBAS SPASI / HURUF)
         let isWaiter = userJobdesk.includes("waiter") || userJobdesk.includes("waiters");
+        let isCashier = userJobdesk.includes("cashier");
+        let isKitchen = userJobdesk.includes("kitchen") || userJobdesk.includes("back office");
+        let isBar = userJobdesk.includes("bar");
         let isAdmin = userRole.includes("admin") || userRole.includes("manager") || userRole.includes("owner") || userRole.includes("hrd");
 
+        let buttonsHtml = "";
+
+        // 1. Tombol khusus Jobdesk Waiter
         if (isWaiter || isAdmin) {
-            if (gotoAppBtn) gotoAppBtn.classList.remove('hidden-screen');
-        } else {
-            if (gotoAppBtn) gotoAppBtn.classList.add('hidden-screen');
+            buttonsHtml += '<button onclick="autoLoginApp(\'order.html\', \'Waiter\', \'MRD_WAITER_SESSION\')" class="py-3.5 bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black rounded-xl active:scale-95 shadow-lg flex items-center justify-center gap-2 w-full transition-all">' +
+                '<i data-lucide="external-link" class="w-4 h-4"></i>' +
+                '<span>ORDER WAITER (DISPLAY)</span>' +
+            '</button>';
         }
+
+        // 2. Tombol khusus Jobdesk Kitchen
+        if (isKitchen || isAdmin) {
+            buttonsHtml += '<button onclick="autoLoginApp(\'kds.html\', \'Kitchen\', \'MRD_KDS_SESSION\')" class="py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl active:scale-95 shadow-lg flex items-center justify-center gap-2 w-full transition-all">' +
+                '<i data-lucide="chef-hat" class="w-4 h-4"></i>' +
+                '<span>DAPUR (KDS DISPLAY)</span>' +
+            '</button>';
+        }
+
+        // 3. Tombol khusus Jobdesk Bar
+        if (isBar || isAdmin) {
+            buttonsHtml += '<button onclick="autoLoginApp(\'bds.html\', \'Bar\', \'MRD_BAR_SESSION\')" class="py-3.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-black rounded-xl active:scale-95 shadow-lg flex items-center justify-center gap-2 w-full transition-all">' +
+                '<i data-lucide="glass-water" class="w-4 h-4"></i>' +
+                '<span>BAR (BDS DISPLAY)</span>' +
+            '</button>';
+        }
+
+        // 4. Tombol khusus Jobdesk Cashier
+        if (isCashier || isAdmin) {
+            buttonsHtml += '<button onclick="autoLoginApp(\'pos.html\', \'Cashier\', \'MRD_CASHIER\')" class="py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl active:scale-95 shadow-lg flex items-center justify-center gap-2 w-full transition-all">' +
+                '<i data-lucide="calculator" class="w-4 h-4"></i>' +
+                '<span>KASIR (POS DISPLAY)</span>' +
+            '</button>';
+        }
+
+        if (appsContainer) appsContainer.innerHTML = buttonsHtml;
 
         if (verifiedUser.canClockOut || verifiedUser.CanClockOut) {
             sub.innerText = "Shift Selesai. Anda diizinkan Absen Pulang.";
@@ -569,7 +602,14 @@ async function submitAttendanceData(photoBase64) {
 }
 
 // --- SINGLE SIGN-ON (SSO ROUTING KHUSUS WAITER) --- 
-async function autoLoginApp() { 
+async function autoLoginApp(targetApp, jobdeskName, sessionKey) { 
+    const appsContainer = document.getElementById('goto-apps-container');
+    if (appsContainer) {
+        // Kunci tombol sementara agar user tidak klik berulang-ulang saat loading
+        const buttons = appsContainer.querySelectorAll('button');
+        buttons.forEach(function(b) { b.disabled = true; b.style.opacity = '0.5'; });
+    }
+
     try { 
         const res = await fetch(GAS_URL, { 
             method: 'POST', 
@@ -581,19 +621,24 @@ async function autoLoginApp() {
             const userJobdesk = (json.jobdesk || json.Jobdesk || "").toString().toLowerCase().trim();
             const userRole = (json.role || json.Role || "").toString().toLowerCase().trim();
 
-            // SINKRONISASI ATURAN FLEKSIBEL REDIRECT KE WAITER APP
-            let isWaiter = userJobdesk.includes("waiter") || userJobdesk.includes("waiters");
-            let isAdmin = userRole.includes("admin") || userRole.includes("manager") || userRole.includes("owner") || userRole.includes("hrd");
+            // Verifikasi validasi dinamis berdasarkan rute modul yang dipilih
+            let isAllowed = userJobdesk.includes(jobdeskName.toLowerCase()) || 
+                            (jobdeskName === "Waiter" && userJobdesk.includes("waiters")) ||
+                            (jobdeskName === "Kitchen" && userJobdesk.includes("back office")) || // Back office bisa akses KDS
+                            userRole.includes("admin") || 
+                            userRole.includes("manager") || 
+                            userRole.includes("owner") || 
+                            userRole.includes("hrd");
 
-            if (isWaiter || isAdmin) {
-                localStorage.setItem("MRD_WAITER_SESSION", JSON.stringify(json));
-                window.location.href = "order.html"; 
+            if (isAllowed) {
+                localStorage.setItem(sessionKey, JSON.stringify(json));
+                window.location.href = targetApp; 
             } else {
-                alert("Akses Ditolak!\n\nAkun Anda tidak memiliki Jobdesk 'Waiter' untuk membuka Aplikasi Order.");
+                alert("Akses Ditolak!\n\nAkun Anda tidak memiliki hak akses 'Jobdesk " + jobdeskName + "' di database.");
                 logoutDashboard();
             }
         } else {
-            alert("Sistem POS/Order terkunci: " + json.message);
+            alert("Sistem Keamanan Terkunci: " + json.message);
             logoutDashboard();
         }
     } catch (e) {
