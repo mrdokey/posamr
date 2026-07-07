@@ -298,7 +298,11 @@ function setupAbsensiMenu() {
     } else {
         msg.innerText = verifiedUser.message || verifiedUser.Message || "Status Kerja Aktif"; 
 
-        if (userRole === "staff" && userJobdesk === "waiter") {
+        // SINKRONISASI ATURAN FLEKSIBEL (TOMBOL MUNCUL UNTUK WAITER & ADMIN/MANAGER)
+        let isWaiter = userJobdesk.includes("waiter") || userJobdesk.includes("waiters");
+        let isAdmin = userRole.includes("admin") || userRole.includes("manager") || userRole.includes("owner") || userRole.includes("hrd");
+
+        if (isWaiter || isAdmin) {
             if (gotoAppBtn) gotoAppBtn.classList.remove('hidden-screen');
         } else {
             if (gotoAppBtn) gotoAppBtn.classList.add('hidden-screen');
@@ -575,15 +579,21 @@ async function autoLoginApp() {
 
         if (json.success) {
             const userJobdesk = (json.jobdesk || json.Jobdesk || "").toString().toLowerCase().trim();
-            if (userJobdesk === "waiter") {
+            const userRole = (json.role || json.Role || "").toString().toLowerCase().trim();
+
+            // SINKRONISASI ATURAN FLEKSIBEL REDIRECT KE WAITER APP
+            let isWaiter = userJobdesk.includes("waiter") || userJobdesk.includes("waiters");
+            let isAdmin = userRole.includes("admin") || userRole.includes("manager") || userRole.includes("owner") || userRole.includes("hrd");
+
+            if (isWaiter || isAdmin) {
                 localStorage.setItem("MRD_WAITER_SESSION", JSON.stringify(json));
                 window.location.href = "order.html"; 
             } else {
-                alert("Akses Kiosk Terkunci. Kasir & Manager wajib menggunakan aplikasi terinstal!");
+                alert("Akses Ditolak!\n\nAkun Anda tidak memiliki Jobdesk 'Waiter' untuk membuka Aplikasi Order.");
                 logoutDashboard();
             }
         } else {
-            alert("Sistem POS terkunci: " + json.message);
+            alert("Sistem POS/Order terkunci: " + json.message);
             logoutDashboard();
         }
     } catch (e) {
