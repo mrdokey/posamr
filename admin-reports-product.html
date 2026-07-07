@@ -212,37 +212,50 @@
         }
 
         function exportToExcel() {
-            if (filteredItems.length === 0) {
-                alert("Tidak ada data produk untuk diekspor!");
-                return;
-            }
-            
-            let csv = "\uFEFF"; 
-            csv += "ID Menu;Nama Menu;Kategori;Porsi Berbayar (Qty);Porsi Komplimen (Qty);Total Porsi Keluar;Omset Penjualan (Rupiah)\n";
-            
-            filteredItems.forEach(item => {
-                csv += [
-                    item.menuId,
-                    item.name.replace(/;/g, ' '),
-                    item.category,
-                    item.qtyPaid,
-                    item.qtyFoc || 0,
-                    item.totalQty,
-                    item.totalRevenue
-                ].join(";") + "\n";
-            });
-            
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            
-            const startStr = document.getElementById('filter-start-date').value || "Mulai";
-            const endStr = document.getElementById('filter-end-date').value || "Selesai";
-            link.setAttribute("download", `Rekap_Penjualan_Produk_AMR_${startStr}_to_${endStr}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
+    if (filteredItems.length === 0) {
+        alert("Tidak ada data produk untuk diekspor!");
+        return;
+    }
+    
+    let csv = "\uFEFF"; // BOM UTF-8
+    
+    const headers = ["ID Menu", "Nama Menu", "Kategori", "Porsi Berbayar (Qty)", "Porsi Komplimen (Qty)", "Total Porsi Keluar", "Omset Penjualan (Rupiah)"];
+    
+    function escapeCsvCell(val) {
+        if (val === undefined || val === null) return '""';
+        let s = val.toString().replace(/"/g, '""');
+        return '"' + s + '"';
+    }
+    
+    csv += headers.map(escapeCsvCell).join(",") + "\n";
+    
+    filteredItems.forEach(item => {
+        const row = [
+            item.menuId || "",
+            item.name || "",
+            item.category || "",
+            item.qtyPaid !== undefined ? item.qtyPaid : 0,
+            item.qtyFoc !== undefined ? item.qtyFoc : 0,
+            item.totalQty !== undefined ? item.totalQty : 0,
+            item.totalRevenue !== undefined ? item.totalRevenue : 0
+        ];
+        
+        csv += row.map(function(val) {
+            return '"' + val.toString().replace(/"/g, '""') + '"';
+        }).join(",") + "\n";
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    
+    const startStr = document.getElementById('filter-start-date').value || "Mulai";
+    const endStr = document.getElementById('filter-end-date').value || "Selesai";
+    link.setAttribute("download", `Rekap_Penjualan_Produk_AMR_${startStr}_to_${endStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
     </script>
 </body>
 </html>

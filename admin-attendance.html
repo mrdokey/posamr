@@ -313,42 +313,59 @@
         }
 
         function exportToExcel() {
-            if (filteredLogs.length === 0) {
-                alert("Tidak ada data absensi untuk diekspor!");
-                return;
-            }
-            
-            let csv = "\uFEFF"; 
-            csv += "Tanggal;ID Karyawan;Nama Karyawan;Jobdesk Kerja;Jam Masuk (IN);Foto Masuk (URL);Jam Pulang (OUT);Foto Pulang (URL);Durasi Kerja;Shift Kerja;Status Geotag;Keterangan / Alasan\n";
-            
-            filteredLogs.forEach(log => {
-                csv += [
-                    log.date,
-                    log.userId,
-                    log.userName.replace(/;/g, ' '),
-                    log.userJobdesk || "-", 
-                    log.timeIn,
-                    log.photoIn || "-", 
-                    log.timeOut || "-",
-                    log.photoOut || "-", 
-                    log.duration || "-",
-                    log.statusShift,
-                    log.statusLokasi,
-                    log.keterangan.replace(/;/g, ' ').replace(/\n/g, ' ')
-                ].join(";") + "\n";
-            });
-            
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            
-            const startStr = document.getElementById('filter-start-date').value || "Mulai";
-            const endStr = document.getElementById('filter-end-date').value || "Selesai";
-            link.setAttribute("download", `Rekap_Absensi_AMR_${startStr}_to_${endStr}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
+    if (filteredLogs.length === 0) {
+        alert("Tidak ada data absensi untuk diekspor!");
+        return;
+    }
+    
+    let csv = "\uFEFF"; // BOM UTF-8 agar Excel & WPS mengenali karakter huruf khusus dengan baik
+    
+    // Header tabel dibungkus kutip ganda sesuai standar RFC 4180
+    const headers = ["Tanggal", "ID Karyawan", "Nama Karyawan", "Jobdesk Kerja", "Jam Masuk (IN)", "Foto Masuk (URL)", "Jam Pulang (OUT)", "Foto Pulang (URL)", "Durasi Kerja", "Shift Kerja", "Status Geotag", "Keterangan / Alasan"];
+    
+    // Helper untuk membungkus data dalam kutip ganda secara aman (anti jebol)
+    function escapeCsvCell(val) {
+        if (val === undefined || val === null) return '""';
+        let s = val.toString().replace(/"/g, '""'); // Ubah tanda " tunggal di dalam teks menjadi "" ganda
+        return '"' + s + '"';
+    }
+    
+    // Gabungkan header menggunakan pembatas koma (,)
+    csv += headers.map(escapeCsvCell).join(",") + "\n";
+    
+    // Gabungkan baris data secara aman
+    filteredLogs.forEach(log => {
+        const row = [
+            log.date || "",
+            log.userId || "",
+            log.userName || "",
+            log.userJobdesk || "-", 
+            log.timeIn || "",
+            log.photoIn || "-", 
+            log.timeOut || "-",
+            log.photoOut || "-", 
+            log.duration || "-",
+            log.statusShift || "SHIFT OPEN",
+            log.statusLokasi || "In Radius",
+            log.keterangan || ""
+        ];
+        
+        csv += row.map(function(val) {
+            return '"' + val.toString().replace(/"/g, '""') + '"';
+        }).join(",") + "\n";
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    
+    const startStr = document.getElementById('filter-start-date').value || "Mulai";
+    const endStr = document.getElementById('filter-end-date').value || "Selesai";
+    link.setAttribute("download", `Rekap_Absensi_AMR_${startStr}_to_${endStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
 
         function viewPhoto(url) {
             const modal = document.getElementById('modal-photo');
