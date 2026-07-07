@@ -36,11 +36,11 @@ async function loginKasir() {
     try {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) });
         const json = await res.json();
+        
         if(json.success) {
             const jobdeskClean = (json.jobdesk || "").toLowerCase().trim();
             const roleClean = (json.role || "").toLowerCase().trim();
 
-            // SINKRONISASI ATURAN FLEKSIBEL (BEBAS)
             let isCashier = jobdeskClean.includes("cashier");
             let isAdmin = roleClean.includes("admin") || roleClean.includes("manager") || roleClean.includes("owner") || roleClean.includes("hrd");
 
@@ -48,17 +48,18 @@ async function loginKasir() {
                 localStorage.setItem(STORAGE_USER, JSON.stringify(json));
                 window.location.reload();
             } else {
-                alert("Akses Ditolak!\n\nAkun Anda tidak memiliki Jobdesk 'Cashier' atau akses manajemen.");
+                // DIALOG INFORMATIF UNTUK DEBUGGING RIIL DI TABLET
+                alert("Akses Ditolak!\n\nSistem mendeteksi data Anda:\n- Role: " + json.role + "\n- Jobdesk: " + json.jobdesk + "\n\nAnda wajib memiliki Jobdesk 'Cashier' atau Role Manajemen (Admin/Manager/Owner/HRD) untuk masuk ke mesin kasir.");
                 clearPin();
                 if (btn) btn.innerText = "Buka Mesin POS";
             }
         } else {
-            alert(json.message);
+            alert("Gagal Login:\n\n" + json.message);
             clearPin();
             if (btn) btn.innerText = "Buka Mesin POS";
         }
     } catch (e) {
-        alert("Koneksi gagal atau terjadi gangguan server!");
+        alert("Koneksi gagal atau terjadi gangguan server!\n\nDetail: " + e.message);
         clearPin();
         if (btn) btn.innerText = "Buka Mesin POS";
     }
