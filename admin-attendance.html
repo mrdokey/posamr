@@ -219,16 +219,31 @@
             ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] px-2 py-0.5 rounded-full font-bold">In Radius</span>`
             : `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[9px] px-2 py-0.5 rounded-full font-bold">Out of Radius</span>`;
 
-        // GENERATOR TOMBOL PREVIEW GOOGLE MAPS JIKA KOORDINAT TERSEDIA
-        let mapButton = "";
-        const targetCoords = log.latLongIn || log.latLongOut;
-        if (targetCoords && targetCoords.trim() !== "") {
-            mapButton = `
-                <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(targetCoords)}" target="_blank" class="inline-flex items-center gap-1 text-[9px] bg-slate-900 border border-slate-800 hover:bg-slate-800 text-amber-500 font-black px-2 py-1 rounded-lg mt-1.5 transition-all" title="Lihat Lokasi Koordinat GPS">
-                    <i data-lucide="map" class="w-3 h-3"></i> MAPS
+        // GENERATOR TOMBOL GPS TERPISAH (IN VS OUT)
+        let mapButtons = [];
+        
+        // 1. Tombol Map untuk Absen Masuk (IN)
+        if (log.latLongIn && log.latLongIn.trim() !== "") {
+            mapButtons.push(`
+                <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(log.latLongIn)}" target="_blank" class="inline-flex items-center gap-1 text-[9px] bg-slate-900 border border-slate-800 hover:bg-slate-800 text-emerald-400 font-black px-2 py-1 rounded-lg transition-all" title="Lokasi Absen Masuk (IN)">
+                    <i data-lucide="map-pin" class="w-3 h-3 text-emerald-400"></i> MAP IN
                 </a>
-            `;
+            `);
         }
+        
+        // 2. Tombol Map untuk Absen Pulang (OUT)
+        if (log.latLongOut && log.latLongOut.trim() !== "") {
+            mapButtons.push(`
+                <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(log.latLongOut)}" target="_blank" class="inline-flex items-center gap-1 text-[9px] bg-slate-900 border border-slate-800 hover:bg-slate-800 text-rose-400 font-black px-2 py-1 rounded-lg transition-all" title="Lokasi Absen Pulang (OUT)">
+                    <i data-lucide="map-pin" class="w-3 h-3 text-rose-400"></i> MAP OUT
+                </a>
+            `);
+        }
+
+        // Gabungkan tombol dalam satu baris flexbox
+        const mapButtonsHtml = mapButtons.length > 0 
+            ? `<div class="flex flex-wrap gap-1.5 mt-1.5">${mapButtons.join('')}</div>`
+            : "";
 
         const cleanKeterangan = log.keterangan || "-";
         const isIzin = cleanKeterangan.includes("[IZIN]") || cleanKeterangan.includes("Pulang Cepat");
@@ -249,10 +264,11 @@
                     <p class="font-bold text-white">${log.duration || "-"}</p>
                     <p class="text-[9px] text-slate-500 font-bold mt-0.5">${log.statusShift}</p>
                 </td>
-                <!-- KOLOM GPS: MENYATUKAN STATUS BADGE & TOMBOL MAPS -->
-                <td class="py-4 px-4 flex flex-col items-start gap-1">
-                    ${gpsStatusBadge}
-                    ${mapButton}
+                <td class="py-4 px-4">
+                    <div class="flex flex-col items-start">
+                        ${gpsStatusBadge}
+                        ${mapButtonsHtml}
+                    </div>
                 </td>
                 <td class="py-4 px-4 max-w-xs truncate" title="${cleanKeterangan}">${keteranganDisplay}</td>
             </tr>
