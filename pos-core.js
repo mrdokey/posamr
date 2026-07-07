@@ -36,16 +36,21 @@ async function loginKasir() {
     try {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) });
         const json = await res.json();
+        
         if(json.success) {
-            const allowedRoles = ["admin", "hrd", "manager", "owner", "administrator", "staff"];
-            const jobdeskClean = json.jobdesk ? json.jobdesk.toLowerCase().trim() : "";
-            const roleClean = json.role ? json.role.toLowerCase().trim() : "";
+            // Jajaran manajemen/admin yang diizinkan mengoperasikan kasir
+            const adminRoles = ["administrator", "admin", "hrd", "manager", "owner"];
+            const jobdeskClean = (json.jobdesk || "").toLowerCase().trim();
+            const roleClean = (json.role || "").toLowerCase().trim();
 
-            if (jobdeskClean === "cashier" || allowedRoles.includes(roleClean)) { 
+            let isCashier = jobdeskClean.includes("cashier");
+            let isAdmin = adminRoles.includes(roleClean);
+
+            if (isCashier || isAdmin) { 
                 localStorage.setItem(STORAGE_USER, JSON.stringify(json));
                 window.location.reload();
             } else {
-                alert(`Akses Ditolak! Pelayan/Staff tidak diizinkan masuk ke aplikasi POS Utama.`);
+                alert(`Akses Ditolak! Akun Anda tidak memiliki Jobdesk 'Cashier' atau akses administrasi.`);
                 clearPin();
                 if (btn) btn.innerText = "Buka Mesin POS";
             }
@@ -78,6 +83,7 @@ async function initApp() {
     if(localMenu) { 
         menuData = JSON.parse(localMenu); 
         filteredData = menuData;
+        renderCategoryButtons(); // <--- INJEKSI DINAMIS KATEGORI LOKAL
         renderMenuHTML(filteredData); 
     }
     if(localDisc) { discountData = JSON.parse(localDisc); renderDiscounts(); }
@@ -85,6 +91,47 @@ async function initApp() {
         voucherData = JSON.parse(localVouchers); 
         renderVouchers(); 
     }
+
+    let userArea = cashierInfo ? cashierInfo.area : "";
+
+    try {
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getMenu', data: { area: userArea } }) });
+        const json = await res.json();
+        if(json.success) {
+            menuData = json.data;
+            localStorage.setItem('localMenu', JSON.stringify(menuData));
+            renderCategoryButtons(); // <--- INJEKSI DINAMIS KATEGORI CLOUD
+            if(document.getElementById('search-menu').value === "") {
+                const safeId = currentCategory.replace(/\s+/g, '_');
+                filterMenu(currentCategory, document.getElementById(`btn-cat-${safeId}`)); 
+            }
+        }
+        const resConf = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig', data: { area: userArea } }) });
+        const jsonConf = await resConf.json();
+        if(jsonConf.success) {
+            configData = jsonConf.data;
+            localStorage.setItem('localConfig', JSON.stringify(configData));
+            applyConfig();
+        }
+        const resDisc = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getDiscounts', data: { area: userArea } }) });
+        const jsonDisc = await resDisc.json();
+        if(jsonDisc.success) {
+            discountData = jsonDisc.data;
+            localStorage.setItem('localDiscounts', JSON.stringify(discountData));
+            renderDiscounts();
+        }
+        const resVoucher = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getVouchers', data: { area: userArea } }) });
+        const jsonVoucher = await resVoucher.json();
+        if(jsonVoucher.success) {
+            voucherData = jsonVoucher.data;
+            localStorage.setItem('localVouchers', JSON.stringify(voucherData));
+            renderVouchers(); 
+        }
+    } catch (e) { 
+        document.getElementById('offline-badge').classList.remove('hidden'); 
+        renderVouchers(); 
+    }
+}
 
     let userArea = cashierInfo ? cashierInfo.area : "";
 
@@ -139,6 +186,39 @@ function renderDiscounts() {
             return `<option value="${d.percentage}" data-id="${d.id}">${d.name} (${displayPerc}%)</option>`;
         }).join('');
     }
+}
+
+// ==========================================
+// GENERATOR FILTER KATEGORI UTAMA DINAMIS (LANDSCAPE)
+// ==========================================
+function renderCategoryButtons() {
+    const container = document.getElementById('filter-buttons');
+    if (!container) return;
+
+    // Ambil semua kategori unik yang aktif dari menuData
+    let uniqueCategories = new Set();
+    menuData.forEach(item => {
+        if (item.category && item.category.trim() !== "") {
+            uniqueCategories.add(item.category.trim());
+        }
+    });
+
+    let sortedCategories = Array.from(uniqueCategories).sort();
+
+    // Render HTML diawali dengan tombol "Semua"
+    let buttonsHtml = `
+        <button id="btn-cat-Semua" onclick="filterMenu('Semua', this)" class="cat-btn bg-amber-500 text-slate-900 px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap smooth-transition shadow-md">Semua</button>
+    `;
+
+    // Render tombol dinamis lainnya (mengganti spasi dengan underscore untuk selector ID)
+    sortedCategories.forEach(cat => {
+        const safeId = cat.replace(/\s+/g, '_');
+        buttonsHtml += `
+            <button id="btn-cat-${safeId}" onclick="filterMenu('${cat}', this)" class="cat-btn bg-slate-800 text-slate-300 hover:bg-slate-700 px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap smooth-transition">${cat}</button>
+        `;
+    });
+
+    container.innerHTML = buttonsHtml;
 }
 
 // ==========================================

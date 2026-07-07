@@ -144,19 +144,18 @@ async function loginWaiter() {
         const json = await res.json();
         
         if(json.success) {
-            const allowedRoles = ["admin", "hrd", "manager", "owner"];
-            const jobdeskClean = json.jobdesk ? json.jobdesk.toLowerCase().trim() : "";
-            const roleClean = json.role ? json.role.toLowerCase().trim() : "";
+            const adminRoles = ["administrator", "admin", "hrd", "manager", "owner"];
+            const jobdeskClean = (json.jobdesk || "").toLowerCase().trim();
+            const roleClean = (json.role || "").toLowerCase().trim();
 
-            if (jobdeskClean === "cashier") {
-                alert("Akses Ditolak! Anda adalah Cashier. Silakan login di Mesin POS Utama.");
-                clearPin();
-                statusText.innerText = "";
-            } else if (jobdeskClean === "waiter" || allowedRoles.includes(roleClean)) {
+            let isWaiter = jobdeskClean.includes("waiter") || jobdeskClean.includes("waiters");
+            let isAdmin = adminRoles.includes(roleClean);
+
+            if (isWaiter || isAdmin) {
                 localStorage.setItem(STORAGE_USER, JSON.stringify(json));
                 window.location.reload();
             } else {
-                alert("Akses Ditolak! Aplikasi ini khusus Waitress.");
+                alert("Akses Ditolak! Akun Anda tidak memiliki Jobdesk 'Waiter' atau akses administrasi.");
                 clearPin();
                 statusText.innerText = "";
             }
@@ -187,6 +186,7 @@ async function initApp() {
     if(localMenu) { 
         menuData = JSON.parse(localMenu); 
         filteredData = menuData;
+        renderCategoryButtons(); // <--- INJEKSI DINAMIS KATEGORI LOKAL WAITER
         renderMenuHTML(filteredData); 
     }
 
@@ -198,7 +198,9 @@ async function initApp() {
         if(json.success) {
             menuData = json.data;
             localStorage.setItem('localMenu', JSON.stringify(menuData));
-            filterMenu(currentCategory, document.getElementById(`btn-cat-${currentCategory}`)); 
+            renderCategoryButtons(); // <--- INJEKSI DINAMIS KATEGORI CLOUD WAITER
+            const safeId = currentCategory.replace(/\s+/g, '_');
+            filterMenu(currentCategory, document.getElementById(`btn-cat-${safeId}`)); 
         }
         const resConf = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig', data: { area: userArea } }) });
         const jsonConf = await resConf.json();
@@ -215,6 +217,36 @@ async function initApp() {
 function applyConfig() {
     const titleEl = document.getElementById('pos-title');
     if(configData["NAMA_PERUSAHAAN"] && titleEl) titleEl.innerText = configData["NAMA_PERUSAHAAN"] + " ORDER";
+}
+
+// ==========================================
+// GENERATOR FILTER KATEGORI UTAMA DINAMIS (PORTRAIT)
+// ==========================================
+function renderCategoryButtons() {
+    const container = document.getElementById('filter-buttons');
+    if (!container) return;
+
+    let uniqueCategories = new Set();
+    menuData.forEach(item => {
+        if (item.category && item.category.trim() !== "") {
+            uniqueCategories.add(item.category.trim());
+        }
+    });
+
+    let sortedCategories = Array.from(uniqueCategories).sort();
+
+    let buttonsHtml = `
+        <button id="btn-cat-Semua" onclick="filterMenu('Semua', this)" class="cat-btn bg-amber-500 text-slate-900 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap smooth-transition shadow-md">Semua</button>
+    `;
+
+    sortedCategories.forEach(cat => {
+        const safeId = cat.replace(/\s+/g, '_');
+        buttonsHtml += `
+            <button id="btn-cat-${safeId}" onclick="filterMenu('${cat}', this)" class="cat-btn bg-slate-800 text-slate-300 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap smooth-transition">${cat}</button>
+        `;
+    });
+
+    container.innerHTML = buttonsHtml;
 }
 
 // ==========================================

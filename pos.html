@@ -122,11 +122,8 @@
                     <input type="text" id="search-menu" onkeyup="searchMenu(this.value)" placeholder="Cari menu makanan/minuman..." class="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 text-white rounded-xl outline-none focus:border-amber-500 text-sm smooth-transition">
                 </div>
                 <div class="flex gap-2 overflow-x-auto w-full sm:w-auto no-scrollbar" id="filter-buttons">
-                    <button onclick="filterMenu('Semua', this)" class="cat-btn bg-amber-500 text-slate-900 px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap smooth-transition">Semua</button>
-                    <button onclick="filterMenu('Makanan', this)" class="cat-btn bg-slate-800 text-slate-300 hover:bg-slate-700 px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap smooth-transition">Makanan</button>
-                    <button onclick="filterMenu('Minuman', this)" class="cat-btn bg-slate-800 text-slate-300 hover:bg-slate-700 px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap smooth-transition">Minuman</button>
-                    <button onclick="filterMenu('Snack', this)" class="cat-btn bg-slate-800 text-slate-300 hover:bg-slate-700 px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap smooth-transition">Snack</button>
-                </div>
+    <button id="btn-cat-Semua" onclick="filterMenu('Semua', this)" class="cat-btn bg-amber-500 text-slate-900 px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap smooth-transition shadow-md">Semua</button>
+</div>
             </div>
             
             <!-- TEMPATKAN INI DI DALAM pos.html DI BAWAH BLOK "Search & Filter" -->

@@ -109,12 +109,10 @@
                 <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
                 <input type="text" id="search-menu" onkeyup="searchMenu(this.value)" placeholder="Cari menu makanan/minuman..." class="w-full pl-9 pr-4 py-2 bg-slate-950 border border-slate-800 text-white rounded-xl outline-none focus:border-amber-500 text-xs smooth-transition">
             </div>
-            <div class="flex gap-2 overflow-x-auto no-scrollbar" id="filter-buttons">
-                <button id="btn-cat-Semua" onclick="filterMenu('Semua', this)" class="cat-btn bg-amber-500 text-slate-900 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap smooth-transition">Semua</button>
-                <button id="btn-cat-Makanan" onclick="filterMenu('Makanan', this)" class="cat-btn bg-slate-800 text-slate-300 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap smooth-transition">Makanan</button>
-                <button id="btn-cat-Minuman" onclick="filterMenu('Minuman', this)" class="cat-btn bg-slate-800 text-slate-300 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap smooth-transition">Minuman</button>
-                <button id="btn-cat-Snack" onclick="filterMenu('Snack', this)" class="cat-btn bg-slate-800 text-slate-300 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap smooth-transition">Snack</button>
-            </div>
+            <!-- Cukup sisakan kontainernya saja, isinya akan digenerate otomatis oleh JS -->
+<div class="flex gap-2 overflow-x-auto no-scrollbar" id="filter-buttons">
+    <button id="btn-cat-Semua" onclick="filterMenu('Semua', this)" class="cat-btn bg-amber-500 text-slate-900 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap smooth-transition">Semua</button>
+</div>
         </div>
 
         <!-- SUB-CATEGORY CHIPS BAR (SaaS Cascade - Portrait Mode) -->
