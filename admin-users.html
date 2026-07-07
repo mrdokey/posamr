@@ -286,7 +286,10 @@
 
     <script>
         const GAS_URL = localStorage.getItem("MRD_API_URL");
-        const adminSession = JSON.parse(localStorage.getItem("MRD_ADMIN_SESSION"));
+        
+        // FIX: Ubah dari localStorage menjadi sessionStorage agar singkron dengan halaman induk admin.html
+        const adminSession = JSON.parse(sessionStorage.getItem("MRD_ADMIN_SESSION"));
+        
         const loggedInRole = adminSession && adminSession.role ? adminSession.role.toLowerCase().trim() : "";
         let allUsers = [];
 
