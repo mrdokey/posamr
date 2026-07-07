@@ -140,10 +140,16 @@ function applyConfig() {
 function renderDiscounts() {
     const select = document.getElementById('cart-discount-select');
     if (select) {
-        select.innerHTML = `<option value="0" data-id="DISC-00">Tanpa Discount (0%)</option>` + 
-        discountData.map(d => {
+        // FILTER: Saring dan buang DISC-00 dari database agar tidak dobel dengan opsi default hardcode
+        const dbDiscountsOnly = discountData.filter(function(d) {
+            return d.id !== "DISC-00";
+        });
+
+        // Render opsi default aman di paling atas, diikuti sisa tingkatan diskon dari database
+        select.innerHTML = '<option value="0" data-id="DISC-00">Tanpa Discount (0%)</option>' + 
+        dbDiscountsOnly.map(function(d) {
             let displayPerc = d.percentage < 1 ? (d.percentage * 100) : d.percentage;
-            return `<option value="${d.percentage}" data-id="${d.id}">${d.name} (${displayPerc}%)</option>`;
+            return '<option value="' + d.percentage + '" data-id="' + d.id + '">' + d.name + ' (' + displayPerc + '%)</option>';
         }).join('');
     }
 }
