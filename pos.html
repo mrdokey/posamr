@@ -115,16 +115,21 @@
                 </div>
             </header>
 
-            <!-- Search & Filter -->
-            <div class="bg-slate-900 px-6 py-4 border-b border-slate-800 shrink-0 flex flex-col sm:flex-row gap-4 justify-between items-end shadow-md z-10">
-                <div class="relative w-full">
-                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
-                    <input type="text" id="search-menu" onkeyup="searchMenu(this.value)" placeholder="Cari menu makanan/minuman..." class="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 text-white rounded-xl outline-none focus:border-amber-500 text-sm smooth-transition">
-                </div>
-                <div class="flex gap-2 overflow-x-auto w-full sm:w-auto no-scrollbar" id="filter-buttons">
-    <button id="btn-cat-Semua" onclick="filterMenu('Semua', this)" class="cat-btn bg-amber-500 text-slate-900 px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap smooth-transition shadow-md">Semua</button>
+            <!-- FILTER & PENCARIAN (FIXED TATA RUANG PROPORSIAL) -->
+<div class="bg-slate-900 px-6 py-4 border-b border-slate-800 shrink-0 flex flex-col sm:flex-row gap-4 items-center justify-start shadow-md z-10">
+    
+    <!-- Kolom pencarian kita batasi lebar maksimalnya agar proporsional di tablet -->
+    <div class="relative w-full sm:max-w-xs md:max-w-sm shrink-0">
+        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+        <input type="text" id="search-menu" onkeyup="searchMenu(this.value)" placeholder="Cari menu makanan/minuman..." class="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 text-white rounded-xl outline-none focus:border-amber-500 text-sm smooth-transition">
+    </div>
+    
+    <!-- Tombol kategori merapat rapi mengikuti di sebelah kanan pencarian -->
+    <div class="flex gap-2 overflow-x-auto w-full sm:w-auto no-scrollbar justify-start" id="filter-buttons">
+        <button id="btn-cat-Semua" onclick="filterMenu('Semua', this)" class="cat-btn bg-amber-500 text-slate-900 px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap smooth-transition shadow-md">Semua</button>
+    </div>
+
 </div>
-            </div>
             
             <!-- TEMPATKAN INI DI DALAM pos.html DI BAWAH BLOK "Search & Filter" -->
 <!-- SUB-CATEGORY CHIPS BAR (SaaS Cascade - Landscape Mode) -->
