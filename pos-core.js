@@ -31,14 +31,26 @@ async function fetchConfigBg() {
 
 async function loginKasir() {
     if(loginPinValue.length < 4) return;
+    
+    // Failsafe jika element button login tidak ditemukan di pos.html
     const btn = document.getElementById('btn-login');
     if (btn) btn.innerText = "Memeriksa...";
+    
     try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) });
+        console.log("Mengirim permintaan login ke:", GAS_URL);
+        const res = await fetch(GAS_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: 'loginPOS', data: { pin: loginPinValue } }) 
+        });
+        
+        if (!res.ok) {
+            throw new Error(`HTTP Error! Status: ${res.status}`);
+        }
+        
         const json = await res.json();
+        console.log("Respon login diterima:", json);
         
         if(json.success) {
-            // Jajaran manajemen/admin yang diizinkan mengoperasikan kasir
             const adminRoles = ["administrator", "admin", "hrd", "manager", "owner"];
             const jobdeskClean = (json.jobdesk || "").toLowerCase().trim();
             const roleClean = (json.role || "").toLowerCase().trim();
@@ -50,17 +62,18 @@ async function loginKasir() {
                 localStorage.setItem(STORAGE_USER, JSON.stringify(json));
                 window.location.reload();
             } else {
-                alert(`Akses Ditolak! Akun Anda tidak memiliki Jobdesk 'Cashier' atau akses administrasi.`);
+                alert(`Akses Ditolak!\n\nAkun Anda tidak memiliki Jobdesk 'Cashier' atau akses administrasi.`);
                 clearPin();
                 if (btn) btn.innerText = "Buka Mesin POS";
             }
         } else {
-            alert(json.message);
+            alert(json.message || "Gagal memverifikasi akun.");
             clearPin();
             if (btn) btn.innerText = "Buka Mesin POS";
         }
     } catch (e) {
-        alert("Koneksi gagal!");
+        console.error("Gagal melakukan login:", e);
+        alert(`Koneksi Gagal!\n\nDetail: ${e.message}\n\nPastikan URL API GAS sudah di-deploy dengan benar (Access: Anyone).`);
         clearPin();
         if (btn) btn.innerText = "Buka Mesin POS";
     }
