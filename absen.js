@@ -331,8 +331,10 @@ function setupAbsensiMenu() {
             '</button>';
         }
 
-        // 4. Tombol khusus Jobdesk Cashier
-        if (isCashier || isAdmin) {
+        // 4. Tombol khusus Jobdesk Cashier -> Hanya dimunculkan jika diakses dari Terminal Kasir Resmi
+        let isOfficialPosTerminal = localStorage.getItem("MRD_POS_TERMINAL") === "true";
+        
+        if ((isCashier || isAdmin) && isOfficialPosTerminal) {
             buttonsHtml += '<button onclick="autoLoginApp(\'pos.html\', \'Cashier\', \'MRD_CASHIER\')" class="py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl active:scale-95 shadow-lg flex items-center justify-center gap-2 w-full transition-all">' +
                 '<i data-lucide="calculator" class="w-4 h-4"></i>' +
                 '<span>KASIR (POS DISPLAY)</span>' +

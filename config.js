@@ -106,9 +106,16 @@ window.onload = () => {
 };
 
 function checkState() {
-    // PROTEKSI UTAMA SAAS: Jika Lisensi Kosong, tampilkan layar aktivasi lokal
+    // 1. PROTEKSI UTAMA SAAS: Jika Lisensi Kosong, tampilkan layar aktivasi lokal
     if (!GAS_URL) {
         showScreen('activation-screen');
+        return;
+    }
+
+    // 2. SAFETY LOCKDOWN: Blokir keras jika perangkat ini bukan Terminal Kasir Resmi
+    if (localStorage.getItem("MRD_POS_TERMINAL") !== "true") {
+        alert("Akses Ditolak!\n\nPerangkat ini belum didaftarkan sebagai Terminal Kasir Resmi. Modul kasir hanya boleh diakses melalui tablet kasir resmi outlet!");
+        window.location.href = "index.html"; 
         return;
     }
 
@@ -128,7 +135,6 @@ function checkState() {
         const jobdeskClean = cashierInfo.jobdesk ? cashierInfo.jobdesk.toLowerCase().trim() : "";
         const roleClean = cashierInfo.role ? cashierInfo.role.toLowerCase().trim() : "";
 
-        // DETEKSI FLEKSIBEL: Harus berupa Cashier ATAU jajaran Atasan/Admin
         let isCashier = jobdeskClean.includes("cashier");
         let isAdmin = allowedRoles.includes(roleClean) || roleClean.includes("admin");
 
@@ -245,8 +251,12 @@ async function activateSystem() {
         const json = await res.json();
         if(json.success) {
             localStorage.setItem(STORAGE_API, input);
+            
+            // SUNTIKAN TOKEN OTORISASI: Daftarkan perangkat fisik ini sebagai Terminal Kasir Resmi
+            localStorage.setItem("MRD_POS_TERMINAL", "true"); 
+            
             GAS_URL = input;
-            window.location.reload(); // Reload kembali ke pos.html dan langsung memunculkan Numpad Login
+            window.location.reload(); 
         } else {
             throw new Error("Gagal melakukan verifikasi konfigurasi.");
         }
