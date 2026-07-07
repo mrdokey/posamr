@@ -30,8 +30,13 @@
             </div>
         </div>
 
-        <!-- Sektor Kanan: Tombol Aksi -->
+        <!-- Sektor Kanan: Tombol Aksi (DENGAN TOMBOL BATAL SAJI CERDAS) -->
         <div class="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end">
+            <!-- Tombol Batal Saji Terakhir (Hanya muncul jika ada riwayat ketukan saji sebelumnya) -->
+            <button id="btn-undo-trigger" onclick="undoLastServe()" class="hidden-screen px-3.5 py-2.5 bg-amber-500/10 text-amber-500 border border-amber-500/30 hover:bg-amber-500 hover:text-slate-950 text-[10px] sm:text-xs font-black rounded-xl transition flex items-center justify-center gap-1.5 animate-pulse" title="Kembalikan Pesanan Terakhir">
+                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> <span>BATAL SAJI</span>
+            </button>
+
             <button onclick="fetchActiveOrders()" class="flex-1 sm:flex-none px-3.5 py-2.5 bg-slate-800 border border-slate-700 hover:bg-slate-700 text-[10px] sm:text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5" title="Segarkan Antrean">
                 <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> <span>SEGARKAN</span>
             </button>
@@ -62,8 +67,12 @@
         let activeOrders = [];
         let pollingInterval = null;
 
-        window.onload = () => {
-            // MEMBACA PARAMETER URL SECARA REAL-TIME (?role=Kitchen atau ?role=Bar)
+        // Menyimpan memori order terakhir yang disajikan khusus untuk fitur BATAL SAJI (UNDO)
+        let lastServedOrderId = null;
+        let lastServedItemsKeys = [];
+
+        window.onload = function() {
+            // MEMBACA PARAMETER URL (?role=Kitchen atau ?role=Bar)
             const urlParams = new URLSearchParams(window.location.search);
             const roleParam = urlParams.get('role'); // "Kitchen" atau "Bar"
 
@@ -107,12 +116,11 @@
         async function fetchActiveOrders() {
             const container = document.getElementById('queue-container');
             if (!GAS_URL) {
-                container.innerHTML = `<div class="p-12 text-center text-rose-500 font-bold">API URL Belum Diaktivasi!</div>`;
+                container.innerHTML = '<div class="p-12 text-center text-rose-500 font-bold">API URL Belum Diaktivasi!</div>';
                 return;
             }
 
             try {
-                // Mengambil history order aktif (Draft/Open/Paid) dari server GAS
                 const res = await fetch(GAS_URL, {
                     method: 'POST',
                     body: JSON.stringify({ action: "getHistoryOrders", data: { area: "" } })
@@ -121,11 +129,10 @@
 
                 if (json.success) {
                     const incomingOrders = json.data || [];
+                    const pendingOrders = incomingOrders.filter(function(order) {
+                        return order.status === "Open" || order.status === "Paid";
+                    });
                     
-                    // Filter order hanya yang berstatus Open/Paid (yang butuh dimasak)
-                    const pendingOrders = incomingOrders.filter(order => order.status === "Open" || order.status === "Paid");
-                    
-                    // Deteksi jika ada orderan baru masuk untuk memicu bel
                     if (detectNewOrders(pendingOrders)) {
                         playAlertSound();
                     }
@@ -138,14 +145,13 @@
             }
         }
 
-        // Membandingkan data lama vs baru di memori untuk deteksi order baru
         let previousOrderIds = [];
         function detectNewOrders(newList) {
-            const currentIds = newList.map(o => o.orderId);
+            const currentIds = newList.map(function(o) { return o.orderId; });
             let hasNew = false;
 
             if (previousOrderIds.length > 0) {
-                currentIds.forEach(id => {
+                currentIds.forEach(function(id) {
                     if (!previousOrderIds.includes(id)) {
                         hasNew = true;
                     }
@@ -155,7 +161,6 @@
             return hasNew;
         }
 
-        // Sintesis suara lonceng panggilan koki (Ding-Dong) secara offline
         function playAlertSound() {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -181,12 +186,10 @@
             const container = document.getElementById('queue-container');
             const servedList = JSON.parse(localStorage.getItem('served_items_cache') || "[]");
 
-            // Filter item berdasarkan rute cetak (Kitchen vs Bar)
             let filteredQueue = [];
 
-            activeOrders.forEach(order => {
-                // Saring item milik order ini sesuai peruntukan layar monitor
-                const itemsForThisMonitor = order.items.filter(item => {
+            activeOrders.forEach(function(order) {
+                const itemsForThisMonitor = order.items.filter(function(item) {
                     const matchRoute = monitorType === "Bar" ? item.route === "Bar" : item.route === "Kitchen";
                     const isAlreadyServed = servedList.includes(order.orderId + "-" + item.menuId);
                     return matchRoute && !isAlreadyServed;
@@ -204,81 +207,111 @@
             });
 
             if (filteredQueue.length === 0) {
-                container.innerHTML = `
-                    <div class="w-80 bg-slate-900/40 border border-slate-800 rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-3 h-[40vh] shrink-0">
-                        <div class="w-14 h-14 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center">
-                            <i data-lucide="check-circle" class="w-8 h-8"></i>
-                        </div>
-                        <h4 class="font-bold text-white text-sm uppercase tracking-wider">Antrean Bersih!</h4>
-                        <p class="text-[10px] text-slate-500 uppercase font-semibold">Semua hidangan telah disajikan.</p>
-                    </div>
-                `;
+                container.innerHTML = '<div class="w-80 bg-slate-900/40 border border-slate-800 rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-3 h-[40vh] shrink-0">' +
+                        '<div class="w-14 h-14 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center">' +
+                            '<i data-lucide="check-circle" class="w-8 h-8"></i>' +
+                        '</div>' +
+                        '<h4 class="font-bold text-white text-sm uppercase tracking-wider">Antrean Bersih!</h4>' +
+                        '<p class="text-[10px] text-slate-500 uppercase font-semibold">Semua hidangan telah disajikan.</p>' +
+                    '</div>';
+                
+                updateUndoButtonVisibility();
                 lucide.createIcons();
                 return;
             }
 
-            // Render daftar kartu antrean horizontal
-            container.innerHTML = filteredQueue.map(order => {
-                return `
-                    <div class="w-80 bg-slate-900 border border-slate-800 rounded-3xl p-5 flex flex-col justify-between shrink-0 h-full max-h-[80vh] shadow-xl">
-                        <div class="overflow-y-auto no-scrollbar pr-1">
-                            <!-- HEADER KARTU -->
-                            <div class="flex justify-between items-start border-b border-slate-800 pb-3 mb-4">
-                                <div class="text-left">
-                                    <h3 class="text-2xl font-black text-amber-500 tracking-tight">${order.tableNo}</h3>
-                                    <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Waiter: ${order.waiterName}</p>
-                                </div>
-                                <span class="bg-slate-850 text-slate-400 font-bold text-[10px] px-2.5 py-1 rounded-lg">${order.time}</span>
-                            </div>
+            container.innerHTML = filteredQueue.map(function(order) {
+                const itemsHtml = order.items.map(function(item) {
+                    const noteDisplay = item.notes 
+                        ? '<p class="text-[10px] text-amber-400 font-black mt-1 bg-amber-500/15 border border-amber-500/20 px-2 py-1 rounded-md">* ' + item.notes + '</p>' 
+                        : '';
+                    return '<div class="border-b border-slate-800/60 pb-3 last:border-b-0">' +
+                            '<div class="flex justify-between items-start">' +
+                                '<span class="text-2xl font-black text-white shrink-0 mr-3">' + item.qty + 'x</span>' +
+                                '<span class="text-sm font-bold text-slate-200 flex-1 leading-snug uppercase">' + item.name + '</span>' +
+                            '</div>' +
+                            noteDisplay +
+                        '</div>';
+                }).join('');
 
-                            <!-- DAFTAR MAKANAN / MINUMAN -->
-                            <div class="space-y-3.5 text-left">
-                                ${order.items.map(item => {
-                                    const noteDisplay = item.notes 
-                                        ? `<p class="text-[10px] text-amber-400 font-black mt-1 bg-amber-500/15 border border-amber-500/20 px-2 py-1 rounded-md">* ${item.notes}</p>` 
-                                        : '';
-                                    return `
-                                        <div class="border-b border-slate-800/60 pb-3 last:border-b-0">
-                                            <div class="flex justify-between items-start">
-                                                <span class="text-2xl font-black text-white shrink-0 mr-3">${item.qty}x</span>
-                                                <span class="text-sm font-bold text-slate-200 flex-1 leading-snug uppercase">${item.name}</span>
-                                            </div>
-                                            ${noteDisplay}
-                                        </div>
-                                    `;
-                                }).join('')}
-                            </div>
-                        </div>
+                const itemsString = JSON.stringify(order.items).replace(/"/g, '&quot;').replace(/'/g, "\\'");
 
-                        <!-- TOMBOL SAJIKAN (LOCAL CACHE DISMISS) -->
-                        <button onclick="serveEntireOrder('${order.orderId}', ${JSON.stringify(order.items).replace(/"/g, '&quot;')})" class="mt-4 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-2xl flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-lg shadow-emerald-900/20 shrink-0">
-                            <i data-lucide="check" class="w-4 h-4"></i> SAJIKAN PESANAN
-                        </button>
-                    </div>
-                `;
+                return '<div class="w-80 bg-slate-900 border border-slate-800 rounded-3xl p-5 flex flex-col justify-between shrink-0 h-full max-h-[80vh] shadow-xl">' +
+                        '<div class="overflow-y-auto no-scrollbar pr-1">' +
+                            '<div class="flex justify-between items-start border-b border-slate-800 pb-3 mb-4">' +
+                                '<div class="text-left">' +
+                                    '<h3 class="text-2xl font-black text-amber-500 tracking-tight">' + order.tableNo + '</h3>' +
+                                    '<p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Waiter: ' + order.waiterName + '</p>' +
+                                '</div>' +
+                                '<span class="bg-slate-850 text-slate-400 font-bold text-[10px] px-2.5 py-1 rounded-lg">' + order.time + '</span>' +
+                            '</div>' +
+                            '<div class="space-y-3.5 text-left">' + itemsHtml + '</div>' +
+                        '</div>' +
+                        '<button onclick="serveEntireOrder(\'' + order.orderId + '\', ' + itemsString + ')" class="mt-4 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-2xl flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-lg shadow-emerald-900/20 shrink-0">' +
+                            '<i data-lucide="check" class="w-4 h-4"></i> SAJIKAN PESANAN' +
+                        '</button>' +
+                    '</div>';
             }).join('');
+
+            updateUndoButtonVisibility();
             lucide.createIcons();
         }
 
-        // Menandai hidangan telah disajikan secara lokal (hemat kuota database)
         function serveEntireOrder(orderId, items) {
             let servedList = JSON.parse(localStorage.getItem('served_items_cache') || "[]");
+            
+            // Catat data penyajian terakhir khusus untuk opsi UNDO/Batal Saji
+            lastServedOrderId = orderId;
+            lastServedItemsKeys = [];
 
-            items.forEach(item => {
+            items.forEach(function(item) {
                 const uniqueKey = orderId + "-" + item.menuId;
                 if (!servedList.includes(uniqueKey)) {
                     servedList.push(uniqueKey);
+                    lastServedItemsKeys.push(uniqueKey); // Masukkan kunci yang baru disajikan
                 }
             });
 
             localStorage.setItem('served_items_cache', JSON.stringify(servedList));
-            renderQueue(); // Segarkan tampilan secara instan tanpa loading
+            renderQueue();
         }
 
-        // Mereset cache sajian lokal (biasanya dilakukan saat pergantian shift / hari baru)
+        function undoLastServe() {
+            if (lastServedItemsKeys.length === 0) return;
+
+            let servedList = JSON.parse(localStorage.getItem('served_items_cache') || "[]");
+            
+            // Saring balik (buang key yang baru saja disajikan)
+            servedList = servedList.filter(function(key) {
+                return !lastServedItemsKeys.includes(key);
+            });
+            
+            localStorage.setItem('served_items_cache', JSON.stringify(servedList));
+            
+            // Kosongkan kembali tracker
+            lastServedItemsKeys = [];
+            lastServedOrderId = null;
+
+            renderQueue();
+            alert("Pesanan berhasil dikembalikan ke antrean aktif!");
+        }
+
+        function updateUndoButtonVisibility() {
+            const undoBtn = document.getElementById('btn-undo-trigger');
+            if (undoBtn) {
+                if (lastServedItemsKeys.length > 0) {
+                    undoBtn.classList.remove('hidden-screen');
+                } else {
+                    undoBtn.classList.add('hidden-screen');
+                }
+            }
+        }
+
         function clearServedCache() {
             if (confirm("Reset seluruh cache sajian lokal hari ini?\n\nSemua hidangan yang disembunyikan akan kembali ke antrean.")) {
                 localStorage.removeItem('served_items_cache');
+                lastServedItemsKeys = [];
+                lastServedOrderId = null;
                 fetchActiveOrders();
             }
         }
