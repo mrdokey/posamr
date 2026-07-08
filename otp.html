@@ -85,23 +85,27 @@
 
         function updateOtp() {
             const nowMs = Date.now();
-            const interval = Math.floor(nowMs / 3600000); // Window 1 Jam (3.600.000 ms)
             
-            // Sisa menit di jam ini
-            const minutesRemaining = 60 - new Date(nowMs).getMinutes();
-            const secondsRemaining = 60 - new Date(nowMs).getSeconds();
+            // Interval diperpendek ke 10 menit (600.000 ms)
+            const interval = Math.floor(nowMs / 600000); 
+            
+            // Hitung sisa waktu dalam interval 10 menit secara akurat
+            const totalMsRemaining = 600000 - (nowMs % 600000);
+            const totalSecondsLeft = Math.floor(totalMsRemaining / 1000);
+            const minutesRemaining = Math.floor(totalSecondsLeft / 60);
+            const secondsRemaining = totalSecondsLeft % 60;
 
             const hash = (interval * 31 + parseInt(managerPin) * 17) % 10000;
             const otpCode = String(hash).padStart(4, '0');
 
             document.getElementById('otp-text').innerText = otpCode;
 
-            // Total sisa detik dalam 1 jam (maks 3600)
-            const totalSecondsLeft = (minutesRemaining * 60) + secondsRemaining;
-            const progress = (totalSecondsLeft / 3600) * 213; // Stroke Dasharray 213
-            
+            // Animasi progress ring (Stroke Dasharray 213 untuk otp.html)
+            const progress = (totalSecondsLeft / 600) * 213; 
             document.getElementById('progress-bar').style.strokeDashoffset = 213 - progress;
-            document.getElementById('countdown-text').innerText = minutesRemaining + "m";
+            
+            // Menampilkan countdown berdetak detik demi detik agar atasan tahu kapan harus buru-buru menyalin
+            document.getElementById('countdown-text').innerText = minutesRemaining + "m " + secondsRemaining + "s";
         }
     </script>
 </body>

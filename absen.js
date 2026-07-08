@@ -697,18 +697,26 @@ function startOtpGenerator() {
 
 function updateOtp() { 
     const nowMs = Date.now(); 
-    const interval = Math.floor(nowMs / 3600000); 
-    const minutesRemaining = 60 - new Date(nowMs).getMinutes(); 
-    const secondsRemaining = 60 - new Date(nowMs).getSeconds();
+    
+    // Interval diperpendek ke 10 menit (600.000 ms)
+    const interval = Math.floor(nowMs / 600000); 
+    
+    // Hitung sisa waktu dalam interval 10 menit saat ini secara akurat
+    const totalMsRemaining = 600000 - (nowMs % 600000);
+    const totalSecondsLeft = Math.floor(totalMsRemaining / 1000);
+    const minutesRemaining = Math.floor(totalSecondsLeft / 60);
+    const secondsRemaining = totalSecondsLeft % 60;
 
+    // Kalkulasi sandi hash OTP
     const hash = (interval * 31 + parseInt(currentPin) * 17) % 10000;
     const otpCode = String(hash).padStart(4, '0');
 
     document.getElementById('otp-text').innerText = otpCode;
 
-    const totalSecondsLeft = (minutesRemaining * 60) + secondsRemaining;
-    const progress = (totalSecondsLeft / 3600) * 264;
-
+    // Animasi progress ring (Stroke Dasharray 264 untuk index.html)
+    const progress = (totalSecondsLeft / 600) * 264;
     document.getElementById('progress-bar').style.strokeDashoffset = 264 - progress;
+    
+    // Tampilkan format sisa waktu detil (contoh: 9m 45s)
     document.getElementById('countdown-text').innerText = minutesRemaining + "m";
 }
