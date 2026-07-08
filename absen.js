@@ -689,7 +689,7 @@ async function submitNewPin() {
     }
 }
 
-// --- LOGIKA OTP GENERATOR (1 JAM) --- 
+// --- LOGIKA OTP GENERATOR (1 JAM) ---
 function startOtpGenerator() {
     updateOtp(); 
     otpInterval = setInterval(updateOtp, 1000); 
